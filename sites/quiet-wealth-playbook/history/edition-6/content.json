@@ -1,0 +1,559 @@
+{
+  "brand": "Alicia Invests",
+  "product": "The Quiet Wealth Playbook",
+  "slogan": "The Boring Money System",
+  "price": 27,
+  "currency": "USD",
+  "regularPrice": 37,
+  "launchEndDate": "",
+  "checkoutUrl": "",
+  "emailFormAction": "",
+  "emailFieldName": "email",
+  "youtubeUrl": "",
+  "supportEmail": "",
+  "siteUrl": "",
+  "analyticsSnippet": "",
+  "copyrightYear": 2026,
+  "seo": {
+    "title": "The Quiet Wealth Playbook | Alicia Invests",
+    "description": "A calmer way to get your money in order. Two stories, twelve months, and practical tools for your own numbers. The complete Quiet Wealth Playbook pack is $27.",
+    "imageAlt": "The Quiet Wealth Playbook, a money system from Alicia Invests"
+  },
+  "ui": {
+    "skip": "Skip to content",
+    "getPlaybook": "Get the Playbook",
+    "buy": "Get the Playbook for {price}",
+    "access": "Get Instant Access",
+    "arrow": "↗",
+    "previewNotice": "Preview edition. Checkout, email delivery and final product pages are not connected yet.",
+    "checkoutMissing": "Checkout is being prepared.",
+    "checkoutHelp": "Purchases are not available on this preview. The finished page will open secure checkout here.",
+    "emailMissing": "Email signup will be available when the site launches.",
+    "emailLabel": "Your email address",
+    "emailPlaceholder": "you@example.com",
+    "emailButton": "Send it to me",
+    "emailPrivacy": "Your free kit, delivered by email. See our Privacy Policy for how your details are handled.",
+    "emailSubmitting": "Opening the signup provider…",
+    "close": "Close preview",
+    "previous": "Previous page",
+    "next": "Next page",
+    "previewLabel": "Design preview",
+    "expandPage": "Open {name} preview",
+    "sampleNotice": "Illustrative layouts, not excerpts from the finished product. Final sample pages will replace these previews.",
+    "mockupNotice": "Alicia illustration created from the channel character. Product cover shown as a concept.",
+    "trustNote": "Channel figures supplied for this preview. Confirm before launch.",
+    "disclaimer": "Educational content only. Not personal financial, legal or tax advice.",
+    "launchLine": "Launch price until {date}. Then {price}.",
+    "delivery": "Instant download. 30-day refund.",
+    "checkoutReassurance": "Secure checkout. Instant download. 30-day refund, no questions asked.",
+    "refundBadge": "30-day refund",
+    "digitalBadge": "Yours to download",
+    "packLabel": "The complete digital collection",
+    "included": "Included in the complete pack",
+    "bonus": "Bonus",
+    "privacy": "Privacy Policy",
+    "terms": "Terms",
+    "refunds": "Refund Policy",
+    "contact": "Contact",
+    "youtube": "YouTube channel",
+    "unconfigured": "Link to be added before launch",
+    "copyright": "© {year} Alicia Invests. All rights reserved.",
+    "back": "Back to the Playbook",
+    "legalPlaceholder": "Owner review required. This is placeholder text, not a finished policy. Replace and approve this page before accepting payments or collecting emails.",
+    "inventoryLabel": "See all 11 resources in the pack",
+    "inventoryHint": "Stories, tools and the everyday extras"
+  },
+  "hero": {
+    "eyebrow": "A quieter kind of money plan",
+    "from": "From Alicia Invests",
+    "headlineTop": "The Quiet Wealth",
+    "headlineBottom": "Playbook",
+    "lede": "The Boring Money System. One year, two real-life stories, and every tool you need to go from stressed to steady.",
+    "support": "A 200-page story-led playbook, 12 calculators, printable checklists and 40 word-for-word scripts. Built for any income.",
+    "explore": "Take a look inside",
+    "edition": "Quietly, one month at a time.",
+    "bookKicker": "THE BORING MONEY SYSTEM",
+    "bookByline": "ALICIA INVESTS",
+    "bookVolume": "STORIES · NUMBERS · NEXT STEPS",
+    "workbookTitle": "Your numbers. Your next move.",
+    "workbookLabel": "THE QUIET WEALTH WORKBOOK",
+    "checklistTitle": "A little less overwhelm.",
+    "checklistLabel": "MONTH ONE / YOUR CHECKLIST",
+    "hostLabel": "ALICIA",
+    "hostPlaceholder": "Your guide to a steadier year",
+    "mockupAlt": "Concept cover and workbook layouts for The Quiet Wealth Playbook",
+    "portraitAlt": "Alicia making a friendly shh gesture while holding a navy book.",
+    "floatingNote": "A little clarity changes the conversation.",
+    "portraitLabel": "Meet your guide",
+    "systemLabel": "The boring way forward.",
+    "includedBadge": "11 resources. All together.",
+    "monthBadge": "12 months",
+    "heroMeta": [
+      "Read the stories",
+      "Use your own numbers",
+      "Keep the tools"
+    ],
+    "poseLabel": "Made to feel like a conversation.",
+    "scrollPrompt": "Explore the playbook"
+  },
+  "trust": [
+    {
+      "number": "105,000+",
+      "label": "subscribers learning with Alicia"
+    },
+    {
+      "number": "2,000,000+",
+      "label": "views on Minimalist Money Rules"
+    }
+  ],
+  "problem": {
+    "eyebrow": "A place to begin",
+    "heading": "You don’t need another budget app.",
+    "body": "You need to know where your money actually goes, what your stuff is really costing you, and what to do next, in order. That is what this playbook gives you, one month at a time.",
+    "aside": "A clear next step is a very good start."
+  },
+  "stories": {
+    "eyebrow": "Two lives. One steady year.",
+    "heading": "Learn it the way people actually learn: through a story.",
+    "people": [
+      {
+        "name": "Jess",
+        "age": "31",
+        "label": "Starting from zero",
+        "income": "$46,000",
+        "debt": "$23,000",
+        "initial": "J",
+        "body": "Zero savings. Sure everyone she knows is ahead of her. Alicia mentors her in person.",
+        "footer": "An in-person conversation, one month at a time."
+      },
+      {
+        "name": "Tanya",
+        "age": "41",
+        "label": "Finding room to breathe",
+        "income": "$39,000",
+        "debt": "$52,000",
+        "initial": "T",
+        "body": "Single mom of two. Her debt includes a car title loan and medical bills in collections. She writes Alicia letters at 2am.",
+        "footer": "A letter, a reply, and the next right move."
+      }
+    ],
+    "incomeLabel": "Yearly income",
+    "debtLabel": "Starting debt",
+    "after": "Follow both through twelve months. Copy every move they make."
+  },
+  "pack": {
+    "eyebrow": "A small library. A complete system.",
+    "heading": "Everything in the pack",
+    "intro": "Read the stories. Work with your own numbers. Keep the tools close for the moments you need them.",
+    "items": [
+      {
+        "name": "The Quiet Wealth Playbook",
+        "body": "About 200 pages. Two 12-month stories plus 300+ practical tips.",
+        "short": "200-page story-led playbook",
+        "icon": "book"
+      },
+      {
+        "name": "The Quiet Wealth Workbook",
+        "body": "12 calculators for your own numbers. Excel and Google Sheets.",
+        "short": "Workbook with 12 calculators",
+        "icon": "grid"
+      },
+      {
+        "name": "Monthly Checklist Pack",
+        "body": "12 one-page checklists with chapter summaries.",
+        "short": "12 monthly checklists",
+        "icon": "check"
+      },
+      {
+        "name": "The Scripts Library",
+        "body": "About 40 word-for-word scripts for bills, debt, raises and hard conversations.",
+        "short": "40 word-for-word scripts",
+        "icon": "message"
+      },
+      {
+        "name": "Decision Trees",
+        "body": "8 one-page flowcharts for the biggest money decisions.",
+        "short": "8 decision trees",
+        "icon": "branch"
+      },
+      {
+        "name": "52-Week Tracker",
+        "body": "A ten-minute weekly check-in for the whole year.",
+        "short": "52-week tracker",
+        "icon": "calendar"
+      },
+      {
+        "name": "Quick Start Guide",
+        "body": "What to do in your first seven days.",
+        "short": "Seven-day quick start guide",
+        "icon": "compass"
+      },
+      {
+        "name": "Money Date Kit",
+        "body": "A monthly money meeting for couples and families.",
+        "short": "Money Date Kit",
+        "icon": "heart",
+        "bonus": true
+      },
+      {
+        "name": "Annual Money Review",
+        "body": "Close out the year and plan the next.",
+        "short": "Annual Money Review",
+        "icon": "sun",
+        "bonus": true
+      },
+      {
+        "name": "Phone Wallpapers",
+        "body": "Six lock screens with Alicia’s rules.",
+        "short": "Six phone wallpapers",
+        "icon": "phone",
+        "bonus": true
+      },
+      {
+        "name": "Reset Kit",
+        "body": "Budgeting tabs to get organized fast.",
+        "short": "Reset Kit",
+        "icon": "folder",
+        "bonus": true
+      }
+    ],
+    "explorer": {
+      "eyebrow": "Open the collection",
+      "title": "A closer look at your toolkit.",
+      "label": "Explore the resources",
+      "imageNote": "Illustrative page layout",
+      "tabs": [
+        {
+          "label": "The Playbook",
+          "kicker": "Read the story",
+          "title": "A year you can follow.",
+          "body": "Follow Jess and Tanya through twelve months of money decisions, with Alicia alongside them.",
+          "image": "assets/page-1.webp",
+          "tag": "About 200 pages"
+        },
+        {
+          "label": "The Workbook",
+          "kicker": "Make it your own",
+          "title": "Put your own numbers on the page.",
+          "body": "Twelve calculators turn the ideas into a system you can work through. Use Excel or free Google Sheets.",
+          "image": "assets/page-6.webp",
+          "tag": "12 calculators"
+        },
+        {
+          "label": "The Scripts",
+          "kicker": "Find the words",
+          "title": "A little help with the hard conversations.",
+          "body": "Word-for-word scripts for bills, debt, raises and the conversations that are easy to put off.",
+          "image": "assets/page-4.webp",
+          "tag": "About 40 scripts"
+        }
+      ],
+      "openPreview": "Open this sample",
+      "bookLabel": "THE COMPLETE DIGITAL COLLECTION"
+    }
+  },
+  "months": {
+    "eyebrow": "The table of contents",
+    "heading": "One year. Twelve moves.",
+    "intro": "You don’t have to fix everything this weekend. Each month gives you something specific to work on.",
+    "items": [
+      "Everything Costs Twice",
+      "The Leak Hunt",
+      "The Payday System",
+      "The Emergency Year",
+      "The Debt Exit",
+      "Wedding Season",
+      "The Car Decision",
+      "The Unsexy Habits",
+      "The Raise",
+      "The House Question",
+      "First Investments",
+      "Quiet Wealth"
+    ],
+    "subheading": "A little progress, month by month.",
+    "interactLabel": "Choose a month to explore",
+    "monthLabel": "MONTH",
+    "descriptions": [
+      "See the ongoing cost behind the things you own, beyond the price on the receipt.",
+      "Look for the small recurring costs that quietly add up.",
+      "Give the money coming in a clear place to go.",
+      "Make room for the expenses you can’t see coming.",
+      "Work through debt decisions with a clearer view of the next step.",
+      "Find your way through celebrations and the pressure to spend.",
+      "Look at the numbers behind buying, keeping or replacing a car.",
+      "Build the everyday routines that help a money system stick.",
+      "Prepare for the conversation about what your work is worth.",
+      "Think through the costs and choices behind a home.",
+      "Get familiar with the next stage of your money journey.",
+      "Look back at the year and decide what comes next."
+    ]
+  },
+  "samples": {
+    "eyebrow": "A little closer",
+    "heading": "Look inside",
+    "intro": "A story to follow. Space for your numbers. Something practical to use today.",
+    "items": [
+      {
+        "name": "The story",
+        "kind": "Story page",
+        "title": "Everything Costs Twice",
+        "subtitle": "A conversation at the kitchen table.",
+        "footer": "THE PLAYBOOK / MONTH 01"
+      },
+      {
+        "name": "The numbers",
+        "kind": "Math page",
+        "title": "See the whole cost.",
+        "subtitle": "A little space for a clearer picture.",
+        "footer": "THE PLAYBOOK / YOUR NUMBERS"
+      },
+      {
+        "name": "The next move",
+        "kind": "Toolkit page",
+        "title": "One thing at a time.",
+        "subtitle": "A practical tool, ready when you are.",
+        "footer": "THE TOOLKIT / NEXT STEPS"
+      },
+      {
+        "name": "The words",
+        "kind": "Script page",
+        "title": "When you need the words.",
+        "subtitle": "A calmer way to start the conversation.",
+        "footer": "THE SCRIPTS LIBRARY"
+      },
+      {
+        "name": "The check-in",
+        "kind": "Checklist page",
+        "title": "Make a little room.",
+        "subtitle": "Your monthly check-in, on one page.",
+        "footer": "THE MONTHLY CHECKLIST"
+      },
+      {
+        "name": "The workbook",
+        "kind": "Workbook page",
+        "title": "Your own numbers.",
+        "subtitle": "A place to work through what comes next.",
+        "footer": "THE QUIET WEALTH WORKBOOK"
+      }
+    ]
+  },
+  "readers": {
+    "eyebrow": "Room for your real life",
+    "heading": "Whatever your situation",
+    "items": [
+      "Tight budget",
+      "High earner",
+      "Couple or family",
+      "50 and over",
+      "Irregular income"
+    ],
+    "body": "Every chapter ends with a version of that month made for you, and every calculator uses your own numbers.",
+    "descriptions": [
+      "Start with the essentials and adapt each month to the room you have in your budget.",
+      "Look at the costs that grow with your income, and work with your real numbers.",
+      "Use the shared tools and Money Date Kit to make space for a conversation.",
+      "Use the versions written for readers 50 and over, alongside your own numbers.",
+      "Work with the money you actually receive, using calculators you can revisit."
+    ],
+    "selectLabel": "Choose the version that fits your life"
+  },
+  "note": {
+    "eyebrow": "A note from Alicia",
+    "body": "I’ve spent years doing the math out loud on the channel. This playbook is everything I’d tell you if we sat at your kitchen table for a year. No shame, no hype, just the next right move, one month at a time.",
+    "signature": "Alicia",
+    "placeholder": "Alicia’s illustration",
+    "portraitAlt": "Alicia sitting at a table, writing in a workbook beside a calculator, envelopes and a mug."
+  },
+  "pricing": {
+    "eyebrow": "Your next chapter",
+    "heading": "A steadier year starts here.",
+    "name": "The Quiet Wealth Playbook, complete pack",
+    "once": "One payment. The complete collection.",
+    "includedLabel": "All eleven resources, together.",
+    "refundHeading": "Take your time with it.",
+    "refundBody": "Try the pack with your own numbers. If it isn’t right for you, email us within 30 days for a full refund."
+  },
+  "faq": {
+    "eyebrow": "Before you begin",
+    "heading": "A few good questions",
+    "items": [
+      {
+        "q": "Is this for me if I’m deep in debt?",
+        "a": "Yes. Tanya’s story starts with $52,000 of debt, a title loan and collections, and her chapters walk through exactly what to do."
+      },
+      {
+        "q": "What if I already earn well?",
+        "a": "Kayla, Jess’s best friend, earns $135,000 and is quietly broke. Her story and the high-earner sections cover you."
+      },
+      {
+        "q": "Do I need Excel?",
+        "a": "No. Everything works in free Google Sheets too."
+      },
+      {
+        "q": "Is this just the YouTube videos written down?",
+        "a": "No. The book is built on new research, current rules and figures, and practical scripts and setups the channel has never covered."
+      },
+      {
+        "q": "How do I get it?",
+        "a": "Instant download right after checkout, plus an email with your links."
+      },
+      {
+        "q": "What if I don’t like it?",
+        "a": "Email us within 30 days for a full refund."
+      },
+      {
+        "q": "Is this financial advice?",
+        "a": "No. It is education. For your specific situation, talk to a qualified professional."
+      }
+    ]
+  },
+  "final": {
+    "eyebrow": "One small move, today",
+    "heading": "Start with what’s already in the room."
+  },
+  "free": {
+    "heading": "Not ready yet? Start free.",
+    "body": "Get the Reset Kit and Alicia’s one-page “No Longer Worth It” checklist by email."
+  },
+  "legal": {
+    "privacy": {
+      "title": "Privacy Policy",
+      "sections": [
+        {
+          "title": "Information and services",
+          "body": "[REPLACE] Name the business, its contact details, the email provider, payment processor, hosting provider, analytics service and the information each receives."
+        },
+        {
+          "title": "Your choices",
+          "body": "[REPLACE] Explain retention, deletion and unsubscribe rights, international transfers and applicable regional rights. Review the actual provider configuration before publishing."
+        }
+      ]
+    },
+    "terms": {
+      "title": "Terms",
+      "sections": [
+        {
+          "title": "Digital product and personal use",
+          "body": "[REPLACE] Identify the seller, the included files, delivery requirements and the permitted personal-use license. State any restrictions on sharing or resale."
+        },
+        {
+          "title": "Purchase terms",
+          "body": "[REPLACE] Describe pricing, taxes, delivery, support, applicable law and limitations in language approved for your business. Link the final refund policy."
+        }
+      ]
+    },
+    "refunds": {
+      "title": "Refund Policy",
+      "sections": [
+        {
+          "title": "30-day refund",
+          "body": "[REPLACE] Confirm the promised full refund within 30 days, the support address, required order details, the request process and expected processing time. Match the actual checkout configuration."
+        }
+      ]
+    }
+  },
+  "tryIt": {
+    "eyebrow": "A little taste of the approach",
+    "heading": "Small numbers. A clearer picture.",
+    "intro": "Pick one recurring expense. Change the amount. See what it looks like across a year.",
+    "illustrationAlt": "Alicia holding a small stack of gold coins and a few generic banknotes.",
+    "amountLabel": "Cost each time",
+    "amountNote": "Choose any amount from $0 to $200.",
+    "frequencyLabel": "How often?",
+    "monthly": "Monthly",
+    "weekly": "Weekly",
+    "annualLabel": "That adds up to",
+    "annualSuffix": "in one year",
+    "decisionLabel": "What would you like to explore?",
+    "decisions": [
+      {
+        "label": "Keep it",
+        "fraction": 0
+      },
+      {
+        "label": "Cut it in half",
+        "fraction": 0.5
+      },
+      {
+        "label": "Skip it",
+        "fraction": 1
+      }
+    ],
+    "retainedLabel": "Could stay with you each year",
+    "retainedNote": "If you make and keep this change. Your choice, your priorities.",
+    "demoNote": "Illustrative demo, not a promise of savings or a finished workbook page. Only simple arithmetic is used.",
+    "defaultAmount": 25,
+    "rangeMin": 0,
+    "rangeMax": 200,
+    "defaultFrequency": "monthly",
+    "defaultFraction": 0.5,
+    "annualTimes": {
+      "monthly": 12,
+      "weekly": 52
+    },
+    "planHeading": "Leave with one small next move.",
+    "planIntro": "Choose a few starting steps. Save the checklist and your example numbers.",
+    "steps": [
+      "List your recurring bills in one place.",
+      "Circle one cost you want to review.",
+      "Choose a ten-minute weekly check-in."
+    ],
+    "planProgress": "{count} of {total} starting steps chosen",
+    "download": "Save my starting point",
+    "privacy": "Everything in this demo stays in your browser. No email needed.",
+    "downloadFile": "my-quiet-money-starting-point.txt",
+    "downloadTitle": "MY QUIET MONEY STARTING POINT",
+    "costText": "Cost each time",
+    "frequencyText": "Frequency",
+    "annualText": "Example yearly cost",
+    "keptText": "Example amount retained per year",
+    "checklistTitle": "MY STARTING STEPS",
+    "downloadDisclaimer": "Educational demo only. These are illustrative numbers, not a guarantee or personal financial advice.",
+    "savedMessage": "Your starting-point file is ready.",
+    "currencySymbol": "$",
+    "noScript": "With JavaScript off, this example shows $25 each month, $300 across a year, and $150 retained if that cost is halved. The interactive controls and text-file download need JavaScript."
+  },
+  "interactionHint": "Try the numbers for yourself",
+  "scrollStory": {
+    "caption": "Less overwhelm. One clear move at a time.",
+    "steps": [
+      {
+        "label": "Turn down the noise",
+        "heading": "A little less noise. A lot more clarity.",
+        "body": "You need to know where your money actually goes, what your stuff is really costing you, and what to do next, in order. That is what this playbook gives you, one month at a time.",
+        "image": "assets/alicia-shh-v3.webp",
+        "width": 800,
+        "height": 1200,
+        "alt": "Alicia gently making a shh gesture while holding a book."
+      },
+      {
+        "label": "Know your numbers",
+        "heading": "Make the invisible costs visible.",
+        "body": "Bills. Subscriptions. The things that keep costing after you bring them home. Work with your own numbers, then decide what is worth keeping.",
+        "image": "assets/alicia-money-v3.webp",
+        "width": 800,
+        "height": 960,
+        "alt": "Alicia holding coins and banknotes as the story turns to everyday costs."
+      },
+      {
+        "label": "Build your rhythm",
+        "heading": "A small routine you can return to.",
+        "body": "Follow the stories. Keep the checklists close. Give yourself a calm place to sit down, see what changed, and choose the next right move.",
+        "image": "assets/alicia-desk-v3.webp",
+        "width": 1200,
+        "height": 800,
+        "alt": "Alicia working through her workbook at the kitchen table."
+      }
+    ]
+  },
+  "motion": {
+    "pause": "Pause motion",
+    "resume": "Resume motion",
+    "reduced": "Reduced motion enabled"
+  },
+  "characterMoments": {
+    "eyebrow": "A CLOSER LOOK",
+    "body": "A little reading. A few honest numbers. A place to begin.",
+    "link": "Explore the sample layouts"
+  }
+}
