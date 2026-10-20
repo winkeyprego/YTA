@@ -1,5 +1,9 @@
 # Current: edition 8 guided experience
 
+## Edition 8.1 polish (Claude, 21 October 2026)
+
+Small changes within the edition 8 direction. Removed the hero line "A little reading. Your own numbers. One next move.", which repeated the three ticks above it. Raised desktop small print (labels, notes, worksheet text, disclosures, footer, offer list) from 9-11px to 11-15px for readability. Rebalanced the refund row under the offer. On phones, the "Let's start where you are." caption now stays on one line inside the artwork. Static, checkout/UTM, worksheet/CSV and JS syntax checks pass. No horizontal overflow at 375 or 1280. Lighthouse was not rerun.
+
 Restored the longer interactive pacing at the owner’s request. Alicia narrates the hero, approach, tools, note and offer in first person. The hero invites “Walk through it with me”; the purchase link is still available but secondary. A three-step sticky scroll conversation changes among complete Alicia poses. The twelve chapter details and large current chapter number are visible again; five situation buttons update a live answer. The clear collection, useful cost tool and honest product/composite labels remain.
 
 Browser checks: all three pose states observed; chapter 05 opened and updated the counter with only that chapter open; Irregular income updated the reader answer; motion pause froze the pose while navigating to a different step. The phone stage is 285px tall, leaving space to read. No document horizontal overflow at actual CSS widths 320, 375 or 1200. All copy remains in native HTML; reader alternatives have a no-JS list. The inactive story images are requested only as the conversation approaches the viewport. No scroll interception or detached body parts.
