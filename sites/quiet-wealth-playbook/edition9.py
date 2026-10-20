@@ -1,6 +1,24 @@
 """Edition 9: the editorial Alicia-led page. Copy lives in content.json; prepare.py calls render()."""
 import json
 from html import escape as e
+from pathlib import Path
+from PIL import Image
+
+ROOT = Path(__file__).resolve().parent
+
+
+def art(name, alt, cls='', life=True, eager=False):
+    """An optimized illustration from dist/assets, sized from the file prepare.py just wrote."""
+    with Image.open(ROOT / 'dist/assets' / f'{name}.webp') as im:
+        w, h = im.size
+    alt_attr = f'alt="{e(alt)}"' if alt else 'alt="" aria-hidden="true"'
+    loading = 'fetchpriority="high"' if eager else 'loading="lazy"'
+    return f'<img class="{cls}"{" data-life" if life else ""} src="assets/{name}.webp" width="{w}" height="{h}" {loading} decoding="async" {alt_attr}>'
+
+
+def signature():
+    """Alicia's signature: the script name plus a flourish that draws itself when motion is on."""
+    return (ROOT / 'source/assets/site/alicia-signature.svg').read_text(encoding='utf-8').strip()
 
 
 def book(c, s, interactive=False):
@@ -39,10 +57,10 @@ def render(c, buy, icon, foot, document):
     bonus_tag = f'<span class="tile-tag">{e(u["bonus"])}</span>'
     tiles = ''.join(f'<li class="tile{" tile-bonus" if x.get("bonus") else ""}">{icon(x.get("icon", "book"))}<div><h4>{e(x["name"])}</h4><p>{e(x["body"])}</p></div>{bonus_tag if x.get("bonus") else ""}</li>' for x in c['pack']['items'])
     compare = ''.join(f'<li><strong>{e(x["topic"])}</strong><span>{e(x["channel"])}</span><span>{e(x["pack"])}</span></li>' for x in s['comparison'])
-    pack = f'''<section class="pack section" id="the-pack"><div class="wrap"><div class="section-head">{head(c['pack']['eyebrow'], s['packHeading'], s['packIntro'])}</div><div class="shelf">{volumes}</div><div class="index-head"><h3>{e(s['inventoryTitle'])}</h3><p>{icon('folder')}{e(s['formats'])}</p></div><ul class="tiles">{tiles}</ul><details class="compare"><summary>{e(s['differenceTitle'])}{icon('plus')}</summary><p>{e(s['differenceIntro'])}</p><ul class="compare-rows"><li class="compare-label"><span></span><span>{e(s['channelColumn'])}</span><span>{e(s['packColumn'])}</span></li>{compare}</ul></details></div></section>'''
+    pack = f'''<section class="pack section" id="the-pack"><div class="wrap"><div class="pack-head"><div class="section-head">{head(c['pack']['eyebrow'], s['packHeading'], s['packIntro'])}</div>{art('alicia-present-a', 'Alicia gesturing toward the collection with an open hand.', 'pack-art')}</div><div class="shelf">{volumes}</div><div class="index-head"><h3>{e(s['inventoryTitle'])}</h3><p>{icon('folder')}{e(s['formats'])}</p></div><ul class="tiles">{tiles}</ul><details class="compare"><summary>{e(s['differenceTitle'])}{icon('plus')}</summary><p>{e(s['differenceIntro'])}</p><ul class="compare-rows"><li class="compare-label"><span></span><span>{e(s['channelColumn'])}</span><span>{e(s['packColumn'])}</span></li>{compare}</ul></details></div></section>'''
 
     rows = ''.join(f'''<div class="cost-row" data-cost-row><span class="cost-swatch" aria-hidden="true"></span><div class="cost-name"><label for="cost-name-{i}">{e(s['expenseLabel'])} {i+1}</label><input id="cost-name-{i}" data-cost-name value="{e(x['name'])}" maxlength="60"></div><div class="cost-amount"><label for="cost-amount-{i}">{e(s['costLabel'])}</label><div class="dollar-input"><span aria-hidden="true">$</span><input id="cost-amount-{i}" data-cost-amount type="number" min="0" max="10000" step="0.01" inputmode="decimal" value="{x['amount']}"></div></div><div class="cost-frequency"><label for="cost-frequency-{i}">{e(s['frequencyLabel'])}</label><select id="cost-frequency-{i}" data-cost-frequency>{''.join(f'<option value="{k}"' + (' selected' if k == x['frequency'] else '') + f'>{e(v)}</option>' for k, v in s['frequencyLabels'].items())}</select></div><label class="review-choice"><input type="checkbox" data-cost-review {'checked' if x['review'] else ''}><span>{e(s['reviewLabel'])}</span></label></div>''' for i, x in enumerate(s['defaultRows']))
-    tool = f'''<section class="ledger section" id="try-it"><div class="wrap ledger-grid"><div class="ledger-side"><div class="section-head">{head(s['starterEyebrow'], s['starterHeading'], s['starterIntro'])}</div><figure class="alicia-says"><img data-life src="assets/alicia-workbook-v5.webp" width="1000" height="667" loading="lazy" alt="{e(s['workbookAlt'])}"><figcaption class="bubble" data-ledger-bubble aria-hidden="true">{e(s['noJsDemo'].split('.')[0])}.</figcaption></figure></div><div class="ledger-card" data-cost-tool><p class="tool-example">{e(s['defaultDemoNote'])}</p>{rows}<div class="ledger-bar" aria-hidden="true" data-ledger-bar><i></i><i></i><i></i></div><div class="tool-results" aria-live="polite" aria-atomic="true"><div><span>{e(s['annualTotal'])}</span><output data-cost-total>$912</output></div><div class="review-result"><span>{e(s['reviewTotal'])}</span><output data-review-total>$300</output><small>{e(s['reviewNote'])}</small></div></div><div class="tool-footer"><div><button class="button" type="button" data-download-costs>{e(s['downloadLabel'])}{icon('arrow')}</button><a class="text-link" href="starter-worksheet.html">{e(s['printLabel'])}</a></div><p>{e(s['demoPrivacy'])}</p></div><p class="tool-status" role="status" data-tool-status></p></div></div><div class="wrap"><p class="fine-print">{e(s['demoNotice'])}</p><noscript><p class="fine-print">{e(s['noJsDemo'])}</p></noscript></div></section>'''
+    tool = f'''<section class="ledger section" id="try-it"><div class="wrap ledger-grid"><div class="ledger-side"><div class="section-head">{head(s['starterEyebrow'], s['starterHeading'], s['starterIntro'])}</div><figure class="alicia-says">{art('alicia-present-b', 'Alicia gesturing toward the worksheet with an open hand.')}<figcaption class="bubble" data-ledger-bubble aria-hidden="true">{e(s['noJsDemo'].split('.')[0])}.</figcaption></figure></div><div class="ledger-card" data-cost-tool><p class="tool-example">{e(s['defaultDemoNote'])}</p>{rows}<div class="ledger-bar" aria-hidden="true" data-ledger-bar><i></i><i></i><i></i></div><div class="tool-results" aria-live="polite" aria-atomic="true"><div><span>{e(s['annualTotal'])}</span><output data-cost-total>$912</output></div><div class="review-result"><span>{e(s['reviewTotal'])}</span><output data-review-total>$300</output><small>{e(s['reviewNote'])}</small></div></div><div class="tool-footer"><div><button class="button" type="button" data-download-costs>{e(s['downloadLabel'])}{icon('arrow')}</button><a class="text-link" href="starter-worksheet.html">{e(s['printLabel'])}</a></div><p>{e(s['demoPrivacy'])}</p></div><p class="tool-status" role="status" data-tool-status></p></div></div><div class="wrap"><p class="fine-print">{e(s['demoNotice'])}</p><noscript><p class="fine-print">{e(s['noJsDemo'])}</p></noscript></div></section>'''
 
     tab_icons = ['grid', 'message', 'check']
     tabs = ''.join(f'<button type="button" role="tab" id="sheet-tab-{i}" aria-controls="sheet-{i}" aria-selected="{str(i == 0).lower()}" data-sheet-tab="{i}"{"" if i == 0 else ' tabindex="-1"'}>{icon(tab_icons[i])}<span><small>{e(x["number"])} / {e(x["tag"])}</small>{e(x["title"])}</span></button>' for i, x in enumerate(s['examples']))
@@ -54,7 +72,7 @@ def render(c, buy, icon, foot, document):
 
     path = ''.join(f'<li><span class="path-number">{i+1:02d}</span><h3>{e(x["title"])}</h3><p>{e(x["body"])}</p></li>' for i, x in enumerate(s['startSteps']))
     people = ''.join(f'<article class="person"><span class="monogram" aria-hidden="true">{e(x["initial"])}</span><div><h4>{e(x["name"])}, {e(x["age"])}</h4><p class="person-label">{e(x["label"])}</p></div><dl><div><dt>{e(c["stories"]["incomeLabel"])}</dt><dd>{e(x["income"])}</dd></div><div><dt>{e(c["stories"]["debtLabel"])}</dt><dd>{e(x["debt"])}</dd></div></dl><p>{e(x["body"])}</p></article>' for x in c['stories']['people'])
-    how = f'''<section class="begin section" id="how-it-works"><div class="wrap"><div class="section-head">{head(s['howEyebrow'], s['startHeading'], s['startIntro'])}</div><ol class="path">{path}</ol><div class="people"><div class="people-head"><p class="eyebrow">{e(c['stories']['eyebrow'])}</p><h3>{e(c['conversationJourney']['storiesHeading'])}</h3><p class="fine-print">{e(c['stories']['after'])}</p></div>{people}</div></div></section>'''
+    how = f'''<section class="begin section" id="how-it-works"><div class="wrap"><div class="begin-head"><div class="section-head">{head(s['howEyebrow'], s['startHeading'], s['startIntro'])}</div>{art('alicia-laptop', 'Alicia sitting on a stool with a laptop and a cup of coffee.', 'begin-art')}</div><ol class="path">{path}</ol><div class="people"><div class="people-head"><p class="eyebrow">{e(c['stories']['eyebrow'])}</p><h3>{e(c['conversationJourney']['storiesHeading'])}</h3><p class="fine-print">{e(c['stories']['after'])}</p></div>{people}</div></div></section>'''
 
     m = c['months']
     j = c['conversationJourney']
@@ -65,19 +83,35 @@ def render(c, buy, icon, foot, document):
     r = c['readers']
     reader_buttons = ''.join(f'<button type="button" data-reader="{i}" aria-pressed="{str(i == 0).lower()}" aria-controls="reader-description">{e(x)}</button>' for i, x in enumerate(r['items']))
     fallback = ''.join(f'<li><strong>{e(x)}</strong> {e(r["descriptions"][i])}</li>' for i, x in enumerate(r['items']))
-    readers = f'''<section class="readers section" id="your-situation"><div class="wrap readers-grid"><div class="readers-copy">{head(j['readersEyebrow'], j['readersHeading'], j['readersIntro'])}<div class="reader-buttons" role="group" aria-label="{e(r['selectLabel'])}">{reader_buttons}</div><p class="fine-print">{e(j['readersFoot'])}</p><noscript><ul class="chapter-list">{fallback}</ul></noscript></div><figure class="readers-art"><p id="reader-description" class="bubble bubble-large" aria-live="polite">{e(r['descriptions'][0])}</p><img data-life src="assets/alicia-money-v3.webp" width="800" height="960" loading="lazy" alt="Alicia holding coins in one hand and banknotes in the other."></figure></div></section>'''
+    readers = f'''<section class="readers section" id="your-situation"><div class="wrap readers-grid"><div class="readers-copy">{head(j['readersEyebrow'], j['readersHeading'], j['readersIntro'])}<div class="reader-buttons" role="group" aria-label="{e(r['selectLabel'])}">{reader_buttons}</div><p class="fine-print">{e(j['readersFoot'])}</p><noscript><ul class="chapter-list">{fallback}</ul></noscript></div><figure class="readers-art"><p id="reader-description" class="bubble bubble-large" aria-live="polite">{e(r['descriptions'][0])}</p>{art('alicia-thinking', 'Alicia with a hand at her chin, thinking it through.')}</figure></div></section>'''
 
-    note = f'''<section class="letter-section" aria-labelledby="note-heading"><div class="wrap letter-grid"><img class="letter-art" data-life src="assets/alicia-tea.webp" width="640" height="640" loading="lazy" alt="{e('Alicia holding a teacup and saucer, ready for a calm conversation.')}"><article class="letter"><p class="eyebrow" id="note-heading">{e(c['note']['eyebrow'])}</p><blockquote>{e(c['note']['body'])}</blockquote><p class="signature">{e(c['note']['signature'])}</p><span class="wax" aria-hidden="true">A</span></article></div></section>'''
+    note = f'''<section class="letter-section" aria-labelledby="note-heading">{art('scene-kitchen-morning', '', 'letter-scene', life=False)}<div class="wrap letter-grid"><article class="letter"><p class="eyebrow" id="note-heading">{e(c['note']['eyebrow'])}</p><blockquote>{e(c['note']['body'])}</blockquote><div class="signature-row">{art('alicia-portrait', 'Alicia smiling.', 'letter-avatar', life=False)}<p class="signature" data-signature>{signature()}</p></div><span class="wax" aria-hidden="true">A</span></article></div></section>'''
+
+    cm = c.get('comments', {})
+    items = cm.get('items', [])
+    comments = ''
+    if items:
+        featured = next((x for x in items if x.get('featured')), None)
+        rest = [x for x in items if x is not featured]
+
+        def card(i, x):
+            initial = (x['handle'].lstrip('@')[:1] or 'A').upper()
+            video = f'<a href="{e(x["url"])}">{e(x["video"])}</a>' if x.get('url') else e(x['video'])
+            likes = f'<p class="comment-likes">{icon("thumb")}{e(str(x["likes"]))}</p>' if x.get('likes') else ''
+            return f'<article class="comment{" is-extra" if i >= 6 else ""}" data-comment><header><span class="comment-avatar tone-{i % 3}" aria-hidden="true">{e(initial)}</span><div><p class="comment-handle">{e(x["handle"])}</p><p class="comment-video">{e(cm["videoLabel"])} {video}</p></div></header><p class="comment-text">{e(x["text"])}</p>{likes}</article>'
+        feature = f'<figure class="comment-feature" data-comment><blockquote>{e(featured["text"])}</blockquote><figcaption>{e(featured["handle"])} · {e(cm["videoLabel"])} {e(featured["video"])}</figcaption></figure>' if featured else ''
+        more = f'<button class="comment-more" type="button" data-comments-more aria-expanded="false" hidden data-more="{e(cm["more"])}" data-less="{e(cm["less"])}">{e(cm["more"])}</button>' if len(rest) > 6 else ''
+        comments = f'''<section class="comments section" id="comments"><div class="wrap"><div class="comments-head">{art('alicia-portrait', '', 'comments-avatar', life=False)}<div class="section-head">{head(cm['eyebrow'], cm['heading'], cm['intro'])}</div></div>{feature}<div class="comment-wall">{''.join(card(i, x) for i, x in enumerate(rest))}</div>{more}<p class="fine-print">{e(cm['disclosure'])}</p></div></section>'''
 
     includes = ''.join(f'<li>{icon("tick")}{e(x["short"])}</li>' for x in c['pack']['items'])
     notice = f'<aside class="setup-notice" id="checkout-setup"><strong>{e(u["checkoutMissing"])}</strong><p>{e(s["offerPreview"])}</p></aside>' if not c['checkoutUrl'] else ''
-    pricing = f'''<section class="offer section" id="pricing"><div class="wrap"><div class="section-head centered">{head(c['pricing']['eyebrow'], c['pricing']['heading'])}</div><div class="offer-card"><div class="offer-object">{book(c, s)}</div><div class="offer-main"><p class="eyebrow">{e(u['packLabel'])}</p><h3>{e(c['pricing']['name'])}</h3><p class="offer-price"><span>{price}</span><small>USD<br>{e(c['pricing']['once'])}</small></p>{buy('pricing', u['access'])}<p class="offer-guarantee">{icon('heart')}{e(u['refundBadge'])}</p><p class="education">{e(u['disclaimer'])}</p></div><div class="offer-includes"><h4>{e(c['pricing']['includedLabel'])}</h4><ul>{includes}</ul></div></div><div class="refund-line"><strong>{e(c['pricing']['refundHeading'])}</strong><p>{e(c['pricing']['refundBody'])}</p></div>{notice}</div></section>'''
+    pricing = f'''<section class="offer section" id="pricing"><div class="wrap"><div class="section-head centered">{head(c['pricing']['eyebrow'], c['pricing']['heading'])}</div><div class="offer-card"><div class="offer-object"><figure class="held-book">{art('alicia-book-front', 'Alicia holding The Quiet Wealth Playbook. The cover is a concept.')}<div class="held-cover" aria-hidden="true"><span class="book-kicker">{e(c['slogan'])}</span><strong>The Quiet<br>Wealth<br><em>Playbook.</em></strong><span class="book-rule"><i></i><i></i><i></i></span><span class="book-byline">{e(c['brand'])}</span></div></figure><p class="offer-object-note">{e(s['coverNote'])}</p></div><div class="offer-main"><p class="eyebrow">{e(u['packLabel'])}</p><h3>{e(c['pricing']['name'])}</h3><p class="offer-price"><span>{price}</span><small>USD<br>{e(c['pricing']['once'])}</small></p>{buy('pricing', u['access'])}<p class="offer-guarantee">{icon('heart')}{e(u['refundBadge'])}</p><p class="education">{e(u['disclaimer'])}</p></div><div class="offer-includes"><h4>{e(c['pricing']['includedLabel'])}</h4><ul>{includes}</ul></div></div><div class="refund-line"><strong>{e(c['pricing']['refundHeading'])}</strong><p>{e(c['pricing']['refundBody'])}</p></div>{notice}</div></section>'''
 
     faq_items = ''.join(f'<details data-faq="{i+1}"><summary>{e(x["q"])}{icon("plus")}</summary><p>{e(x["a"])}</p></details>' for i, x in enumerate(c['faq']['items']))
     faq = f'''<section class="faq section" id="questions"><div class="wrap faq-grid"><div>{head(c['faq']['eyebrow'], c['faq']['heading'])}</div><div class="faq-list">{faq_items}</div></div></section>'''
 
     free_link = f'''<div class="finale-free"><p><strong>{e(s['freeHeading'])}</strong> {e(s['freeBody'])}</p><a class="text-link" href="starter-worksheet.html">{e(s['freeLink'])}{icon('arrow')}</a></div>'''
-    final = f'''<section class="finale"><div class="wrap finale-inner"><p class="eyebrow">{e(c['final']['eyebrow'])}</p><h2>{e(c['final']['heading'])}</h2><p>{e(s['finalBody'])}</p>{buy('final')}<p class="micro">{e(s['offerNote'])}</p>{'' if c['emailFormAction'] else free_link}</div></section>'''
+    final = f'''<section class="finale">{art('alicia-walking', 'Alicia walking forward with the Playbook under her arm and a tote bag in her hand.', 'finale-walk')}<div class="wrap finale-inner"><p class="eyebrow">{e(c['final']['eyebrow'])}</p><h2>{e(c['final']['heading'])}</h2><p>{e(s['finalBody'])}</p>{buy('final')}<p class="micro">{e(s['offerNote'])}</p>{'' if c['emailFormAction'] else free_link}</div></section>'''
     free = ''
     if c['emailFormAction']:
         free = f'''<section class="free wrap"><div><h2>{e(c['free']['heading'])}</h2><p>{e(c['free']['body'])}</p></div><form class="email-form" method="post" action="{e(c['emailFormAction'])}" data-configured="true"><label for="email">{e(u['emailLabel'])}</label><input id="email" type="email" name="{e(c['emailFieldName'])}" autocomplete="email" required><button class="button">{e(u['emailButton'])}</button><p id="newsletter-status">{e(u['emailPrivacy'])}</p></form></section>'''
@@ -85,5 +119,5 @@ def render(c, buy, icon, foot, document):
     config = {'checkoutUrl': c['checkoutUrl'], 'emailSubmitting': u['emailSubmitting'], 'motion': c['motion'], 'sales': s, 'readerDescriptions': r['descriptions'], 'chapters': [{'title': t, 'body': m['descriptions'][i]} for i, t in enumerate(m['items'])]}
     data = '<script id="site-config" type="application/json">' + json.dumps(config).replace('<', '\\u003c') + '</script>'
     banner = f'<p class="preview-banner">{e(u["previewNotice"])}</p>' if not c['checkoutUrl'] else ''
-    main = hero + ribbon + approach + pack + tool + samples + how + chapters + readers + note + pricing + faq + final + free
+    main = hero + ribbon + approach + pack + tool + samples + how + chapters + readers + note + comments + pricing + faq + final + free
     return document(c['seo']['title'], nav + '<main id="main">' + main + '</main>' + foot(True) + banner + data)

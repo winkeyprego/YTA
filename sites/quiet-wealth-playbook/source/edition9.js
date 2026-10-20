@@ -165,6 +165,27 @@
   paint();
  }
 
+ // Alicia's signature writes itself the first time the letter scrolls into view.
+ const sign=document.querySelector('[data-signature]');
+ if(sign && moving() && 'IntersectionObserver' in window && sign.getBoundingClientRect().top>innerHeight){
+  sign.classList.add('is-pending');
+  const watch=new IntersectionObserver(([entry])=>{if(entry.isIntersecting){sign.classList.add('is-signed');watch.disconnect();}},{rootMargin:'0px 0px -15% 0px'});
+  watch.observe(sign);
+  document.querySelector('[data-motion-toggle]')?.addEventListener('click',()=>sign.classList.add('is-signed'));
+ }
+
+ // Viewer comments: the first six show; the rest wait behind a button.
+ const more=document.querySelector('[data-comments-more]');
+ if(more){
+  const wall=more.closest('.comments');
+  more.hidden=false;
+  more.addEventListener('click',()=>{
+   const open=wall.classList.toggle('show-all');
+   more.setAttribute('aria-expanded',String(open));
+   more.textContent=open?more.dataset.less:more.dataset.more;
+  });
+ }
+
  // Gentle reveals for content below the first screen. Anything already visible stays put.
  const reveal=[...document.querySelectorAll('.section-head,.volume,.tile,.ledger-card,.sheet-stack,.path li,.person,.dial,.chapter-card,.readers-art,.letter,.offer-card,.faq-list,.finale-inner')];
  if(moving() && 'IntersectionObserver' in window){

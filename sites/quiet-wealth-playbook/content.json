@@ -521,10 +521,10 @@
         "label": "Turn down the noise",
         "heading": "First, let’s turn down the noise.",
         "body": "There is a lot of money advice out there. I don’t want to add to the feeling that you should already have everything figured out. We can start with what is in front of you.",
-        "image": "assets/alicia-shh-v3.webp",
-        "width": 800,
-        "height": 1200,
-        "alt": "Alicia gently making a shh gesture while holding a book."
+        "image": "assets/alicia-welcome-full.webp",
+        "width": 556,
+        "height": 1525,
+        "alt": "Alicia, head to toe, waving hello with the Playbook tucked under her arm."
       },
       {
         "label": "Know your numbers",
@@ -775,5 +775,15 @@
     "readersIntro": "Choose one. Let’s look at the parts you might want to spend time with.",
     "readersFoot": "Your situation can change. You can return to a different part of the book when it does.",
     "storiesHeading": "You’ll get to know Jess and Tanya."
+  },
+  "comments": {
+    "eyebrow": "From the comments",
+    "heading": "What viewers say about the videos.",
+    "intro": "A few comments left on Alicia Invests videos on YouTube, shown as they were written.",
+    "disclosure": "These comments are about the free YouTube videos. They are not reviews of the Playbook, which is still in development.",
+    "videoLabel": "On",
+    "more": "Show more comments",
+    "less": "Show fewer comments",
+    "items": []
   }
 }

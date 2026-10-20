@@ -14,6 +14,16 @@ Interactions: a 3D concept cover that follows the pointer and opens to its conte
 
 The free-worksheet invitation now sits inside the closing section unless an email form is configured. Sections and the conversation steps are shorter than in the first edition 9 pass.
 
+New artwork from the owner (October 2026) is in place: Alicia waving full-length opens the conversation, presents the collection and the worksheet, sits with a laptop beside "Where I'd begin", thinks through the reader situations, holds the Playbook in the offer (the concept cover is laid over the plain book in CSS, so a final cover can replace it), and walks into the closing section. The letter sits over the morning kitchen scene and is signed with `source/assets/site/alicia-signature.svg`, which writes itself once when motion is allowed. Standalone signature files in four colours are in `source/assets/site/signature/`.
+
+### Viewer comments
+
+The "What viewers say about the videos" section appears only when `comments.items` in `content.json` has entries. Each entry:
+
+    {"handle": "@viewer", "text": "The comment, word for word", "video": "Video title", "likes": 120, "url": "https://youtube.com/...", "featured": true}
+
+`likes`, `url` and `featured` are optional. One `featured` comment shows large above the wall; the first six others show and the rest sit behind "Show more comments". Copy comments exactly, use only comments about the videos, and ask commenters before quoting them. The disclosure under the section says these are not reviews of the unreleased Playbook; keep it.
+
 `ASSET-PROMPTS.md` lists the next artwork to generate (eight Alicia poses and an optional scene) and the product images to supply.
 
 Edition 8 notes follow for history.

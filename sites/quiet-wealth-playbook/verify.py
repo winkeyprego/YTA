@@ -15,7 +15,15 @@ assert len([a for t,a in p.tags if 'data-month' in a])==12
 assert len([a for t,a in p.tags if 'data-reader' in a])==5
 assert len([a for t,a in p.tags if 'data-conversation-step' in a])==3
 assert len([a for t,a in p.tags if 'data-cost-row' in a])==3
-assert len([a for t,a in p.tags if 'data-life' in a])==7
+assert len([a for t,a in p.tags if 'data-life' in a])==10
+comments=C.get('comments',{}).get('items',[])
+if comments:
+ assert len([a for t,a in p.tags if 'data-comment' in a])==len(comments)
+ assert C['comments']['disclosure'] in text
+ assert all(x.get('handle') and x.get('text') and x.get('video') for x in comments)
+else:
+ assert 'id="comments"' not in source
+assert 'aria-label="Alicia"' in source and 'sig-flourish' in source
 assert 'alicia-joint' not in source and 'data-greet' not in source
 assert len(C['pack']['items'])==11
 assert source.count(C['ui']['disclaimer'])==2

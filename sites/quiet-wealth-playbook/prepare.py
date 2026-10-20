@@ -33,6 +33,7 @@ def icon(name='book', cls=''):
         'lock': '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/>',
         'plus': '<path d="M12 5v14M5 12h14"/>',
         'close': '<path d="m6 6 12 12M18 6 6 18"/>',
+        'thumb': '<path d="M7 11v9H4v-9zM7 11l4-7a2 2 0 0 1 3 2l-1 4h5a2 2 0 0 1 2 2l-2 7a2 2 0 0 1-2 1H7"/>',
     }
     return f'<svg class="icon {cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{shapes.get(name, shapes["book"])}</svg>'
 
@@ -91,7 +92,9 @@ def make_assets():
     shutil.copytree(ROOT/'source/assets/fonts',assets/'fonts',dirs_exist_ok=True)
     for name in ['favicon.svg','og-image.png']:
         shutil.copy2(ROOT/'source/assets/site'/name,assets/name)
-    for name,size in [('alicia-shh-v3',(600,900)),('alicia-money-v3',(800,960)),('alicia-desk-v3',(1200,800)),('alicia-puppet-v5',(1280,1280)),('alicia-workbook-v5',(1000,1000))]:
+    for name,size in [('alicia-shh-v3',(600,900)),('alicia-money-v3',(800,960)),('alicia-desk-v3',(1200,800)),('alicia-puppet-v5',(1280,1280)),('alicia-workbook-v5',(1000,1000)),
+                      ('alicia-welcome-full',(560,1540)),('alicia-present-a',(760,1100)),('alicia-present-b',(760,1100)),('alicia-book-front',(760,1210)),('alicia-portrait',(300,330)),
+                      ('alicia-thinking',(640,1120)),('alicia-laptop',(640,900)),('alicia-walking',(560,1250)),('scene-kitchen-morning',(1672,941))]:
         with Image.open(ROOT/'source/assets'/f'{name}.png') as asset:
             asset.thumbnail(size,Image.Resampling.LANCZOS)
             asset.save(assets/f'{name}.webp',quality=88,method=6)
