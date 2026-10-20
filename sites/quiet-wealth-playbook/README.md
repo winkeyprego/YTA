@@ -10,7 +10,11 @@ An editorial redesign at the owner's request: the page looked plain, was not int
 - New font: Libre Caslon Text italic, self-hosted under `source/assets/fonts/` (SIL OFL).
 - `prepare.py` also writes `alicia-tea.webp`, the complete teacup pose cut from the preserved atlas.
 
-Interactions: a 3D concept cover that follows the pointer and opens to its contents page; a scrolling ribbon of chapter titles; the three-step conversation with Alicia in an arched window whose background shifts per step; book-style collection volumes; a ledger worksheet with a proportional bar and Alicia's running note; tabbed paper-stack website examples; a clock-face year dial for the twelve chapters; reader situations answered in Alicia's speech bubble; a letter with a wax seal. Motion pauses offscreen, in hidden tabs, with the footer control and under reduced motion. Content below the first screen eases in only when motion is allowed.
+Interactions: a 3D concept cover that follows the pointer and opens to its contents page as it scrolls up past the middle of the screen (the button overrides this, and it stays closed when motion is off); a scrolling ribbon of chapter titles; the three-step conversation with Alicia in an arched window whose background shifts per step; book-style collection volumes; a ledger worksheet with a proportional bar and Alicia's running note; tabbed paper-stack website examples; a clock-face year dial for the twelve chapters; reader situations answered in Alicia's speech bubble; a letter with a wax seal. Motion pauses offscreen, in hidden tabs, with the footer control and under reduced motion. Content below the first screen eases in only when motion is allowed.
+
+The free-worksheet invitation now sits inside the closing section unless an email form is configured. Sections and the conversation steps are shorter than in the first edition 9 pass.
+
+`ASSET-PROMPTS.md` lists the next artwork to generate (eight Alicia poses and an optional scene) and the product images to supply.
 
 Edition 8 notes follow for history.
 

@@ -29,13 +29,24 @@
   area.addEventListener('pointerleave',()=>{book.style.removeProperty('--tx');book.style.removeProperty('--ty');});
  }
  const toggle=document.querySelector('[data-book-toggle]');
- toggle?.addEventListener('click',()=>{
-  const open=!book.classList.contains('is-open');
-  book.classList.toggle('is-open',open);
-  toggle.setAttribute('aria-pressed',String(open));
-  toggle.querySelector('[data-open-label]').hidden=open;
-  toggle.querySelector('[data-close-label]').hidden=!open;
- });
+ if(book && toggle){
+  // The cover opens as the book rises past the middle of the screen; once the reader uses the button, their choice wins.
+  let chosen=null;
+  const paintBook=()=>{
+   const box=area.getBoundingClientRect();
+   const start=Math.max(0,box.top+scrollY-innerHeight*.55);
+   const scrolled=moving()?Math.min(1,Math.max(0,(scrollY-start)/(box.height*.5))):0;
+   const open=chosen===null?scrolled:chosen;
+   book.style.setProperty('--open',open.toFixed(3));
+   const shown=open>.5;
+   toggle.setAttribute('aria-pressed',String(shown));
+   toggle.querySelector('[data-open-label]').hidden=shown;
+   toggle.querySelector('[data-close-label]').hidden=!shown;
+  };
+  toggle.addEventListener('click',()=>{chosen=Number(book.style.getPropertyValue('--open'))>.5?0:1;paintBook();});
+  addEventListener('scroll',()=>{if(chosen===null) requestAnimationFrame(paintBook);},{passive:true});
+  paintBook();
+ }
 
  // Illustrations breathe only while visible.
  const life=[...document.querySelectorAll('[data-life]')];

@@ -76,8 +76,9 @@ def render(c, buy, icon, foot, document):
     faq_items = ''.join(f'<details data-faq="{i+1}"><summary>{e(x["q"])}{icon("plus")}</summary><p>{e(x["a"])}</p></details>' for i, x in enumerate(c['faq']['items']))
     faq = f'''<section class="faq section" id="questions"><div class="wrap faq-grid"><div>{head(c['faq']['eyebrow'], c['faq']['heading'])}</div><div class="faq-list">{faq_items}</div></div></section>'''
 
-    final = f'''<section class="finale"><div class="wrap finale-inner"><p class="eyebrow">{e(c['final']['eyebrow'])}</p><h2>{e(c['final']['heading'])}</h2><p>{e(s['finalBody'])}</p>{buy('final')}<p class="micro">{e(s['offerNote'])}</p></div></section>'''
-    free = f'''<section class="free wrap"><div><h2>{e(s['freeHeading'])}</h2><p>{e(s['freeBody'])}</p></div><a class="text-link" href="starter-worksheet.html">{e(s['freeLink'])}{icon('arrow')}</a></section>'''
+    free_link = f'''<div class="finale-free"><p><strong>{e(s['freeHeading'])}</strong> {e(s['freeBody'])}</p><a class="text-link" href="starter-worksheet.html">{e(s['freeLink'])}{icon('arrow')}</a></div>'''
+    final = f'''<section class="finale"><div class="wrap finale-inner"><p class="eyebrow">{e(c['final']['eyebrow'])}</p><h2>{e(c['final']['heading'])}</h2><p>{e(s['finalBody'])}</p>{buy('final')}<p class="micro">{e(s['offerNote'])}</p>{'' if c['emailFormAction'] else free_link}</div></section>'''
+    free = ''
     if c['emailFormAction']:
         free = f'''<section class="free wrap"><div><h2>{e(c['free']['heading'])}</h2><p>{e(c['free']['body'])}</p></div><form class="email-form" method="post" action="{e(c['emailFormAction'])}" data-configured="true"><label for="email">{e(u['emailLabel'])}</label><input id="email" type="email" name="{e(c['emailFieldName'])}" autocomplete="email" required><button class="button">{e(u['emailButton'])}</button><p id="newsletter-status">{e(u['emailPrivacy'])}</p></form></section>'''
 

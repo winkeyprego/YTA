@@ -30,7 +30,7 @@ button{cursor:pointer}
 :focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:3px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .wrap{max-width:calc(var(--wrap) + 2 * var(--gutter));margin-inline:auto;padding-left:var(--gutter);padding-right:max(20px,env(safe-area-inset-right,0px))}
-.section{padding-block:clamp(84px,11vw,150px)}
+.section{padding-block:clamp(72px,9vw,124px)}
 .icon{width:20px;height:20px;flex:none;vertical-align:middle}
 .icon.flip{transform:rotate(180deg)}
 .eyebrow{display:flex;align-items:center;gap:14px;font:600 12px/1.4 var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:22px}
@@ -88,7 +88,7 @@ button{cursor:pointer}
 .stage-caption{position:absolute;left:0;bottom:-58px;font-size:12px;color:var(--muted)}
 
 /* The 3D book */
-.book{--w:clamp(190px,21vw,280px);--t:22px;width:var(--w);aspect-ratio:3/4;position:relative;transform-style:preserve-3d;transform:rotateX(calc(7deg - var(--ty,0) * 8deg)) rotateY(calc(-24deg + var(--tx,0) * 16deg)) rotateZ(-3deg);transition:transform .7s var(--ease)}
+.book{--w:clamp(190px,21vw,280px);--t:22px;width:var(--w);aspect-ratio:3/4;position:relative;transform-style:preserve-3d;transform:rotateX(calc(7deg - var(--ty,0) * 8deg - var(--open,0) * 3deg)) rotateY(calc(-24deg + var(--tx,0) * 16deg + var(--open,0) * 20deg)) rotateZ(calc(-3deg + var(--open,0) * 2deg)) translateX(calc(var(--open,0) * 18%)) scale(calc(1 + var(--open,0) * .06));transition:transform .7s var(--ease)}
 .book-hero{--w:clamp(170px,16vw,236px);position:absolute;left:0;bottom:5%;z-index:3}
 .book-body{position:absolute;inset:0;transform-style:preserve-3d}
 .book-cover,.book-inside,.book-body::before{position:absolute;inset:0;border-radius:3px 9px 9px 3px}
@@ -110,8 +110,9 @@ button{cursor:pointer}
 .book-inside ol{list-style:none;padding:0;display:grid;gap:clamp(1px,.18vw,3px);font-size:clamp(7px,.7vw,10px);line-height:1.3}
 .book-inside li{display:flex;gap:8px;border-bottom:1px dotted rgba(23,35,58,.18);padding-bottom:2px}
 .book-inside li span{color:var(--gold);font-variant-numeric:tabular-nums}
-.book.is-open .book-cover{transform:translateZ(calc(var(--t) / 2)) rotateY(-155deg)}
-.book.is-open{transform:rotateX(4deg) rotateY(-4deg) rotateZ(-1deg) translateX(18%) scale(1.06)}
+/* The hero cover opens as the reader starts scrolling (or from its button); --open runs 0 to 1. */
+.book-hero,.book-hero .book-cover{transition-duration:.45s}
+.book-hero .book-cover{transform:translateZ(calc(var(--t) / 2)) rotateY(calc(var(--open,0) * -155deg))}
 .book-toggle{position:absolute;left:3%;bottom:-6px;z-index:5;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--rule);background:var(--ivory);border-radius:999px;padding:9px 16px;font:600 13px var(--sans);box-shadow:0 8px 20px -12px rgba(22,34,58,.4);transition:background .3s,border-color .3s}
 .book-toggle::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 4px rgba(125,92,46,.18);animation:pulse 2.4s ease-in-out infinite}
 .book-toggle:hover{border-color:var(--gold)}
@@ -144,7 +145,7 @@ button{cursor:pointer}
 .talk-meter{width:120px;height:2px;margin:16px auto 0;background:var(--rule);overflow:hidden}
 .talk-meter i{display:block;height:100%;width:100%;background:var(--gold);transform:scaleX(var(--meter,.3333));transform-origin:left;transition:transform .6s var(--ease)}
 .talk-steps{display:flex;flex-direction:column}
-.talk-step{min-height:72vh;display:flex;flex-direction:column;justify-content:center;opacity:.4;transition:opacity .6s ease}
+.talk-step{min-height:60vh;display:flex;flex-direction:column;justify-content:center;opacity:.4;transition:opacity .6s ease}
 .talk-step.is-current{opacity:1}
 .talk-number{font:italic 40px/1 var(--italic);color:var(--gold);margin-bottom:18px}
 .talk-step .eyebrow{margin-bottom:16px}
@@ -372,6 +373,10 @@ details[open]>summary .icon{transform:rotate(45deg)}
 .finale .button .icon{background:var(--navy);color:var(--gold-soft)}
 .finale .button:hover{background:#ecd6ab}
 .finale .micro{font-size:14px!important;margin-top:18px!important}
+.finale-free{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:56px;padding-top:30px;border-top:1px solid var(--rule-navy);width:min(100%,760px)}
+.finale .finale-free p{margin:0;font-size:16px;max-width:none}
+.finale-free strong{display:block;font:400 26px var(--display);color:var(--on-navy);margin-bottom:6px}
+.finale-free .text-link{color:var(--gold-soft)}
 .free{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:20px 40px;padding-block:56px}
 .free h2{font-size:clamp(30px,3vw,40px)}
 .free p{color:var(--muted);margin-top:8px}
@@ -457,7 +462,7 @@ html[data-motion="paused"] [data-life],html[data-motion="reduced"] [data-life]{a
  .talk-big{font-size:96px}
  .talk-caption{display:none}
  .talk-meter{margin-top:10px}
- .talk-step{min-height:58vh;padding-block:40px}
+ .talk-step{min-height:52vh;padding-block:36px}
  .talk-step p:not(.eyebrow):not(.talk-number){font-size:18px}
  .shelf{grid-template-columns:minmax(0,1fr)}
  .volume{min-height:0}
