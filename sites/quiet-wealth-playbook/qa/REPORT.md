@@ -1,4 +1,8 @@
-# Current: edition 8 guided experience
+# Current: edition 9 editorial redesign (Claude, 21 October 2026)
+
+Rebuilt the presentation in `edition9.py`, `source/edition9.css` and `source/edition9.js`; copy, offer and honesty labels are unchanged. `verify.py` now expects seven `data-life` elements (hero portrait, turning seal, chapter ribbon, conversation poses, workbook, money and teacup poses). Static, checkout/UTM, worksheet/CSV and JS syntax checks pass. In Chromium: no page errors; no horizontal overflow at 320, 375, 768, 1024 and 1360; cover open/close, dial selection, sheet tabs, reader answers, worksheet bar and note, and the scroll conversation were exercised. Lighthouse was not rerun.
+
+# Previous: edition 8 guided experience
 
 ## Edition 8.1 polish (Claude, 21 October 2026)
 

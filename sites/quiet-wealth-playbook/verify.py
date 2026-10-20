@@ -15,7 +15,7 @@ assert len([a for t,a in p.tags if 'data-month' in a])==12
 assert len([a for t,a in p.tags if 'data-reader' in a])==5
 assert len([a for t,a in p.tags if 'data-conversation-step' in a])==3
 assert len([a for t,a in p.tags if 'data-cost-row' in a])==3
-assert len([a for t,a in p.tags if 'data-life' in a])==4
+assert len([a for t,a in p.tags if 'data-life' in a])==7
 assert 'alicia-joint' not in source and 'data-greet' not in source
 assert len(C['pack']['items'])==11
 assert source.count(C['ui']['disclaimer'])==2

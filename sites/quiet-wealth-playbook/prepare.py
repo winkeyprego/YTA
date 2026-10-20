@@ -2,7 +2,8 @@
 import html
 import json
 import shutil
-from sales import render_sales, make_printables
+from sales import make_printables
+from edition9 import render
 from datetime import date
 from pathlib import Path
 
@@ -79,9 +80,9 @@ def document(title, body, legal=False):
         product['offers']['url'] = C['checkoutUrl']
         product['offers']['availability'] = 'https://schema.org/InStock'
     schema = '' if legal else '<script type="application/ld+json">' + json.dumps(product, ensure_ascii=False).replace('<','\\u003c') + '</script>'
-    stylesheet = '<link rel="stylesheet" href="styles.css">' if legal else '<style>' + (ROOT/'source/sales.css').read_text(encoding='utf-8') + '</style>'
+    stylesheet = '<link rel="stylesheet" href="styles.css">' if legal else '<style>' + (ROOT/'source/edition9.css').read_text(encoding='utf-8') + '</style>'
     return f'''<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#FAF7F2"><title>{E(title)}</title><meta name="description" content="{E(C['seo']['description'])}">{canonical}<meta property="og:type" content="website"><meta property="og:title" content="{E(title)}"><meta property="og:description" content="{E(C['seo']['description'])}"><meta property="og:image" content="{E(share)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="{E(C['seo']['imageAlt'])}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{E(title)}"><meta name="twitter:description" content="{E(C['seo']['description'])}"><meta name="twitter:image" content="{E(share)}"><link rel="icon" type="image/svg+xml" href="assets/favicon.svg"><link rel="preload" href="assets/fonts/dm-sans-latin.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="assets/fonts/libre-caslon-display-latin.woff2" as="font" type="font/woff2" crossorigin>{stylesheet}{schema}<script src="site.js" defer></script>{'<script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>' if C['checkoutUrl'] else ''}{C['analyticsSnippet']}</head><body><a class="skip-link" href="#main">{E(U['skip'])}</a>{body}</body></html>'''
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#FAF7F2"><title>{E(title)}</title><meta name="description" content="{E(C['seo']['description'])}">{canonical}<meta property="og:type" content="website"><meta property="og:title" content="{E(title)}"><meta property="og:description" content="{E(C['seo']['description'])}"><meta property="og:image" content="{E(share)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="{E(C['seo']['imageAlt'])}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{E(title)}"><meta name="twitter:description" content="{E(C['seo']['description'])}"><meta name="twitter:image" content="{E(share)}"><link rel="icon" type="image/svg+xml" href="assets/favicon.svg"><link rel="preload" href="assets/fonts/dm-sans-latin.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="assets/fonts/libre-caslon-display-latin.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="assets/fonts/libre-caslon-text-italic-latin.woff2" as="font" type="font/woff2" crossorigin><script>document.documentElement.classList.add('js')</script>{stylesheet}{schema}<script src="site.js" defer></script>{'<script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>' if C['checkoutUrl'] else ''}{C['analyticsSnippet']}</head><body><a class="skip-link" href="#main">{E(U['skip'])}</a>{body}</body></html>'''
 
 
 def make_assets():
@@ -94,6 +95,10 @@ def make_assets():
         with Image.open(ROOT/'source/assets'/f'{name}.png') as asset:
             asset.thumbnail(size,Image.Resampling.LANCZOS)
             asset.save(assets/f'{name}.webp',quality=88,method=6)
+    # The teacup pose is the lower-right quarter of the preserved atlas, shown whole.
+    with Image.open(ROOT/'source/assets/alicia-puppet-v5.png') as atlas:
+        half=atlas.width//2
+        atlas.crop((half,half,atlas.width,atlas.height)).resize((640,640),Image.Resampling.LANCZOS).save(assets/'alicia-tea.webp',quality=88,method=6)
     for sample in C.get('productSamples',[]):
         relative=Path(sample['image'])
         source=(ROOT/'source'/relative).resolve()
@@ -107,17 +112,16 @@ def make_assets():
 def main():
     D.mkdir(exist_ok=True)
     make_assets()
-    (D/'index.html').write_text(render_sales(C,buy,icon,foot,document),encoding='utf-8')
+    (D/'index.html').write_text(render(C,buy,icon,foot,document),encoding='utf-8')
     make_printables(C,D)
     for key,item in C['legal'].items():
         content = ''.join(f'<section><h2>{E(s["title"])}</h2><p>{E(s["body"])}</p></section>' for s in item['sections'])
         body = f'<header class="wrap legal-nav"><a class="wordmark" href="index.html">{E(C["brand"])}</a><a class="text-link" href="index.html">{E(U["back"])}</a></header><main id="main" class="wrap legal-content"><p class="eyebrow">{E(U["previewLabel"])}</p><h1>{E(item["title"])}</h1><aside class="setup-notice">{E(U["legalPlaceholder"])}</aside>{content}</main>' + foot()
         (D/f'{key}.html').write_text(document(item['title']+' | '+C['brand'],body,legal=key),encoding='utf-8')
-    shutil.copy2(ROOT/'source/sales.css',D/'styles.css')
+    shutil.copy2(ROOT/'source/edition9.css',D/'styles.css')
     shutil.copy2(ROOT/'source/sales.js',D/'site.js')
     with (D/'site.js').open('a',encoding='utf-8') as client:
-        client.write('\n'+(ROOT/'source/character.js').read_text(encoding='utf-8'))
-        client.write('\n'+(ROOT/'source/guided.js').read_text(encoding='utf-8'))
+        client.write('\n'+(ROOT/'source/edition9.js').read_text(encoding='utf-8'))
     print(f'Ready to preview or deploy: {D}')
 
 

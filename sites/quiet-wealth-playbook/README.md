@@ -1,4 +1,20 @@
-# Quiet Wealth Playbook: Alicia-led edition 8
+# Quiet Wealth Playbook: Alicia-led edition 9
+
+## Edition 9 (current build)
+
+An editorial redesign at the owner's request: the page looked plain, was not interactive enough and did not use Alicia well. Same copy, offer, honesty rules and checks as edition 8.
+
+- `edition9.py` renders the page from `content.json`. `prepare.py` now calls it instead of `sales.py`'s `render_sales` (`sales.py` still writes the printables).
+- `source/edition9.css` is the only active stylesheet (inlined into the home page, copied to `dist/styles.css` for legal pages and printables).
+- `dist/site.js` is `source/sales.js` (checkout UTMs, FAQ events, worksheet, CSV, motion toggle) plus `source/edition9.js` (interactions below). `guided.js` and `character.js` are no longer bundled.
+- New font: Libre Caslon Text italic, self-hosted under `source/assets/fonts/` (SIL OFL).
+- `prepare.py` also writes `alicia-tea.webp`, the complete teacup pose cut from the preserved atlas.
+
+Interactions: a 3D concept cover that follows the pointer and opens to its contents page; a scrolling ribbon of chapter titles; the three-step conversation with Alicia in an arched window whose background shifts per step; book-style collection volumes; a ledger worksheet with a proportional bar and Alicia's running note; tabbed paper-stack website examples; a clock-face year dial for the twelve chapters; reader situations answered in Alicia's speech bubble; a letter with a wax seal. Motion pauses offscreen, in hidden tabs, with the footer control and under reduced motion. Content below the first screen eases in only when motion is allowed.
+
+Edition 8 notes follow for history.
+
+# Edition 8 notes
 
 This is a standalone static sales-page preview for Alicia Invests. FrameFact production services and routes are unchanged. The owner confirmed the product is unfinished, Jess and Tanya are composites of real people, and checkout/support details are not ready. This page does not accept payments.
 
