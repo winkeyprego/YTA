@@ -32,8 +32,16 @@ function cueSplit(s) {
 }
 
 function parseWho(str) {
-  const [name, spot, mood, pose] = String(str).split(':');
-  const c = { who: name.trim() };
+  const parts = String(str).split(':');
+  // segments with "=" are extra fields: "leo:center:sad:idle:holding=phone,walk=out"
+  const extras = {};
+  const plain = parts.filter((p) => {
+    if (!p.includes('=')) return true;
+    p.split(',').forEach((kv) => { const [k, v] = kv.split('='); extras[k.trim()] = v === 'true' ? true : v === 'false' ? false : isNaN(Number(v)) ? v : Number(v); });
+    return false;
+  });
+  const [name, spot, mood, pose] = plain;
+  const c = { who: name.trim(), ...extras };
   if (spot) c.spot = spot;
   if (mood) {
     const [m1, m2] = mood.split('>');
@@ -71,7 +79,7 @@ function expand(line, beats, lineNo) {
     const [a, b] = String(s.b).split('-').map(Number);
     const list = beats.filter((x) => x.n >= a && x.n <= (b || a));
     if (!list.length) throw new Error(`storyboard ${lineNo}: beat "${s.b}" not found (beats.txt has 1-${beats.length})`);
-    if (list.every((x) => x.pause)) out.fill = +(list[list.length - 1].e - list[0].s).toFixed(2); // uses an existing silence
+    if (list.every((x) => x.pause)) { out.fill = +(list[list.length - 1].e - list[0].s).toFixed(2); out._pause = true; } // uses an existing silence
     else out.vo = list.filter((x) => !x.pause).map((x) => x.text).join(' ');
     out._beats = [a, b || a];
     delete s.b;
@@ -152,7 +160,10 @@ function compileStoryboard(dir) {
     if (!line || line.startsWith('#') || line.startsWith('//')) return;
     let obj;
     try { obj = JSON.parse(line); } catch (e) { throw new Error(`storyboard ${origin[i]} is not valid JSON: ${e.message}\n  ${line.slice(0, 160)}`); }
-    if (!obj.t && !obj.template) { header = { ...header, ...obj }; return; }
+    if (!obj.t && !obj.template) {
+      if (!origin[i].startsWith('storyboard.txt:')) throw new Error(`storyboard ${origin[i]}: a line without "t" is a header line, and headers belong only in storyboard.txt (part files hold shots only). Add "t" or move it.`);
+      header = { ...header, ...obj }; return;
+    }
     shots.push(expand(obj, beats, origin[i]));
     lineOf.push(origin[i]);
   });
@@ -160,9 +171,11 @@ function compileStoryboard(dir) {
   const covered = new Map();
   shots.forEach((s, k) => { if (s._beats) for (let b = s._beats[0]; b <= s._beats[1]; b++) covered.set(b, (covered.get(b) || []).concat(lineOf[k])); });
   const missing = beats.filter((b) => !covered.has(b.n)).map((b) => b.n);
-  const doubled = [...covered.entries()].filter(([, v]) => v.length > 1).map(([b]) => b);
-  shots.forEach((s) => delete s._beats);
-  return { spec: { ...header, shots: vary(shots) }, lineOf, missing, doubled };
+  const isPause = new Set(beats.filter((b) => b.pause).map((b) => b.n));
+  const doubled = [...covered.entries()].filter(([b, v]) => v.length > 1 && !isPause.has(b)).map(([b]) => b);
+  const mixedMontage = shots.map((s, k) => (s.frames && s.frames.some((f) => f.at != null || f.on) && s.frames.some((f) => f.at == null && !f.on) ? lineOf[k] : null)).filter(Boolean);
+  shots.forEach((s) => { delete s._beats; delete s._pause; });
+  return { spec: { ...header, shots: vary(shots) }, lineOf, missing, doubled, mixedMontage };
 }
 
 module.exports = { compileStoryboard, parseWho };

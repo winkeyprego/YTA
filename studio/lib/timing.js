@@ -81,7 +81,9 @@ function schedule(shots, words) {
       let j = i + 1;
       while (j < shots.length && !al[j].hasVo) j++;
       const end = j < shots.length ? first(j) + shift : clock + s.fill;
-      const dur = Math.max(0.8, end - clock);
+      // a fill shot with its own "dur" takes that much of the pause (e.g. a 2s chapter card); the next fill shot gets the rest
+      const nextFill = shots[i + 1] && shots[i + 1].fill && !al[i + 1].hasVo;
+      const dur = Math.max(0.8, s.dur && nextFill ? Math.min(s.dur, end - clock - 0.8) : end - clock);
       out.push({ start: clock, dur, words: [] });
       clock += dur;
       continue;

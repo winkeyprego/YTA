@@ -29,6 +29,7 @@ function loadEpisode(dir) {
       .map(([a, b]) => (a === b ? `${a}` : `${a}-${b}`)).join(', ');
     if (sb.missing.length) boardWarnings.push(`beats not used by any shot: ${ranges(sb.missing)}`);
     if (sb.doubled.length) boardWarnings.push(`beats used twice: ${ranges(sb.doubled)}`);
+    sb.mixedMontage.forEach((l) => boardWarnings.push(`${l}: montage mixes frames with and without "at"/"on". Give all frames a time or none`));
     fs.writeFileSync(path.join(dir, 'shots.compiled.json'), JSON.stringify(spec, null, 1));
   } else {
     try {

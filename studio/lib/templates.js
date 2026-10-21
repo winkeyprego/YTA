@@ -50,11 +50,15 @@ const POSES = {
 
 const STICKER_COLORS = { red: P.red, ink: P.ink, gold: P.goldDark, green: P.greenDark, blue: P.blue };
 
+// Cast colours may be palette names ("navy", "red", "gold") or hex.
+const COLOR_FIELDS = ['suit', 'shirt', 'tie', 'hairColor', 'skin', 'hatColor', 'hatBand', 'moustacheColor', 'blushColor', 'beardColor', 'necklace'];
 const resolveCast = (who, ctx) => {
   const c = (ctx.cast && ctx.cast[who]) || who;
   if (typeof c === 'string') return CAST[c] || CAST.banker;
   const base = c.base ? CAST[c.base] || {} : {};
-  return { ...base, ...c };
+  const out = { ...base, ...c };
+  COLOR_FIELDS.forEach((k) => { if (typeof out[k] === 'string' && P[out[k]]) out[k] = P[out[k]]; });
+  return out;
 };
 
 // ---------- common pieces ----------
@@ -632,7 +636,54 @@ function kitTemplate(which) {
   };
 }
 
-const TEMPLATES = { talk, versus, document: documentShot, chart, stat, fuse, map: mapShot, money, title, chapter, card,
+// ---------- compose: free placement of props, people, text and stickers (metaphors, one-off scenes) ----------
+// { template: 'compose', bg: 'board'|'paper'|'wall'|'desk'|'night'|<set name>, setOpts, front: true, light: [x, y],
+//   items: [ { prop: 'cashStack', x, y, s, on, ...prop options },          // lib/propkit.js
+//            { who: 'leo', x, y, s, mood, pose, poseOn, mood2, mood2On },   // a character standing at (x, y)
+//            { text: 'Words', x, y, size, font, color, on },                 // plain text
+//            { sticker: 'KEY PHRASE', x, y, on, color, rot, size } ] }       // a sticker
+// Items appear on their cue with the standard pop; anchors are bottom-centre for props and people.
+const COMPOSE_BG = {
+  board: () => boardBg(),
+  paper: () => `<rect x="-200" y="-200" width="${W + 400}" height="${H + 400}" fill="${P.paper}"/>` + Array.from({ length: 30 }, (_, i) => `<path d="M-200 ${i * 40 - 180} H${W + 200}" stroke="${P.paperShade}" stroke-width="1" opacity=".5"/>`).join(''),
+  wall: () => props.office(),
+  desk: () => props.deskTop(4),
+  night: () => props.nightSky(3) + props.skyline(11, 650, { color: '#253247', minH: 140, maxH: 330, lit: 0.06 }) + `<rect y="650" width="${W}" height="70" fill="#1a222e"/>`,
+};
+function compose(shot, ctx) {
+  const kit = lazy('./propkit');
+  const PROPS = (kit && kit.PROPS) || {};
+  const items = (shot.items || []).map((it, i) => ({ ...it, at: ctx.cue(it.on, it.at ?? 0.3 + i * 0.6) }));
+  return (t) => {
+    const set = sets()[shot.bg];
+    const bg = set ? set.draw(t, shot.setOpts || {}) : (COMPOSE_BG[shot.bg || 'paper'] || COMPOSE_BG.paper)();
+    const body = items.map((it, i) => {
+      if (t < it.at) return '';
+      const x = it.x ?? 640, y = it.y ?? 600;
+      if (it.prop) {
+        const fn = PROPS[it.prop];
+        if (!fn) return '';
+        const p = M.pop(t, it.at, 0.25);
+        return `<g opacity="${n(p.o)}" transform="translate(${n(x)} ${n(y)}) scale(${n(p.s)}) translate(${n(-x)} ${n(-y)})">${fn({ ...it, x, y }, t)}</g>`;
+      }
+      if (it.who) {
+        const p = M.pop(t, it.at, 0.25);
+        return `<g opacity="${n(p.o)}">${g(tr(x, y, it.s ?? 0.9), character(resolveCast(it.who, ctx), actor({ ...it, seed: i }, t, ctx)))}</g>`;
+      }
+      if (it.text) {
+        const k = M.clamp((t - it.at) * 5);
+        return `<g opacity="${n(k)}" data-qa="text" data-qn="text '${String(it.text).slice(0, 20)}'">${text(it.text, x, y, { size: it.size || 40, font: it.font || 'hand', fill: STICKER_COLORS[it.color] || it.color || P.ink, anchor: it.anchor || 'middle' })}</g>`;
+      }
+      if (it.sticker) return ui.sticker(it.sticker, x, y, t, it.at, { size: it.size || 34, rot: it.rot ?? (i % 2 ? 2 : -3), color: STICKER_COLORS[it.color] || P.red });
+      return '';
+    }).join('');
+    const front = set && shot.front && set.front ? set.front(t, shot.setOpts || {}) : '';
+    const light = Array.isArray(shot.light) ? ui.spotlight(shot.light[0], shot.light[1], { r: 300 }) : '';
+    return cam(bg + body + front, { zoom: cameraZoom(shot.camera || 'creep', t, ctx) }) + light + overlays(shot, t, ctx, { side: 'left' });
+  };
+}
+
+const TEMPLATES = { compose, talk, versus, document: documentShot, chart, stat, fuse, map: mapShot, money, title, chapter, card,
   screen: kitTemplate('screen'), data: kitTemplate('data'), diagram: kitTemplate('diagram') };
 
 module.exports = { TEMPLATES, MOODS, POSES, KIT_KINDS, wrap };

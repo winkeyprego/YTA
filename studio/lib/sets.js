@@ -311,4 +311,7 @@ const SETS = {
   },
 };
 
+// History/places sets live in lib/sets-history.js (same interface); merged here so every episode sees one registry.
+try { Object.assign(SETS, require('./sets-history').SETS); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; }
+
 module.exports = { SETS, pool };

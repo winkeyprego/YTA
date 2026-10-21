@@ -380,4 +380,17 @@ function crowd(seed, rows, cols, x, y, w, h, scale = 0.3) {
 }
 
 
-module.exports = { character, handPosition, crowd, ANCHOR, CAST, HEAD_Y, HEAD_R };
+// Every valid cast feature, for the validator (lib/validate.js). When you add a hair style, outfit, hat, moustache or
+// beard above, add its name here too so shots.json / storyboard casts can use it.
+const FEATURES = {
+  hair: ['slick', 'side', 'bald', 'bob', 'curly', 'long', 'spiky', 'ponytail', 'bun', 'none'],
+  outfit: ['suit', 'shirt', 'dress', 'coat', 'hoodie', 'turtleneck', 'vest', 'robe', 'overalls', 'blazer'],
+  hat: ['tophat', 'fedora', 'cap'],
+  moustache: ['brush', 'walrus', 'thin'],
+  beard: [],
+  colors: ['suit', 'shirt', 'tie', 'hairColor', 'skin', 'hatColor', 'hatBand', 'moustacheColor', 'blushColor', 'beardColor', 'necklace'],
+  flags: ['glasses', 'cigar', 'pin', 'badge', 'lanyard', 'earrings', 'necklace'],
+  numbers: ['size'],
+};
+
+module.exports = { FEATURES, character, handPosition, crowd, ANCHOR, CAST, HEAD_Y, HEAD_R };

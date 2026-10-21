@@ -22,11 +22,12 @@ const FIELDS = {
   title: ['text', 'set', 'setOpts', 'size'],
   chapter: ['label', 'sub', 'style'],
   card: ['text', 'lines', 'stack', 'size'],
+  compose: ['bg', 'setOpts', 'items', 'front', 'light'],
   screen: null, data: null, diagram: null, // kit templates: fields depend on `kind` (see the kit file's header)
 };
 const REQUIRED = {
   talk: ['chars'], versus: ['left', 'right'], document: ['lines'], chart: ['data'], stat: ['value'],
-  fuse: ['stops'], map: ['view'], money: ['items'], title: ['text'], chapter: ['label'],
+  fuse: ['stops'], map: ['view'], money: ['items'], title: ['text'], chapter: ['label'], compose: ['items'],
 };
 const CHAR_FIELDS = ['who', 'spot', 'mood', 'mood2', 'mood2On', 'mood2At', 'pose', 'poseOn', 'poseAt', 'pose2', 'pose2On', 'pose2At',
   'holding', 'carry', 'walk', 'walkAt', 'walkDur', 'look', 'tilt', 'seed'];
@@ -52,11 +53,28 @@ function validate(spec) {
   const SETS = lazy('./sets').SETS || {};
   const money = lazy('./money');
   const castKeys = [...Object.keys(CAST), ...Object.keys(spec.cast || {})];
-  if (!Array.isArray(spec.shots) || !spec.shots.length) return { errors: ['shots.json has no "shots" list'], warnings };
-
+  // cast first, so a header-only storyboard (director's pass) can be validated on its own
+  const { FEATURES } = require('./characters');
+  const P = require('./palette');
+  const castKeysAllowed = ['base', 'outfit', 'hair', 'hat', 'moustache', 'beard', ...FEATURES.colors, ...FEATURES.flags, ...FEATURES.numbers];
   Object.entries(spec.cast || {}).forEach(([k, c]) => {
-    if (c && c.base && !CAST[c.base]) errors.push(`cast "${k}": unknown base "${c.base}"${suggest(c.base, Object.keys(CAST))}`);
+    if (!c || typeof c !== 'object') { errors.push(`cast "${k}": must be an object like { "base": "ceo", "glasses": true }`); return; }
+    if (c.base && !CAST[c.base]) errors.push(`cast "${k}": unknown base "${c.base}"${suggest(c.base, Object.keys(CAST))}`);
+    if (!c.base && !c.outfit) warnings.push(`cast "${k}": no "base" or "outfit", so it will look like the default banker`);
+    Object.entries(c).forEach(([f, v]) => {
+      if (!castKeysAllowed.includes(f)) { errors.push(`cast "${k}": unknown feature "${f}"${suggest(f, castKeysAllowed)}`); return; }
+      if (['hair', 'outfit', 'hat', 'moustache', 'beard'].includes(f) && v != null && !FEATURES[f].includes(v)) {
+        errors.push(`cast "${k}": ${f} "${v}" doesn't exist${suggest(v, FEATURES[f])} (${FEATURES[f].join(', ') || 'none yet'})`);
+      }
+      if (FEATURES.colors.includes(f) && typeof v === 'string' && !/^#[0-9a-f]{3,8}$/i.test(v) && !P[v]) {
+        errors.push(`cast "${k}": ${f} "${v}" is not a hex colour or a palette name${suggest(v, Object.keys(P))}`);
+      }
+    });
   });
+  if (!Array.isArray(spec.shots) || !spec.shots.length) {
+    if (spec.cast && !errors.length) warnings.push('header OK: no shots yet');
+    return { errors: errors.length ? errors : (spec.cast ? [] : ['no shots yet (and no cast)']), warnings };
+  }
 
   spec.shots.forEach((shot, i) => {
     const at = `shot ${i + 1}${shot.template ? ` (${shot.template})` : ''}`;
@@ -134,6 +152,18 @@ function validate(spec) {
       else if (st.text.length > 26) warnings.push(`${at} stickers[${k}]: "${st.text}" is long (${st.text.length} chars). Stickers read best under ~22`);
     });
     if ((shot.stickers || []).length > 3) warnings.push(`${at}: ${shot.stickers.length} stickers. More than 3 crowds the frame`);
+    if (tpl === 'compose') {
+      const PROPS = (lazy('./propkit').PROPS) || {};
+      const bgs = ['board', 'paper', 'wall', 'desk', 'night', ...Object.keys(SETS)];
+      if (shot.bg && !bgs.includes(shot.bg)) errors.push(`${at}: unknown bg "${shot.bg}"${suggest(shot.bg, bgs)}`);
+      (shot.items || []).forEach((it, k) => {
+        if (it.prop && !PROPS[it.prop]) errors.push(`${at} items[${k}]: unknown prop "${it.prop}"${suggest(it.prop, Object.keys(PROPS))}`);
+        if (it.who && !castKeys.includes(it.who)) errors.push(`${at} items[${k}]: unknown character "${it.who}"${suggest(it.who, castKeys)}`);
+        if (!it.prop && !it.who && !it.text && !it.sticker) errors.push(`${at} items[${k}]: needs one of prop, who, text or sticker`);
+        ['mood', 'mood2'].forEach((f) => { if (it[f] && !MOODS[it[f]]) errors.push(`${at} items[${k}]: unknown ${f} "${it[f]}"${suggest(it[f], Object.keys(MOODS))}`); });
+        ['pose', 'pose2'].forEach((f) => { if (it[f] && !POSES[it[f]]) errors.push(`${at} items[${k}]: unknown ${f} "${it[f]}"${suggest(it[f], Object.keys(POSES))}`); });
+      });
+    }
     if (tpl === 'fuse' && (shot.stops || []).length > 5) errors.push(`${at}: the fuse fits at most 5 stops`);
     if (tpl === 'chart' && (!Array.isArray(shot.data) || shot.data.length < 2)) errors.push(`${at}: chart needs at least 2 data points`);
     if (tpl === 'money') (shot.items || []).forEach((it, k) => { if (!money[it.kind]) errors.push(`${at} items[${k}]: unknown money kind "${it.kind}"${suggest(it.kind, Object.keys(money))}`); });

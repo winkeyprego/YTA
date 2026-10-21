@@ -4,6 +4,7 @@
     python3 tools/transcribe.py episodes/<ep>/vo.mp3                 # writes episodes/<ep>/words.json
     python3 tools/transcribe.py vo.mp3 --out words.json --model small.en
     python3 tools/transcribe.py vo.mp3 --to 120                       # only the first 120 seconds
+    python3 tools/transcribe.py vo.mp3 --names "Aschenbrenner, Tyler Cowen, FTX"   # spell names right
 
 Needs: pip install faster-whisper (the model downloads once from Hugging Face).
 Models: tiny.en (fastest), base.en (default, good for clean narration), small.en (more accurate).
@@ -21,6 +22,7 @@ def main():
     ap.add_argument("--out")
     ap.add_argument("--model", default="base.en")
     ap.add_argument("--to", type=float, help="only transcribe up to this many seconds")
+    ap.add_argument("--names", help='comma-separated names/terms in the script, e.g. "Aschenbrenner, Tyler Cowen, FTX" (improves spelling)')
     a = ap.parse_args()
 
     from faster_whisper import WhisperModel
@@ -35,7 +37,8 @@ def main():
     src = np.frombuffer(pcm, np.int16).astype(np.float32) / 32768.0
 
     model = WhisperModel(a.model, device="cpu", compute_type="int8")
-    segments, info = model.transcribe(src, word_timestamps=True, vad_filter=True, language="en")
+    prompt = f"Names and terms: {a.names}." if a.names else None
+    segments, info = model.transcribe(src, word_timestamps=True, vad_filter=True, language="en", initial_prompt=prompt)
     words = []
     for seg in segments:
         for w in seg.words:
