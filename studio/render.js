@@ -184,6 +184,7 @@ async function main() {
   if (o.plan != null) {
     tl.forEach((s, i) => console.log(`${String(i + 1).padStart(3)}  ${s.start.toFixed(2).padStart(7)}s  ${s.dur.toFixed(2).padStart(5)}s  ${s.name}`));
     console.log(`total ${total.toFixed(1)}s`);
+    if (ep.variety) console.log(`\n${ep.variety().join('\n')}`);
     if (ep.lint) {
       const w = ep.lint();
       console.log(w.length ? `\nwarnings (${w.length}):\n- ${w.join('\n- ')}` : '\nchecks: OK');

@@ -217,6 +217,17 @@ function talk(shot, ctx) {
     return byWho(shot.focus || shot.speaker) || chars[0];
   };
   const closeFrame = shot.frame === 'close' || shot.frame === 'reverse';
+  // "wide" (default) frames the cast at a medium size like the references; "full" shows the whole set.
+  // Establishing sets (exteriors, the night tower) default to full.
+  const ESTABLISHING = ['towerNight', 'bankExterior'];
+  const fitCast = () => {
+    if (shot.frame === 'full' || (!shot.frame && ESTABLISHING.includes(shot.set)) || !chars.length) return { zoom: 1, fx: 640, fy: 360 };
+    const boxes = chars.map((ch) => { const [x, y, s] = spotOf(ch); return { x0: x - 110 * s, x1: x + 110 * s, y0: y - 330 * s, y1: y + 10 }; });
+    const x0 = Math.min(...boxes.map((b) => b.x0)), x1 = Math.max(...boxes.map((b) => b.x1));
+    const y0 = Math.min(...boxes.map((b) => b.y0)), y1 = Math.max(...boxes.map((b) => b.y1));
+    const zoom = Math.max(1, Math.min(1.55, (720 * 0.78) / (y1 - y0), (1280 * 0.8) / (x1 - x0)));
+    return { zoom, fx: (x0 + x1) / 2, fy: Math.min(y0 + (y1 - y0) * 0.42, 420) };
+  };
 
   return (t) => {
     const focusChar = focusOf(t);
@@ -229,8 +240,9 @@ function talk(shot, ctx) {
       const sx = hx < 640 ? 470 : 810; // head off-centre; dialogue and stickers get the other side
       c = { zoom, fx: hx, fy: hy, x: sx - hx, y: 330 - hy };
     } else {
-      const zoom = cameraZoom(shot.camera || style.camera, t, ctx, shot.zoom || 1);
-      const [fx, fy] = shot.focusXY || (focusChar ? [spotOf(focusChar)[0], spotOf(focusChar)[1] - 200] : [640, 360]);
+      const fit = fitCast();
+      const zoom = cameraZoom(shot.camera || style.camera, t, ctx, shot.zoom || fit.zoom);
+      const [fx, fy] = shot.focusXY || (shot.zoom || fit.zoom === 1 ? (focusChar ? [spotOf(focusChar)[0], spotOf(focusChar)[1] - 200] : [640, 360]) : [fit.fx, fit.fy]);
       c = { zoom, fx, fy };
     }
     const people = chars.map((ch) => {
@@ -589,6 +601,22 @@ function kitTemplate(which) {
     if (!KIT_KINDS[which].includes(shot.kind) || typeof fn !== 'function') throw new Error(`${which}: unknown kind "${shot.kind}" (${KIT_KINDS[which].join(', ')})`);
     const spec = resolveCues(Object.fromEntries(Object.entries(shot).filter(([k]) => !KIT_SKIP.includes(k) && k !== 'panels' && k !== 'frames')), ctx);
     if (spec.at == null) spec.at = 0.3;
+    // Never hold a blank frame waiting for a cue word:
+    if (shot.kind === 'countUp') {
+      // big sums read as "$45 BILLION" / "$225 MILLION"; the count starts at the cut and lands on the spoken word
+      if (typeof spec.value === 'number' && !shot.suffix && Math.abs(spec.value) >= 1e6) {
+        const big = Math.abs(spec.value) >= 1e9 ? [1e9, ' BILLION'] : [1e6, ' MILLION'];
+        spec.value = Math.round((spec.value / big[0]) * 10) / 10;
+        spec.suffix = big[1];
+      }
+      const land = spec.at;
+      spec.at = Math.min(land, 0.25);
+      if (shot.dur == null && land > 0.8) spec.dur = Math.max(1.2, land - spec.at + 0.3);
+    }
+    if (shot.kind === 'browserArticle' && spec.at > 0.6) {
+      if (spec.highlightAt == null) spec.highlightAt = spec.at;
+      spec.at = 0.3;
+    }
     const panels = shot.panels ? subShots(resolveCues(shot.panels, ctx), ctx) : null;
     // montage frames without an `at` are spread evenly over the shot (no long hold on the last frame)
     const evenFrames = (shot.frames || []).map((f, i, all) => (f.at == null && f.on == null ? { ...f, at: (i * ctx.dur) / all.length } : f));

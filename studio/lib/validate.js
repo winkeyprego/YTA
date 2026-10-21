@@ -68,7 +68,8 @@ function validate(spec) {
     } else {
       const kinds = require('./templates').KIT_KINDS[tpl];
       if (!shot.kind) errors.push(`${at}: missing "kind" (${kinds.join(', ')})`);
-      else if (!kinds.includes(shot.kind)) errors.push(`${at}: unknown kind "${shot.kind}"${suggest(shot.kind, kinds)} (${kinds.join(', ')})`);
+      else if (shot.kind === 'tickerChip') warnings.push(`${at}: tickerChip is a small overlay; on its own it leaves an almost empty frame. Use stockChart, or a montage of fuller frames`);
+      if (shot.kind && !kinds.includes(shot.kind)) errors.push(`${at}: unknown kind "${shot.kind}"${suggest(shot.kind, kinds)} (${kinds.join(', ')})`);
     }
     (REQUIRED[tpl] || []).forEach((k) => { if (shot[k] == null) errors.push(`${at}: missing "${k}"`); });
 
@@ -115,7 +116,7 @@ function validate(spec) {
       if (shot.speaker && !(shot.chars || []).some((c) => c.who === shot.speaker)) errors.push(`${at}: speaker "${shot.speaker}" is not in chars`);
       if (shot.line && !shot.speaker) errors.push(`${at}: "line" needs a "speaker"`);
       if (shot.line && shot.line.length > 90) warnings.push(`${at}: bubble line is ${shot.line.length} characters. Keep bubbles under ~90`);
-      if (shot.frame && !['wide', 'close', 'reverse'].includes(shot.frame)) errors.push(`${at}: frame must be "wide", "close" or "reverse"`);
+      if (shot.frame && !['wide', 'full', 'close', 'reverse'].includes(shot.frame)) errors.push(`${at}: frame must be "wide", "full", "close" or "reverse"`);
       (shot.lines || []).forEach((l, k) => {
         if (!l.text) errors.push(`${at} lines[${k}]: missing "text"`);
         if (!(shot.chars || []).some((c) => c.who === (l.who || shot.speaker))) errors.push(`${at} lines[${k}]: speaker "${l.who}" is not in chars`);

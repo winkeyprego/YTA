@@ -25,8 +25,10 @@ function loadEpisode(dir) {
     const sb = require('./storyboard').compileStoryboard(dir);
     spec = sb.spec;
     where = (msg) => msg.replace(/^shots? (\d+)(-(\d+))?/, (m, a, _, b) => `${m} [${sb.lineOf[a - 1]}${b ? ` to ${sb.lineOf[b - 1]}` : ''}]`);
-    if (sb.missing.length) boardWarnings.push(`beats not used by any shot: ${sb.missing.join(', ')}`);
-    if (sb.doubled.length) boardWarnings.push(`beats used twice: ${sb.doubled.join(', ')}`);
+    const ranges = (xs) => xs.reduce((acc, x) => { const l = acc[acc.length - 1]; if (l && x === l[1] + 1) l[1] = x; else acc.push([x, x]); return acc; }, [])
+      .map(([a, b]) => (a === b ? `${a}` : `${a}-${b}`)).join(', ');
+    if (sb.missing.length) boardWarnings.push(`beats not used by any shot: ${ranges(sb.missing)}`);
+    if (sb.doubled.length) boardWarnings.push(`beats used twice: ${ranges(sb.doubled)}`);
     fs.writeFileSync(path.join(dir, 'shots.compiled.json'), JSON.stringify(spec, null, 1));
   } else {
     try {
@@ -56,6 +58,7 @@ function loadEpisode(dir) {
   });
   return {
     lint: () => [...check.warnings, ...lint(spec, plan, style).map(where)],
+    variety: () => variety(spec, plan),
     style: style.name,
     fps: spec.fps || 24,
     audio: spec.audio,
@@ -88,7 +91,7 @@ function lint(spec, plan, style = { pacing: { maxShot: 8, maxBuild: 13, maxGap: 
     if (shot.tag) times.push(0.1);
     if (shot.plate) times.push(0.5);
     if (shot.line) times.push(0.3);
-    (shot.lines || []).forEach((l) => times.push(l.on ? cue(l.on, null) : null));
+    if (shot.template === 'talk' && Array.isArray(shot.lines)) shot.lines.forEach((l) => times.push(l.on ? cue(l.on, null) : null));
     const ev = times.filter((x) => x != null && x <= win.dur).sort((a, b) => a - b);
     ev.push(win.dur);
     let gap = 0, gapAt = 0;
@@ -96,11 +99,47 @@ function lint(spec, plan, style = { pacing: { maxShot: 8, maxBuild: 13, maxGap: 
     const label = `shot ${i + 1} (${shot.template}, ${win.dur.toFixed(1)}s)`;
     if (!MOVING.has(shot.template) && !['card', 'chapter', 'title'].includes(shot.template) && gap > maxGap) warn.push(`${label}: nothing happens for ${gap.toFixed(1)}s from ${gapAt.toFixed(1)}s. Add a sticker/pose/stat on a word, or split the shot`);
     if (!MOVING.has(shot.template) && !['card', 'chapter'].includes(shot.template) && !shot.fill && win.dur > maxShot) warn.push(`${label}: longer than ${maxShot}s. Split it (wide -> close, or a second template)`);
-    if (shot.template === 'title' && win.dur > 5) warn.push(`${label}: title cards should be short. Move most of this narration to the next shot`);
+    if (shot.template === 'title' && win.dur > 5) warn.push(shot.fill
+      ? `${label}: a ${win.dur.toFixed(0)}s pause held on one title card. Use a montage (diagram:montage) or split the pause into an establishing shot + title`
+      : `${label}: title cards should be short. Move most of this narration to the next shot`);
     if (MOVING.has(shot.template) && win.dur > maxBuild + 1) warn.push(`${label}: very long even for a built-up shot (max ~${maxBuild}s)`);
     if (shot.template === 'card' && win.dur > 4) warn.push(`${label}: black cards hold 0.5-2.5s after typing. Keep the narration on them short`);
   });
   return warn;
 }
 
-module.exports = { loadEpisode, lint };
+// Episode-wide variety report (printed by --plan): what the whole video is made of.
+function variety(spec, plan) {
+  const n = spec.shots.length;
+  const total = plan.total || 1;
+  const kinds = {}, sets = {};
+  let cards = 0, host = 0, run = 1, worstRun = 1, worstAt = 0;
+  spec.shots.forEach((s, i) => {
+    const key = s.template + (s.kind ? `:${s.kind}` : '');
+    kinds[key] = (kinds[key] || 0) + 1;
+    if (s.set) sets[s.set] = (sets[s.set] || 0) + 1;
+    if (s.template === 'card') cards++;
+    if ((s.chars || []).some((c) => c.who === 'host')) host++;
+    const prev = spec.shots[i - 1];
+    const same = prev && (prev.template + (prev.kind || '') + (prev.set || '')) === (s.template + (s.kind || '') + (s.set || ''));
+    run = same ? run + 1 : 1;
+    if (run > worstRun) { worstRun = run; worstAt = i + 2 - run; }
+  });
+  const pct = (x) => `${Math.round((100 * x) / n)}%`;
+  const top = (o) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => `${k} ${pct(v)}`).join(', ');
+  const notes = [];
+  const talkShare = (kinds.talk || 0) / n;
+  if (talkShare > 0.55) notes.push(`talk shots are ${pct(kinds.talk)}: mix in more data/diagram/screen/document beats`);
+  const topSet = Object.entries(sets).sort((a, b) => b[1] - a[1])[0];
+  if (topSet && topSet[1] / n > 0.25) notes.push(`set "${topSet[0]}" is ${pct(topSet[1])} of shots: vary locations`);
+  if (worstRun >= 4) notes.push(`${worstRun} near-identical shots in a row from shot ${worstAt}`);
+  return [
+    `shots ${n}, ${(total / 60).toFixed(1)} min, avg ${(total / n).toFixed(1)}s/shot`,
+    `mix: ${top(kinds)}`,
+    `sets: ${top(sets) || '-'}`,
+    `black cards: ${cards} (1 per ${cards ? Math.round(n / cards) : '-'} shots), host shots: ${host}`,
+    ...notes.map((x) => `NOTE ${x}`),
+  ];
+}
+
+module.exports = { loadEpisode, lint, variety };
