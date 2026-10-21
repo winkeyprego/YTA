@@ -38,7 +38,7 @@ function loadEpisode(dir) {
     if (!tpl) throw new Error(`shot ${i + 1}: unknown template "${shot.template}". Known: ${Object.keys(TEMPLATES).join(', ')}`);
     const ctx = { dur: win.dur, cue: cueFinder(win.words), cast: spec.cast || {}, index: i, style };
     const render = tpl(shot, ctx);
-    return { name: shot.name || `${i + 1}-${shot.template}`, dur: win.dur, render: (t) => render(t), frameOpts: { vignette: style.vignette } };
+    return { name: shot.id || `${i + 1}-${shot.template}${shot.kind ? `-${shot.kind}` : ''}`, dur: win.dur, render: (t) => render(t), frameOpts: { vignette: style.vignette } };
   });
   return {
     lint: () => [...check.warnings, ...lint(spec, plan, style)],

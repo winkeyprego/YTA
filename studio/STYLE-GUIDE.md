@@ -1,5 +1,9 @@
 # Style guide: how things look
 
+Two style packs share this engine (`lib/styles.js`, chosen by `"style"` in shots.json):
+- **war** (default): everything below, measured from Two Sides of War / War Unspun.
+- **finance**: see "Finance pack" at the end, measured from Crayon Capital (`docs/CRAYON-ANALYSIS.md`).
+
 The look of the reference channels, adapted for a money channel. Measured numbers come from
 `docs/REFERENCE-ANALYSIS.md`. Every rule here is already built into `lib/`, so follow the lib and you follow this guide.
 
@@ -91,3 +95,21 @@ The references each carry a whole episode with one metaphor: exits on a road, a 
 Ours is **the fuse**: a lit fuse burning along a timeline toward the disaster. Each stop is a moment someone could have
 cut it. A card lands at each stop and the "CHANCES TO CUT IT" tally counts up. Use it as the spine of
 every "Why X Was COMPLETELY Avoidable" episode, and return to it between chapters.
+
+## Finance pack
+Same characters, sets, line weights and palette; brighter and lighter-handed:
+- **Look:** neutral grey, wood and teal backgrounds; saturation ~0.22; **light vignette** (corners ~0.9 of centre); spotlight pools for drama; no grain.
+- **Text:**
+  - Dialogue: a **floating handwritten line** (Caveat, `script`) above the speaker, with a tick; bubbles only for emphasis.
+  - Place and time: a **handwritten corner caption** ("New York, 2008"), low on busy sets.
+  - Pivot sentences: **black cards** with typed white script.
+  - Chapter cards: black, with a handwritten title.
+- **People:** a **handwritten name + curved arrow** on someone's first appearance. Conversations cut shot/reverse-shot.
+- **Graphics:**
+  - UI mockups (`lib/screens.js`): social post, phone notification, article, app page, live news, terminal, chat
+  - Data (`lib/datakit.js`): stock chart with timeframe tabs, ticker chip, ranking board, winners vs losers, calendar flip, cheque, count-up
+  - Diagrams (`lib/diagrams.js`): equation, loop, funnel, org tree, portraits, steps, split panels, flash montage
+  - **No real logos**: lettered emblems plus names.
+- **The host** (`CAST.host`, `lib/host.js`): brown skin, dark side-parted bob, navy blazer, white open collar, gold necklace and studs.
+  A detailed "hero" face. An occasional recurring character, not a presenter.
+- **Structure:** cold open (montage or big number → headline → hook card), title, chapters every 4–5 min, quote card, subscribe.

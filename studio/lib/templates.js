@@ -528,19 +528,44 @@ function resolveCues(obj, ctx) {
   return out;
 }
 const KIT_FILES = { screen: './screens', data: './datakit', diagram: './diagrams' };
-const KIT_SKIP = ['template', 'kind', 'vo', 'dur', 'minDur', 'tail', 'name', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
+// The kinds each kit offers (other exports are helpers).
+const KIT_KINDS = {
+  screen: ['socialPost', 'phoneNotification', 'browserArticle', 'appPage', 'newsLive', 'terminal', 'chatThread'],
+  data: ['stockChart', 'rankingBoard', 'winnersLosers', 'calendarFlip', 'cheque', 'countUp', 'tickerChip'],
+  diagram: ['equation', 'loop', 'funnel', 'orgTree', 'portraits', 'steps', 'split', 'montage'],
+};
+const KIT_SKIP = ['template', 'kind', 'vo', 'dur', 'minDur', 'tail', 'id', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
+
+// split panels / montage frames may carry a whole sub-shot: { shot: { template: 'talk', ... }, at }.
+// The sub-shot renders with its own clock starting at the panel's `at`.
+function subShots(list, ctx) {
+  return (list || []).map((p) => {
+    if (!p.shot) return { ...p, render: null };
+    const tpl = TEMPLATES[p.shot.template];
+    if (!tpl) throw new Error(`sub-shot: unknown template "${p.shot.template}"`);
+    const render = tpl(p.shot, { ...ctx, dur: ctx.dur });
+    return { ...p, render };
+  });
+}
+
 function kitTemplate(which) {
   return (shot, ctx) => {
     const kit = lazy(KIT_FILES[which]);
     if (!kit) throw new Error(`${KIT_FILES[which]}.js missing`);
     const fn = kit[shot.kind];
-    if (typeof fn !== 'function') throw new Error(`${which}: unknown kind "${shot.kind}"`);
-    const spec = resolveCues(Object.fromEntries(Object.entries(shot).filter(([k]) => !KIT_SKIP.includes(k))), ctx);
+    if (!KIT_KINDS[which].includes(shot.kind) || typeof fn !== 'function') throw new Error(`${which}: unknown kind "${shot.kind}" (${KIT_KINDS[which].join(', ')})`);
+    const spec = resolveCues(Object.fromEntries(Object.entries(shot).filter(([k]) => !KIT_SKIP.includes(k) && k !== 'panels' && k !== 'frames')), ctx);
     if (spec.at == null) spec.at = 0.3;
-    const builds = which === 'diagram' && typeof kit.buildCamera === 'function' && !shot.camera;
+    const panels = shot.panels ? subShots(resolveCues(shot.panels, ctx), ctx) : null;
+    // montage frames without an `at` are spread evenly over the shot (no long hold on the last frame)
+    const evenFrames = (shot.frames || []).map((f, i, all) => (f.at == null && f.on == null ? { ...f, at: (i * ctx.dur) / all.length } : f));
+    const frames = shot.frames ? subShots(resolveCues(evenFrames, ctx), ctx) : null;
+    const focus = which === 'diagram' && typeof fn.focus === 'function' ? fn.focus(spec) : null;
+    const builds = focus && typeof kit.buildCamera === 'function' && !shot.camera;
     return (t) => {
-      const world = fn(spec, t);
-      const c = builds ? kit.buildCamera(t, ctx.dur, spec) : { zoom: cameraZoom(shot.camera || 'locked', t, ctx) };
+      const fill = (list) => list && list.map((p) => ({ ...p, svg: p.render ? p.render(Math.max(0, t - (p.at || 0))) : p.svg || '' }));
+      const world = fn({ ...spec, ...(panels ? { panels: fill(panels) } : {}), ...(frames ? { frames: fill(frames) } : {}) }, t);
+      const c = builds ? { zoom: kit.buildCamera(t, ctx.dur, focus).zoom, ...kit.buildCamera(t, ctx.dur, focus) } : { zoom: cameraZoom(shot.camera || 'locked', t, ctx) };
       return cam(world, c) + overlays(shot, t, ctx, { side: 'left' });
     };
   };
@@ -549,4 +574,4 @@ function kitTemplate(which) {
 const TEMPLATES = { talk, versus, document: documentShot, chart, stat, fuse, map: mapShot, money, title, chapter, card,
   screen: kitTemplate('screen'), data: kitTemplate('data'), diagram: kitTemplate('diagram') };
 
-module.exports = { TEMPLATES, MOODS, POSES, wrap };
+module.exports = { TEMPLATES, MOODS, POSES, KIT_KINDS, wrap };

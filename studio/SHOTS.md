@@ -15,6 +15,7 @@ With it, every shot lasts exactly as long as its line, and anything with `"on": 
 ```json
 {
   "title": "Why the 2008 Crash Was COMPLETELY Avoidable",
+  "style": "war",
   "fps": 24,
   "audio": "vo.mp3",
   "cast": { "fuld": { "base": "ceo", "hair": "bald", "glasses": false } },
@@ -22,11 +23,17 @@ With it, every shot lasts exactly as long as its line, and anything with `"on": 
 }
 ```
 
+**`style`**: `"war"` (default; history look: taped tags, speech bubbles, strong vignette) or `"finance"`
+(Crayon-informed look: handwritten captions and floating dialogue, light vignette, black narration cards, script chapter cards).
+Start a finance episode from `episodes/finance-starter`, and a war episode from `episodes/template-starter`.
+**Which visual for which sentence: see `RECIPES.md`.**
+
 ## Fields every shot can use
 
 | Field | Meaning |
 |---|---|
-| `template` | **required**: `talk`, `versus`, `document`, `chart`, `stat`, `fuse`, `map`, `money`, `title`, `chapter` |
+| `template` | **required**: `talk`, `versus`, `document`, `chart`, `stat`, `fuse`, `map`, `money`, `title`, `chapter`, `card`, `screen`, `data`, `diagram` |
+| `id` | optional label for the shot (shown by `--plan`) |
 | `vo` | the narration spoken during this shot, copied exactly from the script. The shot's length comes from it. Shots without `vo` (chapter cards) last `dur` seconds, and the narration pauses for them |
 | `dur` | force a length in seconds (normally leave it out) |
 | `tag` | date tag top-left: `"NEW YORK · SEPT 2008"`. Use one on every new place or time |
@@ -59,7 +66,11 @@ With it, every shot lasts exactly as long as its line, and anything with `"on": 
   `mood2` + `mood2On` (change of expression), `pose2` + `pose2On` (second gesture), `holding` (`phone`, `paper`, `money`, `mic`,
   `briefcase`, `sign`), `carry: "box"`, `walk: "in"|"out"`.
 - `frame`: `wide` (default) or `close` (head and shoulders of `focus` or `speaker`).
-- `speaker` + `line`: a speech bubble that types out while the mouth moves. `speaking: true` gives mouth movement only (narrated or reported speech).
+- `speaker` + `line`: the speaker says a line while the mouth moves. In finance it's a floating handwritten line; in war, a speech bubble. Add `"bubble": true` to force a bubble.
+- `lines: [{ "who", "text", "on" }]`: a conversation. Each line replaces the previous one. With `"frame": "reverse"`, the camera cuts close to whoever is speaking (shot / reverse shot).
+- `speaking: true`: mouth movement only, for narrated or reported speech.
+- `light: true`: a spotlight pool on the focus character (drama, a lone figure).
+- `nameArrow: { "who", "text", "on" }`: a handwritten name with a curved arrow, for someone's first appearance.
 - **Moods:** `neutral`, `confident`, `smug`, `happy`, `excited`, `worried`, `sad`, `angry`, `shocked`, `sleepy`.
 - **Poses:** `idle`, `pointLeft`, `pointRight`, `pointUp`, `present`, `presentLeft`, `shrug`, `armsUp`, `hips`, `think`, `wave`.
 
@@ -112,11 +123,33 @@ See the top of `lib/maps.js` for every option.
 ```
 `"$t"` is replaced with the shot time, and `"$at"` with the item's cue time.
 
+### `card`: black narration card (pivot sentences)
+```json
+{ "template": "card", "vo": "But nobody asked the obvious question.", "text": "But nobody asked the obvious question." }
+{ "template": "card", "vo": "...", "lines": [{ "text": "First line", "on": "first" }, { "text": "Then this", "on": "then" }] }
+```
+White handwritten script on black, typed. A later line replaces the earlier one (add `"stack": true` to keep both). Finance: about 1 in every 10–12 shots.
+
+### `screen` / `data` / `diagram`: the finance kits
+A `kind` picks the graphic; the remaining fields belong to that kind. Any `"on": "word"` (or `xxxOn`) inside is timed to the narration.
+The full field lists are at the top of `lib/screens.js`, `lib/datakit.js` and `lib/diagrams.js`. Ready-to-copy examples are in RECIPES.md.
+
+| template | kinds |
+|---|---|
+| `screen` | `socialPost`, `phoneNotification`, `browserArticle`, `appPage`, `newsLive`, `terminal`, `chatThread` |
+| `data` | `stockChart`, `rankingBoard`, `winnersLosers`, `calendarFlip`, `cheque`, `countUp`, `tickerChip` |
+| `diagram` | `equation`, `loop`, `funnel`, `orgTree`, `portraits`, `steps` (`style: "book"` or `"notes"`), `split`, `montage` |
+
+`split` panels and `montage` frames can hold a whole shot: `{ "label": "2007", "on": "2007", "shot": { "template": "talk", ... } }`.
+Montage frames without `at`/`on` spread evenly over the shot. Diagram builds hold tight on the first element and pull back at the end automatically.
+No real logos: companies are lettered emblems (`"emblem": "G"`) plus their names.
+
 ### `title` and `chapter`
 ```json
 { "template": "title", "vo": "So why didn't anyone?", "text": "WHY THE [2008 CRASH] WAS COMPLETELY AVOIDABLE", "set": "towerNight" }
 { "template": "chapter", "label": "Part One", "sub": "Cheap Money", "dur": 2 }
 ```
+Chapter cards follow the style: serif small caps (war) or a handwritten title (finance).
 Words in `[brackets]` turn gold. Keep the `vo` on a title short (under 5s).
 
 ## Cast (`who`)
@@ -124,6 +157,9 @@ Words in `[brackets]` turn gold. Keep the `vo` on a title short (under 5s).
 - Money and business: `banker`, `oldBanker`, `robberBaron`, `ceo`, `founder`, `founderTurtle`, `investor`, `trader`, `analyst`
 - Officials: `regulator`, `regulatorWoman`, `politician`, `judge`, `reporter`
 - Ordinary people: `homeowner`, `homeownerWoman`, `worker`, `child`, `elderly`, `elderlyWoman`, `crowdA`, `crowdB`, `crowdC`
+
+**The finance host:** `host` (detailed face, from the owner's illustration) or `hostHouse` (the same person in house style).
+She is an occasional character, not a presenter on every shot. See RECIPES.md, "The host".
 
 **Named people** go in the episode's `cast`, built from a base plus one or two signature features:
 ```json
@@ -135,7 +171,8 @@ Words in `[brackets]` turn gold. Keep the `vo` on a title short (under 5s).
 - Colours: `suit`, `shirt`, `tie`, `hairColor`
 
 ## Pacing rules (checked by `node render.js episodes/<ep> --plan`)
-- Shots about 3.5s (8–11 words of narration). Split anything over 8s, except `fuse`, `chart` and `map`, which can run to ~13s.
+- War: shots about 3.5s, with anything over 8s split. Finance: story shots about 3s, split over 7s.
+  Built shots (`fuse`, `chart`, `map`, `data`, `diagram`, `screen`) can run to ~13s (war) or ~15s (finance) if elements keep landing.
 - Something must happen every 1–1.5s: a sticker, a pose, an expression change, a bubble, a stat.
   The checker warns when nothing happens for more than 4s.
 - Cut wide → close on the same set to keep the pace up.

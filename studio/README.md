@@ -38,6 +38,7 @@ studio/
   HANDOFF.md           project memory: status, decisions, next steps (read first)
   PLAYBOOK.md          script -> finished video, step by step
   SHOTS.md             shots.json reference: every template and field
+  RECIPES.md           which visual for which kind of sentence (the visual vocabulary)
   CLAUDE.md            rules for any Claude session continuing this work
   STYLE-GUIDE.md       the visual bible: characters, colour, type, layout, graphics
   MOTION.md            camera, pacing, entrances, character acting, timing numbers
@@ -57,7 +58,14 @@ studio/
                        home, hearing hall, courtroom, factory, news studio)
     money.js           cash stacks, bags, coins, gold, vault, piggy bank, tickers, bar charts
     maps.js            real maps (Natural Earth): highlights, hatching, cities, arrows, legend
-    templates.js       shot templates: talk, versus, document, chart, stat, fuse, map, money, title, chapter
+    templates.js       shot templates: talk, versus, document, chart, stat, fuse, map, money, title, chapter,
+                       card, screen, data, diagram
+    styles.js          style packs: war (default) and finance
+    host.js            the finance host (detailed face) + house-style twin
+    screens.js         finance UI mockups (social post, phone alert, article, app page, live news, terminal, chat)
+    datakit.js         finance data (stock chart w/ tabs, ticker, ranking, winners/losers, calendar, cheque, count-up)
+    diagrams.js        finance diagrams (equation, loop, funnel, org tree, portraits, steps, split, montage)
+    validate.js        shots.json checker (typos, unknown names, cue words, labels, repetition)
     timing.js          lines up narration with word timings; estimates timing without a voice
     episode.js         builds an episode from shots.json; pacing checker
     stage.html         the page Chromium renders into (loads fonts)
@@ -65,7 +73,8 @@ studio/
   tools/transcribe.py  voiceover -> word timings (faster-whisper)
   fonts/               Lilita One, Patrick Hand, Special Elite, Cormorant SC (open licences included)
   episodes/
-    template-starter/  shots.json-only example of every template: copy it for a new video
+    finance-starter/   finance style: GameStop cold open using every finance kit (copy for finance videos)
+    template-starter/  war/history style: 2008 cold open using the core templates (copy for war videos)
     sample-2008-cold-open/  hand-coded example (episode.js), the original style test
     test-sets/, test-maps/  library showcases
   renders/             output (git-ignored; regenerate with render.js)

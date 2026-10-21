@@ -1,0 +1,391 @@
+{
+ "title": "Why the GameStop Squeeze Was COMPLETELY Avoidable (finance starter: copy this folder for a new finance episode)",
+ "style": "finance",
+ "fps": 24,
+ "cast": {
+  "fundManager": {
+   "base": "ceo",
+   "hair": "slick",
+   "hairColor": "#3a2d25"
+  },
+  "redditor": {
+   "base": "founder"
+  }
+ },
+ "shots": [
+  {
+   "template": "diagram",
+   "kind": "montage",
+   "vo": "In January 2021, a dying video game store became the most famous stock on Earth.",
+   "frames": [
+    {
+     "shot": {
+      "template": "screen",
+      "kind": "socialPost",
+      "name": "Moon Boy",
+      "handle": "moonboy",
+      "avatar": "MB",
+      "text": "GME TO THE MOON",
+      "likes": 48000,
+      "at": 0
+     }
+    },
+    {
+     "shot": {
+      "template": "screen",
+      "kind": "phoneNotification",
+      "app": "Brokerage",
+      "title": "GME +92% today",
+      "body": "Your watchlist is moving.",
+      "at": 0
+     }
+    },
+    {
+     "shot": {
+      "template": "screen",
+      "kind": "newsLive",
+      "channel": "MN",
+      "headline": "RETAIL TRADERS STORM WALL STREET",
+      "ticker": "GME HALTED \u00b7 VOLATILITY \u00b7 SHORT SQUEEZE",
+      "anchor": "reporter",
+      "at": 0
+     }
+    },
+    {
+     "shot": {
+      "template": "data",
+      "kind": "countUp",
+      "value": 483,
+      "prefix": "$",
+      "caption": "PER SHARE",
+      "at": 0,
+      "dur": 0.3
+     }
+    },
+    {
+     "shot": {
+      "template": "screen",
+      "kind": "chatThread",
+      "title": "Family",
+      "messages": [
+       {
+        "from": "right",
+        "text": "I just bought GameStop",
+        "at": 0
+       }
+      ]
+     }
+    },
+    {
+     "shot": {
+      "template": "screen",
+      "kind": "browserArticle",
+      "site": "marketdaily.com",
+      "headline": "Hedge fund losses mount as GameStop soars",
+      "sub": "Short sellers scramble",
+      "lines": 4,
+      "at": 0
+     }
+    }
+   ],
+   "flash": 0.3,
+   "tag": "January 2021"
+  },
+  {
+   "template": "data",
+   "kind": "stockChart",
+   "vo": "Its shares went from around seventeen dollars to over four hundred and eighty in less than a month.",
+   "name": "GameStop",
+   "ticker": "GME",
+   "tabs": [
+    "1D",
+    "1W",
+    "1M",
+    "6M",
+    "YTD",
+    "1Y"
+   ],
+   "activeTab": "1M",
+   "data": [
+    [
+     1,
+     17
+    ],
+    [
+     5,
+     19
+    ],
+    [
+     8,
+     31
+    ],
+    [
+     12,
+     39
+    ],
+    [
+     15,
+     65
+    ],
+    [
+     19,
+     148
+    ],
+    [
+     21,
+     347
+    ],
+    [
+     23,
+     380
+    ],
+    [
+     24,
+     483
+    ]
+   ],
+   "xLabels": [
+    [
+     1,
+     "JAN 1"
+    ],
+    [
+     24,
+     "JAN 28"
+    ]
+   ],
+   "price": 483,
+   "change": "+2,700%",
+   "on": "shares",
+   "drawDur": 2.6,
+   "source": "Intraday high, 28 Jan 2021 (pre-split)"
+  },
+  {
+   "template": "card",
+   "vo": "And a hedge fund was on the wrong side of it.",
+   "text": "And a hedge fund was on the wrong side of it."
+  },
+  {
+   "template": "talk",
+   "set": "tradingFloor",
+   "vo": "In New York, a fund called Melvin Capital had bet that the stock would fall.",
+   "tag": "New York, January 2021",
+   "chars": [
+    {
+     "who": "fundManager",
+     "spot": "center",
+     "mood": "smug",
+     "pose": "pointLeft",
+     "poseOn": "bet"
+    }
+   ],
+   "nameArrow": {
+    "who": "fundManager",
+    "text": "Melvin Capital",
+    "on": "melvin"
+   }
+  },
+  {
+   "template": "diagram",
+   "kind": "equation",
+   "vo": "That's called shorting. You borrow a share, sell it today, and hope to buy it back cheaper later.",
+   "title": "How shorting works",
+   "terms": [
+    {
+     "label": "BORROW A SHARE",
+     "icon": "bank",
+     "on": "borrow"
+    },
+    {
+     "label": "SELL IT TODAY",
+     "icon": "cash",
+     "on": "sell"
+    }
+   ],
+   "ops": [
+    "+",
+    "="
+   ],
+   "result": {
+    "label": "BUY BACK CHEAPER",
+    "value": "PROFIT",
+    "on": "cheaper"
+   }
+  },
+  {
+   "template": "talk",
+   "set": "home",
+   "light": true,
+   "vo": "But on a forum called WallStreetBets, millions of small investors noticed something.",
+   "chars": [
+    {
+     "who": "redditor",
+     "spot": "center",
+     "mood": "excited",
+     "holding": "phone",
+     "pose": "present",
+     "poseOn": "noticed"
+    }
+   ],
+   "speaker": "redditor",
+   "line": "Wait. They're ALL short?",
+   "lineOn": "noticed",
+   "stickers": [
+    {
+     "text": "WALLSTREETBETS",
+     "on": "wallstreetbets",
+     "x": 980,
+     "y": 420,
+     "color": "ink"
+    }
+   ]
+  },
+  {
+   "template": "screen",
+   "kind": "socialPost",
+   "vo": "More than a hundred percent of the available shares had been sold short.",
+   "name": "Deep Value Dan",
+   "handle": "deepvaluedan",
+   "avatar": "DV",
+   "text": "GME short interest is over 100% of the float. You know what that means.",
+   "likes": 91000,
+   "reposts": 22000,
+   "on": "more",
+   "likesOn": "short",
+   "source": "Illustrative post, not a real account"
+  },
+  {
+   "template": "diagram",
+   "kind": "loop",
+   "vo": "If the price rises, short sellers have to buy back, and that pushes the price even higher.",
+   "title": "The squeeze",
+   "center": "repeat",
+   "nodes": [
+    {
+     "label": "PRICE RISES",
+     "icon": "chartUp",
+     "on": "rises"
+    },
+    {
+     "label": "SHORTS BUY BACK",
+     "icon": "cash",
+     "on": "buy"
+    },
+    {
+     "label": "EVEN HIGHER",
+     "icon": "rocket",
+     "on": "higher"
+    }
+   ]
+  },
+  {
+   "template": "talk",
+   "set": "office",
+   "frame": "reverse",
+   "vo": "How bad is it? We're down more than half.",
+   "chars": [
+    {
+     "who": "ceo",
+     "spot": "left",
+     "mood": "worried"
+    },
+    {
+     "who": "fundManager",
+     "spot": "right",
+     "mood": "sad"
+    }
+   ],
+   "lines": [
+    {
+     "who": "ceo",
+     "text": "How bad is it?",
+     "on": "how"
+    },
+    {
+     "who": "fundManager",
+     "text": "We're down more than half.",
+     "on": "we're"
+    }
+   ]
+  },
+  {
+   "template": "data",
+   "kind": "countUp",
+   "vo": "By the end of January, Melvin had lost more than half of its money.",
+   "value": 53,
+   "prefix": "\u2212",
+   "suffix": "%",
+   "caption": "MELVIN CAPITAL \u00b7 JANUARY 2021",
+   "dur": 1.2,
+   "at": 0.3
+  },
+  {
+   "template": "data",
+   "kind": "cheque",
+   "vo": "Two bigger firms stepped in with two point seven five billion dollars to keep it alive.",
+   "payer": "CITADEL & POINT72",
+   "payee": "Melvin Capital",
+   "amount": "$2,750,000,000",
+   "memo": "rescue",
+   "on": "stepped",
+   "signOn": "alive"
+  },
+  {
+   "template": "screen",
+   "kind": "phoneNotification",
+   "vo": "Then, on January twenty-eighth, the most popular trading app stopped people from buying.",
+   "app": "Brokerage",
+   "title": "Buying restricted",
+   "body": "GME: you can only close positions.",
+   "urgent": true,
+   "on": "stopped",
+   "tag": "28 January 2021"
+  },
+  {
+   "template": "talk",
+   "set": "studioNews",
+   "vo": "So who actually won? Let's break it down.",
+   "chars": [
+    {
+     "who": "host",
+     "spot": "center",
+     "mood": "confident",
+     "pose": "present",
+     "poseOn": "break"
+    }
+   ],
+   "speaker": "host",
+   "speaking": true,
+   "frame": "close"
+  },
+  {
+   "template": "data",
+   "kind": "winnersLosers",
+   "vo": "Some early buyers made fortunes. Many who bought near the top lost most of it.",
+   "left": {
+    "title": "EARLY BUYERS",
+    "items": [
+     "Bought under $40"
+    ],
+    "trend": "up",
+    "caption": "FORTUNES"
+   },
+   "right": {
+    "title": "LATE BUYERS",
+    "items": [
+     "Bought near $400"
+    ],
+    "trend": "down",
+    "caption": "WIPED OUT"
+   },
+   "on": "early",
+   "verdictOn": "lost"
+  },
+  {
+   "template": "chapter",
+   "label": "The Squeeze",
+   "sub": "part one",
+   "dur": 2
+  }
+ ]
+}

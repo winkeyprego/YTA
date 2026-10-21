@@ -151,8 +151,8 @@ function socialPost(spec, t) {
   const y = Math.max(40, Math.round((720 - h) / 2) - 10);
   const name = spec.name || 'Someone';
   const handle = spec.handle || `@${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-  const verified = spec.verified ? `<circle cx="${n(x + 140 + measure(name, 32, 'display'))}" cy="${y + 64}" r="13" fill="${C.blueCheck}" ${ink(2)}/>
-    <path d="M${n(x + 133 + measure(name, 32, 'display'))} ${y + 64} l5 5 l9 -10" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>` : '';
+  const verified = spec.verified ? `<circle cx="${n(x + 152 + measure(name, 32, 'display'))}" cy="${y + 64}" r="13" fill="${C.blueCheck}" ${ink(2)}/>
+    <path d="M${n(x + 145 + measure(name, 32, 'display'))} ${y + 64} l5 5 l9 -10" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>` : '';
   const liked = t >= likesAt;
   const icon = (ix, kind, val, active) => {
     const col = active ? (kind === 'heart' ? P.red : P.green) : C.muted;

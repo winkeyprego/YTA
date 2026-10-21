@@ -25,7 +25,7 @@
 // Camera: each build export has a `.focus(spec)` giving the first element's centre. In the template:
 //   const c = D.buildCamera(t, dur, D.equation.focus(spec));       // { zoom, fx, fy }
 //   camera(D.equation(spec, t), c)
-// It holds a gentle 1.14x on the first element, then eases back to 0.92x (centred) over the last 2.6s.
+// It holds a gentle 1.14x on the first element, then eases back to 0.95x (centred) over the last 2.6s.
 // Backgrounds are drawn oversized, so zooming out below 1 never shows an empty edge.
 
 const P = require('./palette');
@@ -130,7 +130,7 @@ function drawLine(x1, y1, x2, y2, t, at, { dur = 0.4, color = P.ink, width = 4, 
 }
 
 // ---------- camera helper ----------
-function buildCamera(t, dur, focus = [640, 360], { tight = 1.14, end = 0.92, back = 2.6 } = {}) {
+function buildCamera(t, dur, focus = [640, 360], { tight = 1.14, end = 0.95, back = 2.6 } = {}) {
   const startBack = Math.max(0.4, dur - back);
   const k = M.ease.inOut(M.prog(t, startBack, Math.max(0.5, dur - startBack - 0.15)));
   return { zoom: M.lerp(tight, end, k), fx: M.lerp(focus[0], 640, k), fy: M.lerp(focus[1], 380, k) };
@@ -140,10 +140,10 @@ function buildCamera(t, dur, focus = [640, 360], { tight = 1.14, end = 0.92, bac
 function eqLayout(spec) {
   const terms = spec.terms || [];
   const count = terms.length + (spec.result ? 1 : 0);
-  const cw = count > 3 ? 210 : 240, ch = 240, gap = 84;
+  const cw = count > 3 ? 220 : 270, ch = count > 3 ? 250 : 290, gap = count > 3 ? 74 : 90;
   const total = count * cw + (count - 1) * gap;
   const x0 = 640 - total / 2;
-  return { cw, ch, gap, x0, y: 250, count };
+  return { cw, ch, gap, x0, y: count > 3 ? 250 : 220, count };
 }
 function equation(spec, t) {
   const L = eqLayout(spec);
@@ -158,9 +158,10 @@ function equation(spec, t) {
     const res = it.result;
     const card = shadowCard(x, L.y, L.cw, L.ch, { fill: res ? '#fbf3d9' : C.card, stroke: res ? P.goldDark : P.ink, sw: res ? 5 : 3 })
       + (res && it.value != null
-        ? text(countUp(it.value, t, at + 0.15, it), cx, L.y + 118, { size: String(it.value).length > 6 ? 50 : 64, font: 'display', anchor: 'middle', fill: it.color || P.ink })
-        : badge(it, cx, L.y + 92, 58))
-      + text(String(it.label || '').toUpperCase(), cx, L.y + L.ch - 34, { size: 28, font: 'hand', anchor: 'middle' });
+        ? text(countUp(it.value, t, at + 0.15, it), cx, L.y + L.ch / 2 + (String(it.value).toUpperCase() === String(it.label || '').toUpperCase() ? 22 : 0), { size: String(it.value).length > 6 ? 50 : 64, font: 'display', anchor: 'middle', fill: it.color || P.ink })
+        : badge(it, cx, L.y + L.ch * 0.4, 66))
+      + (res && String(it.value ?? '').toUpperCase() === String(it.label || '').toUpperCase() ? ''
+        : text(String(it.label || '').toUpperCase(), cx, L.y + L.ch - 34, { size: 30, font: 'hand', anchor: 'middle' }));
     out += popIn(cx, L.y + L.ch / 2, t, at, card, i % 2 ? 1.5 : -1.5);
     if (i > 0) {
       const op = ops[i - 1] || '+';
@@ -369,8 +370,13 @@ function split(spec, t) {
     const x = vertical ? fx : M.lerp(W, fx, i === 0 && at <= 0 ? 1 : e);
     const y = vertical ? M.lerp(H, fy, i === 0 && at <= 0 ? 1 : e) : fy;
     const content = p.svg || `<rect width="${W}" height="${H}" fill="${p.bg || C.tealLight}"/>`;
-    out += `<svg x="${n(x)}" y="${n(y)}" width="${n(pw)}" height="${n(ph)}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" overflow="hidden">
-        <rect width="${W}" height="${H}" fill="${p.bg || C.board}"/>${content}</svg>
+    // cover-fit the full-frame content into the panel, centred, clipped (explicit maths; nested <svg> slicing
+    // is not reliable in Chromium screenshots)
+    const sc = Math.max(pw / W, ph / H);
+    const tx = x + (pw - W * sc) / 2, ty = y + (ph - H * sc) / 2;
+    out += `<defs><clipPath id="splitClip${i}"><rect x="${n(x)}" y="${n(y)}" width="${n(pw)}" height="${n(ph)}"/></clipPath></defs>
+      <g clip-path="url(#splitClip${i})"><g transform="translate(${n(tx)} ${n(ty)}) scale(${n(sc)})">
+        <rect width="${W}" height="${H}" fill="${p.bg || C.board}"/>${content}</g></g>
       <rect x="${n(x)}" y="${n(y)}" width="${n(pw)}" height="${n(ph)}" fill="none" stroke="${P.ink}" stroke-width="8"/>`;
     if (p.label) {
       const lx = x + pw / 2, ly = y + ph - 52;

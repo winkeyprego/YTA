@@ -4,7 +4,7 @@ This file is the memory of the project. Any Claude session (cloud or desktop, an
 this work should read it first, then `CLAUDE.md`, then do the "Next steps" in order.
 **Update this file at the end of every working session.**
 
-_Last updated: 2026-10-21 (cloud session): the script-to-video toolkit is ready to use._
+_Last updated: 2026-10-21 (cloud session): two style packs (war + finance), recipes, validator and skills are ready._
 
 ## The goal (in the owner's words, summarised)
 Build a faceless YouTube channel about **money, companies, scams and crashes** (the topics of
@@ -26,6 +26,7 @@ The owner is not a developer. Explain things step by step in plain words, and sh
 - **Render output (`renders/`) is not committed.** Regenerate it with `node render.js …`.
 - **Two style packs planned:** `war` (history) and `finance` (informed by Crayon Capital: see `docs/CRAYON-ANALYSIS.md`
   once written). Same engine and cast; the pack changes look, dialogue style, pacing and devices.
+- **Finance pack decisions** come from `docs/CRAYON-ANALYSIS.md` ("Rules for our FINANCE pack"). No real logos: lettered emblems instead.
 - **The finance host** (`CAST.host`, `lib/host.js`, from the owner's illustration) is an occasional recurring character:
   she appears sometimes, as a shot or inside an explanation. She is NOT a presenter on every shot; most scenes use the
   regular cast, as in the history style. The default build is the detailed "hero" head (`host`); a house-style twin is
@@ -36,30 +37,32 @@ The owner is not a developer. Explain things step by step in plain words, and sh
   uploaded appears to be Crayon Capital's own narration (same title, same 12:41 length). It may be used **only as
   private test material** for VO timing, never in a published video, and it is not in the repo.
 
-## Status: ready to make videos
+## Status: ready to make videos in two styles
 | Piece | State |
 |---|---|
-| Style library: characters (~25 archetypes), 11 sets, props, UI, money graphics, maps, fuse device | done |
-| Shot templates: talk, versus, document, chart, stat, fuse, map, money, title, chapter | done (`lib/templates.js`, `SHOTS.md`) |
-| `shots.json` episodes + pacing checker (`--plan`) | done |
-| Voiceover → word timings (`tools/transcribe.py`, faster-whisper) | done; tested on 90s of audio, about 16s to process |
-| Shots and cues timed to spoken words; silence inserted for cards | done |
-| Renderer (MP4 / still / contact sheet, parallel) | done, ~2s render per 1s of video on 4 CPUs (maps ~3×) |
-| Reference measurements + style and motion guides | done |
-| Starter episode (`episodes/template-starter`, the 2008 cold open, all templates) | done |
+| **Style packs:** `war` (Two Sides look) and `finance` (Crayon-informed look) | done (`lib/styles.js`) |
+| Core templates: talk, versus, document, chart, stat, fuse, map, money, title, chapter, card | done |
+| Finance kits: screens (7), data (7), diagrams (8) | done (`lib/screens.js`, `lib/datakit.js`, `lib/diagrams.js`) |
+| Finance dialogue: floating lines, conversations cutting to the speaker, spotlight, name + arrow, black cards | done |
+| **Visual vocabulary:** beat type → recipes (`RECIPES.md`) | done |
+| Finance host (`CAST.host`, from the owner's illustration) | done; occasional cast member |
+| Library: ~27 cast, 11 sets, money graphics, real maps | done |
+| Validator (typos, unknown names, cue words, labels, repetition) + pacing checker | done; `--plan` |
+| Voiceover → word timings → shot timing | done (`tools/transcribe.py`) |
+| **Skills:** `make-video`, `add-to-library` (`.claude/skills/` at the repo root) | done |
+| Starters: `finance-starter` (GameStop), `template-starter` (2008, war look) | done |
 | Sound kit (music bed, sparse SFX, loudness) | **not yet**: add in an editor for now |
 
 ## How to make a video now
-Follow `PLAYBOOK.md`. In short: script → `vo.mp3` → `python3 tools/transcribe.py episodes/<ep>/vo.mp3`
-→ write `episodes/<ep>/shots.json` (copy `template-starter`) → `node render.js episodes/<ep> --plan` (fix warnings)
-→ `--sheet 1 --scale 1` (look) → `node render.js episodes/<ep>`.
+Use the **make-video** skill. In short: style → script → (voice → `words.json`) → `shots.json` from `RECIPES.md`
+→ `node render.js episodes/<ep> --plan` (fix everything) → `--sheet 1 --scale 1` (look) → `node render.js episodes/<ep>`.
 
 ## Next steps (improvements, not blockers)
-1. **Sound kit:** a music bed about 17 dB under the voice, sparse pop/whoosh SFX, a −14 LUFS master (in render.js).
-2. **More templates:** calendar flip, timeline, balance scale, ledger, newspaper headline, phone/chat screen.
-3. **More sets** as episodes need them: lab or hospital, casino, White House or parliament exterior, ship or port.
-4. **Historical map borders** (pre-1990) if an episode needs them.
-5. **Move derived colours** from `lib/sets.js` (const `T`) and `lib/maps.js` (const `C`) into `palette.js`.
+1. **Sound kit:** a music bed ~17 dB under the voice (war) and a light bed (finance), sparse pops/whooshes, a −14 LUFS master.
+2. **A first real episode** with the owner's voice, then tune anything that looks off at full length.
+3. **More metaphor props** (RECIPES O) as scripts need them: house of cards, rocket, gold-rush tools, sinking ship.
+4. **More sets:** a lab or hospital, casino, government building exterior, port.
+5. Move derived colours (`T` in sets.js, `C` in maps.js and diagrams.js, `SCREEN_COLORS`, `DATAKIT_COLORS`) into palette.js.
 
 ## Open questions for the owner
 - Which voice for real episodes? (see step 6)
@@ -95,6 +98,10 @@ Package managers (npm, PyPI) are allowed by default.
 - Crayon Capital: topic and direction reference (top videos: Wolf of Wall Street, Great Depression, 2008 crisis).
 
 ## Session log
+- **2026-10-21 (cloud), latest:** the owner wants a finance style next to the war style, their host character, more variety for
+  any kind of script, and no rebuilding on the main account. Measured two Crayon Capital videos (`docs/CRAYON-ANALYSIS.md`).
+  Built: style packs, finance dialogue and cards, the host, screens, data and diagram kits, RECIPES.md (beat → visual),
+  the validator, the make-video and add-to-library skills, and finance-starter.
 - **2026-10-21 (cloud), later:** the owner clarified that the deliverable is the TOOLKIT, so any script can become a video
   on their main account. Built: the shot templates, shots.json, voice timing (faster-whisper), the pacing checker, 11 sets,
   ~25 cast, money graphics, a real-map kit, SHOTS.md and PLAYBOOK.md, and a starter episode. Tested end-to-end on 90s of the

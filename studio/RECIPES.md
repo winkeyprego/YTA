@@ -1,0 +1,129 @@
+# Recipes: the visual vocabulary
+
+**Use this to turn any script into a shot list.** Every sentence in a script is one of the beat types below.
+For each beat, pick one of its recipes, fill in the words, and move on. Rotate recipes so the same visual
+never repeats three times in a row (the validator warns about that).
+
+How to use it:
+1. Split the script into beats of 8–11 words (finance story beats ~3s; war ~3.5s).
+2. Label each beat with a type (A–P below).
+3. Pick a recipe for that type. Prefer one not used in the last two beats.
+4. Put at least one cue on a spoken word in every beat: a sticker, pose, expression, stat, or line.
+5. Check with `node render.js episodes/<ep> --plan`, then look at the `--sheet`.
+
+The recipes are written as `shots.json` entries; `"vo"` is always the beat's narration. Fields are explained in `SHOTS.md`.
+Recipes marked **F** fit the finance style best, **W** the war style; unmarked ones fit both.
+
+---
+
+## A. Introduce a person
+1. **Name + arrow on a set (F):** the person on a fitting set, with a handwritten name and an arrow on their first appearance.
+   `{ "template": "talk", "set": "office", "chars": [{ "who": "ceo", "spot": "center", "mood": "confident", "pose": "present", "poseOn": "<word>" }], "nameArrow": { "who": "ceo", "text": "Dick Fuld", "on": "<name>" } }`
+2. **Name plate (W):** the same, with `"plate": { "name": "...", "role": "...", "on": "<name>" }`.
+3. **Portrait row:** when several people are introduced together.
+   `{ "template": "diagram", "kind": "portraits", "title": "The people behind it", "people": [{ "who": "founder", "label": "FOUNDER", "sub": "ex-Google", "on": "<word>" }] }`
+4. **Close-up with an expression change** on a telling word: `"frame": "close"`, `"mood": "neutral"`, `"mood2": "smug"`, `"mood2On": "<word>"`.
+
+## B. Introduce a company, product or app
+1. **Exterior with a sign:** `{ "template": "talk", "set": "bankExterior", "setOpts": { "name": "LEHMAN BROTHERS" }, "tag": "New York, 1850", "chars": [...] }`. For an office tower, use `towerNight` with `setOpts.name`.
+2. **App page (F):** `{ "template": "screen", "kind": "appPage", "name": "ChatBot", "emblem": "C", "rating": 4.7, "rank": "#1 FREE", "downloads": "100M+", "on": "<word>" }`
+3. **Browser or press article:** `{ "template": "screen", "kind": "browserArticle", "site": "...", "headline": "...", "highlight": "<phrase>", "highlightOn": "<word>" }`
+4. **Social post announcing it:** `{ "template": "screen", "kind": "socialPost", "name": "...", "handle": "...", "text": "...", "likes": 48000, "likesOn": "<word>" }`
+
+Never draw real logos. Companies are lettered emblems (`emblem: "G"`) plus their name in our fonts.
+
+## C. Big number or sum of money
+1. **Count-up (F):** `{ "template": "data", "kind": "countUp", "value": 613000000000, "prefix": "$", "caption": "IN DEBT" }`.
+   War style: `{ "template": "stat", "value": 613, "prefix": "$", "suffix": "B", "caption": "IN DEBT", "on": "<word>" }`
+2. **Cheque (F):** for money changing hands: `{ "template": "data", "kind": "cheque", "payer": "...", "payee": "...", "amount": "$2,750,000,000", "signOn": "<word>" }`
+3. **Cash pile with a person:** `{ "template": "money", "items": [{ "kind": "cashStack", "args": [640, 600, 300, "$t", "$at"], "on": "<word>" }], "stickers": [...] }`
+4. **Stamp on a document:** for debts, fines and settlements (see J).
+
+## D. Comparison or two sides
+1. **Winners vs losers cards (F):** `{ "template": "data", "kind": "winnersLosers", "left": { "title": "...", "items": [...], "trend": "up", "caption": "..." }, "right": { ..., "trend": "down" }, "verdictOn": "<word>" }`
+2. **Versus split:** `{ "template": "versus", "left": { "who": "banker", "label": "WALL STREET", "mood": "smug" }, "right": { "who": "homeowner", "label": "MAIN STREET", "mood": "sad" } }`
+3. **Slide-in split panels (F):** `{ "template": "diagram", "kind": "split", "panels": [{ "label": "2007", "shot": { ...any shot... }, "on": "<word>" }, { "label": "2008", "shot": {...}, "on": "<word>" }] }`
+4. **Ranking board:** for "the biggest", "top five", league tables: `{ "template": "data", "kind": "rankingBoard", "title": "...", "rows": [{ "label": "...", "value": 10, "emblem": "A" }], "unit": "$B" }`
+
+## E. Cause and effect, or a chain of events
+1. **The fuse (house device):** a timeline of missed chances. `{ "template": "fuse", "stops": [{ "year": "2003", "title": "...", "lines": ["..."], "on": "2003" }], "end": { "label": "...", "on": "<word>" } }`
+2. **Equation (F):** `{ "template": "diagram", "kind": "equation", "title": "...", "terms": [{ "label": "CHEAP MONEY", "icon": "cash", "on": "cheap" }, { "label": "HYPE", "icon": "rocket", "on": "hype" }], "ops": ["+", "="], "result": { "label": "BUBBLE", "on": "bubble" } }`
+3. **Feedback loop or flywheel (F):** `{ "template": "diagram", "kind": "loop", "title": "...", "center": "repeat", "nodes": [{ "label": "...", "icon": "chartUp", "on": "<word>" }] }`
+4. **Map with arrows (W):** for anything that spreads across places: `{ "template": "map", "view": { "fit": ["United States of America", "United Kingdom"], "arrows": [{ "from": [-74, 40.7], "to": [-0.1, 51.5], "on": "<word>", "label": "PANIC" }] } }`
+
+## F. A date or time jump
+1. **Calendar flip (F):** `{ "template": "data", "kind": "calendarFlip", "from": "MARCH 2007", "to": "SEPT 2008" }`
+2. **Establishing exterior with a caption:** any `talk` on an exterior set with `"tag": "New York, 2008"`. Finance shows it as a handwritten corner caption; war as a taped tag.
+3. **Black card (F):** for "Two years later…": `{ "template": "card", "text": "Two years later." }`
+
+## G. Dialogue or a quote
+1. **Floating line (F):** `{ "template": "talk", "set": "...", "chars": [...], "speaker": "ceo", "line": "Is it bad?", "lineOn": "is" }`. Finance draws a handwritten floating line; war draws a bubble.
+2. **Conversation, cutting to whoever speaks:** `"frame": "reverse"`, `"lines": [{ "who": "ceo", "text": "Is it bad?", "on": "is" }, { "who": "trader", "text": "Worse.", "on": "worse" }]`
+3. **Speech bubble for emphasis:** add `"bubble": true`.
+4. **Group chat or text message (F):** `{ "template": "screen", "kind": "chatThread", "title": "Family", "messages": [{ "from": "right", "text": "...", "on": "<word>" }] }`
+
+Quotes from real people must be real and sourced in SCRIPT.md. Otherwise paraphrase, and make it clear on screen.
+
+## H. How something works
+1. **Equation** (E2), **loop** (E3), or **funnel (F):** `{ "template": "diagram", "kind": "funnel", "title": "...", "stages": [{ "label": "RAISED", "value": 7300000000, "prefix": "$", "on": "<word>" }] }`
+2. **Org tree (F):** for who owns, funds or controls whom: `{ "template": "diagram", "kind": "orgTree", "root": { "label": "...", "who": "ceo" }, "children": [{ "label": "...", "emblem": "BT" }] }`
+3. **Steps notebook (F):** `{ "template": "diagram", "kind": "steps", "style": "book", "title": "The playbook", "steps": [{ "label": "Buy the picks and shovels", "on": "<word>" }] }`
+4. **Document with highlight (W):** see J.
+
+## I. A list of things
+1. **Sticky notes (F):** `{ "template": "diagram", "kind": "steps", "style": "notes", ... }`
+2. **Index cards on the fuse board:** a `fuse` with up to 5 stops.
+3. **Ranking board** (D4).
+
+## J. A document or record
+1. **Document with highlighter and stamp:** `{ "template": "document", "lines": ["...", "..."], "highlight": "<text>", "highlightOn": "<word>", "stamp": { "text": "...", "on": "<word>" }, "pencil": "<text>", "pencilOn": "<word>" }`
+2. **Browser article with a highlighted phrase (F)** (B3).
+3. **Terminal or code (F),** for tech stories: `{ "template": "screen", "kind": "terminal", "lines": [{ "text": "> run model", "on": "<word>" }] }`
+
+## K. Data moving over time
+1. **Stock chart with timeframe tabs (F):** `{ "template": "data", "kind": "stockChart", "name": "...", "ticker": "...", "data": [[1, 17], [24, 483]], "activeTab": "1M", "price": 483, "change": "+2,700%", "on": "<word>" }`
+2. **Rise and fall line chart:** `{ "template": "chart", "data": [...], "turn": 2006.5, "turnLabel": "PEAK", "fallOn": "<word>", "change": { "text": "−27%", "on": "<word>" } }`
+3. **Count-up** (C1), or a **ticker chip** inside a montage.
+
+## L. A reaction or consequence
+1. **Close-up with a mood change:** `"frame": "close"`, `"mood": "neutral"`, `"mood2": "shocked"`, `"mood2On": "<word>"`
+2. **Spotlight on a lone figure (F):** `"light": true` on a `talk` shot (a sad CEO alone, someone staring at a phone).
+3. **Phone notification (F):** bad news arriving: `{ "template": "screen", "kind": "phoneNotification", "app": "Brokerage", "title": "Margin call", "body": "...", "urgent": true, "on": "<word>" }`
+4. **Walk out with a box:** `"chars": [{ "who": "banker", "carry": "box", "walk": "out", "mood": "sad" }]` on `towerNight` or `streetDay`.
+
+## M. A pivot sentence, punchline or question to the viewer
+1. **Black card (F):** about 1 in every 10–12 shots: `{ "template": "card", "text": "But nobody was asking the obvious question." }`
+2. **Title card (W):** for the episode title only.
+3. **Host aside:** the host on a set saying the line (see "The host" below).
+
+## N. News, hype or public reaction
+1. **TV news, live (F):** `{ "template": "screen", "kind": "newsLive", "channel": "MN", "headline": "...", "ticker": "...", "anchor": "reporter" }`
+2. **Social post (F)** (B4), with likes counting up on a word.
+3. **News studio set:** `{ "template": "talk", "set": "studioNews", "setOpts": { "headline": "..." }, "chars": [{ "who": "reporter", "spot": "center" }], "speaking": true }`
+4. **Hearing room:** officials grilling someone: `set: "hall"`.
+
+## O. Metaphor or analogy (about once every 1–2 minutes)
+Build it from labelled props on a set. For example:
+- "Picks and shovels": a `worker` on `factory`, with stickers PICKS and SHOVELS.
+- "A house of cards": stacked index cards.
+- "The music stopped": a crowd on `hall`.
+
+When a metaphor needs a prop that doesn't exist yet, add the prop to `lib/props.js` (see PLAYBOOK, "When something is missing").
+
+## P. Cold open, chapters, ending
+- **Cold open (F):** a flash montage, 6–10 frames (`{ "template": "diagram", "kind": "montage", "frames": [{ "shot": {...} }, ...] }`), then a headline or document, then the hook line on a black card.
+- **Cold open (W):** a date tag on one exact moment, the myth, then the device.
+- **Chapters:** `{ "template": "chapter", "label": "The Squeeze", "sub": "part one", "dur": 2 }`, every 4–5 minutes, named with a story phrase.
+- **Ending:** a quote card (`card` with the quote and source), then the subscribe line.
+
+---
+
+## The host (finance)
+The host (`"who": "host"`) is an **occasional** recurring character, not a presenter on every shot.
+She appears now and then: as an aside (M3), introducing a breakdown ("Let's break it down"), or as one of the people
+in an explanation (for example, a portrait in a `portraits` row, or a character in a `talk` scene). Most beats use the regular cast.
+
+## Rotation rules
+- Never three beats of the same recipe in a row. Change the set at least every three beats.
+- Finance: a black card about every 10–12 shots, a metaphor every 1–2 minutes, the host at most every ~2 minutes.
+- War: date tags on every place or time change, the fuse as the spine, chapter cards every 4–5 minutes.

@@ -7,7 +7,8 @@ and keep the pipeline runnable with one command.
 
 ## Read before changing anything
 0. `HANDOFF.md`: project memory: goal, decisions, status, next steps. **Update it at the end of every session.**
-   Making a video? Follow `PLAYBOOK.md`, and write the shot list per `SHOTS.md`.
+   Making a video? Use the **make-video** skill (`.claude/skills/make-video/SKILL.md` at the repo root): it walks through
+   `RECIPES.md` (which visual for which sentence), `SHOTS.md` (fields) and the starters. Adding something missing? Use **add-to-library**.
 1. `STYLE-GUIDE.md`: what things look like. Stay on-model.
 2. `MOTION.md`: how things move and how long they stay.
 3. `docs/REFERENCE-ANALYSIS.md`: measured numbers from the reference videos. Prefer these numbers over guesses.

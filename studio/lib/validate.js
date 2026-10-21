@@ -9,7 +9,7 @@ const { MOODS, POSES } = require('./templates');
 
 const lazy = (m) => { try { return require(m); } catch (e) { return {}; } };
 
-const COMMON = ['template', 'vo', 'dur', 'minDur', 'tail', 'name', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
+const COMMON = ['template', 'vo', 'dur', 'minDur', 'tail', 'id', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
 const FIELDS = {
   talk: ['set', 'setOpts', 'chars', 'frame', 'focus', 'focusXY', 'zoom', 'speaker', 'line', 'lineOn', 'lineAt', 'lineWidth', 'cps', 'speaking', 'lines', 'bubble', 'light', 'nameArrow'],
   versus: ['left', 'right', 'title'],
@@ -24,7 +24,6 @@ const FIELDS = {
   card: ['text', 'lines', 'stack', 'size'],
   screen: null, data: null, diagram: null, // kit templates: fields depend on `kind` (see the kit file's header)
 };
-const KITS = { screen: './screens', data: './datakit', diagram: './diagrams' };
 const REQUIRED = {
   talk: ['chars'], versus: ['left', 'right'], document: ['lines'], chart: ['data'], stat: ['value'],
   fuse: ['stops'], map: ['view'], money: ['items'], title: ['text'], chapter: ['label'],
@@ -67,10 +66,9 @@ function validate(spec) {
       const allowed = [...COMMON, ...FIELDS[tpl]];
       Object.keys(shot).forEach((k) => { if (!allowed.includes(k)) warnings.push(`${at}: unknown field "${k}"${suggest(k, allowed)}. It will be ignored`); });
     } else {
-      const kit = lazy(KITS[tpl]);
-      const kinds = Object.keys(kit).filter((k) => typeof kit[k] === 'function' && !/^(buildCamera|_)/.test(k));
+      const kinds = require('./templates').KIT_KINDS[tpl];
       if (!shot.kind) errors.push(`${at}: missing "kind" (${kinds.join(', ')})`);
-      else if (typeof kit[shot.kind] !== 'function') errors.push(`${at}: unknown kind "${shot.kind}"${suggest(shot.kind, kinds)} (${kinds.join(', ')})`);
+      else if (!kinds.includes(shot.kind)) errors.push(`${at}: unknown kind "${shot.kind}"${suggest(shot.kind, kinds)} (${kinds.join(', ')})`);
     }
     (REQUIRED[tpl] || []).forEach((k) => { if (shot[k] == null) errors.push(`${at}: missing "${k}"`); });
 
@@ -143,7 +141,8 @@ function validate(spec) {
   // variety
   for (let i = 3; i < spec.shots.length; i++) {
     const run = spec.shots.slice(i - 3, i + 1);
-    if (run.every((s) => s.template === run[0].template && s.template !== 'talk')) warnings.push(`shots ${i - 2}-${i + 1}: four "${run[0].template}" shots in a row. Vary the visuals`);
+    const key = (s) => s.template + (s.kind ? `:${s.kind}` : '');
+    if (run.every((s) => key(s) === key(run[0]) && s.template !== 'talk')) warnings.push(`shots ${i - 2}-${i + 1}: four "${key(run[0])}" shots in a row. Vary the visuals`);
     if (run.every((s) => s.set && s.set === run[0].set)) warnings.push(`shots ${i - 2}-${i + 1}: four shots on the "${run[0].set}" set in a row. Cut away (chart, document, stat, map)`);
   }
   if (!spec.shots[0].tag) warnings.push('shot 1: the opening shot has no date tag. Cold opens start on a place and time');
