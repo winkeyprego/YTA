@@ -447,7 +447,7 @@ function stat(shot, ctx) {
     const set = sets()[shot.set];
     const bg = set ? set.draw(t, shot.setOpts || {}) + (set.front ? set.front(t, shot.setOpts || {}) : '') : boardBg();
     // the number is on screen at the cut; a count runs from the cut and lands on its cue word
-    const cue = ctx.cue(shot.on, 0.3);
+    const cue = ctx.cue(shot.on, shot.at ?? 0.3);
     const at = Math.min(cue, -0.1);
     let value = shot.value;
     if (typeof value === 'number') {
@@ -630,7 +630,7 @@ const KIT_KINDS = {
   data: ['stockChart', 'rankingBoard', 'winnersLosers', 'calendarFlip', 'cheque', 'countUp', 'tickerChip', 'countDown', 'ledger', 'donut', 'dualChart', 'leverage'],
   diagram: ['equation', 'loop', 'funnel', 'orgTree', 'portraits', 'steps', 'split', 'montage', 'section'],
 };
-const KIT_SKIP = ['template', 'kind', 'vo', 'dur', 'minDur', 'tail', 'id', 'vignette', 'fill', 'stamp', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
+const KIT_SKIP = ['template', 'kind', 'vo', 'dur', 'minDur', 'tail', 'id', 'vignette', 'fill', 'stamp', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note', '_t0'];
 
 // split panels / montage frames may carry a whole sub-shot: { shot: { template: 'talk', ... }, at }.
 // The sub-shot renders with its own clock starting at the panel's `at`.

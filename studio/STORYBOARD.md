@@ -18,7 +18,7 @@ It's about 3× less writing than shots.json, and cue words can't mismatch the na
 | Key | Means | Example |
 |---|---|---|
 | `t` / `k` | template / kind | `"t":"data","k":"countUp"` |
-| `b` | beat(s) this shot covers | `"b":12` or `"b":"12-13"` |
+| `b` | beat(s) this shot covers (`"beat"` works too; use it when a kit has its own `b` field, like `dualChart`) | `"b":12` or `"b":"12-13"` |
 | `who` | character(s): `name:spot:mood:pose`. Mood can change on a word (`smug>shocked@lost`); pose can land on a word (`present@genius`) | `"who":"sbf:center:smug>shocked@lost:present@genius"`, or a list for several people |
 | `say` | the first character says a line (floating line or bubble per preset) | `"say":"We're fine.@fine"` |
 | `talk` | a conversation; use with `"f":"r"` to cut to each speaker | `"talk":["ceo\|How bad?@bad","sbf\|Worse.@worse"]` |

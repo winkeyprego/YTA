@@ -5,12 +5,16 @@
 
 const WPM = 165;
 
-const norm = (w) => String(w).toLowerCase().replace(/[’']/g, '').replace(/[^a-z0-9%$]+/g, '');
+const norm = (w) => String(w).toLowerCase().replace(/[’']/g, '').replace(/[^a-z0-9]+/g, ''); // "$225" ~ "225", "439%" ~ "439"
 const tokens = (text) => String(text || '').split(/\s+/).map(norm).filter(Boolean);
 
 // Spelled-out numbers in narration vs digits in transcripts: treat these as equal.
 const ALIAS = { one: '1', two: '2', three: '3', four: '4', five: '5', six: '6', seven: '7', eight: '8', nine: '9', ten: '10' };
-const same = (a, b) => a === b || ALIAS[a] === b || ALIAS[b] === a || (a.length > 3 && b.length > 3 && (a.startsWith(b) || b.startsWith(a)));
+// Same word, allowing aliases and word endings ("huang" ~ "huangs", "bank" ~ "banking"), but not a different word that
+// merely starts the same ("some" is not "something"), and "90" matches "90%".
+const ENDINGS = /^(s|es|ed|d|ing|er|ers|ly|n|%)$/;
+const stem = (a, b) => a.length > 3 && b.startsWith(a) && ENDINGS.test(b.slice(a.length));
+const same = (a, b) => a === b || ALIAS[a] === b || ALIAS[b] === a || stem(a, b) || stem(b, a) || a.replace(/%$/, '') === b.replace(/%$/, '');
 
 // Greedy forward alignment of every shot's vo tokens against the transcript.
 // Returns per shot: { start, end, words: [{ w, s, e }] } in absolute seconds.
@@ -19,6 +23,9 @@ function alignToWords(shots, words) {
   let p = 0;
   const out = shots.map((shot) => {
     const toks = tokens(shot.vo);
+    // storyboard shots know where their first beat starts: align from there, so a part can be checked before
+    // the parts before it are written
+    if (shot._t0 != null) { const j = W.findIndex((x) => x.s >= shot._t0 - 0.05); if (j >= 0) p = j; }
     const matched = [];
     for (const tk of toks) {
       let hit = -1;

@@ -9,7 +9,7 @@ const { MOODS, POSES } = require('./templates');
 
 const lazy = (m) => { try { return require(m); } catch (e) { return {}; } };
 
-const COMMON = ['template', 'vo', 'dur', 'minDur', 'tail', 'id', 'vignette', 'fill', 'stamp', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
+const COMMON = ['template', 'vo', 'dur', 'minDur', 'tail', 'id', 'vignette', 'fill', 'stamp', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note', '_t0'];
 const FIELDS = {
   talk: ['set', 'setOpts', 'chars', 'frame', 'focus', 'focusXY', 'zoom', 'speaker', 'line', 'lineOn', 'lineAt', 'lineWidth', 'cps', 'speaking', 'lines', 'bubble', 'dialogue', 'light', 'nameArrow'],
   versus: ['left', 'right', 'title'],
