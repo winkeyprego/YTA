@@ -28,6 +28,19 @@
 //                setOpts: skyline 'generic' | 'wtc'; time 'day' | 'dusk' | 'night'; towers (true) and light for 'wtc'.
 //   gulfSkyline  generic desert-coast city at dusk from a palm-lined corniche (no landmarks).
 //
+// WW2 Eastern Front (calm, illustrative; no gore and no Nazi symbols anywhere):
+//   redSquare    Moscow, Nov 1941: red Kremlin wall, Spasskaya-style clock tower (left), St Basil's-like cathedral
+//                (right), cobbled square. setOpts: snow (true) = grey sky, falling snow, snowy ground;
+//                tanks (false) = a column of green tanks with red stars rolling left to right behind the people.
+//   kremlinStudy Stalin's study: wood panelling, wall map with a red front line, curtained windows (snow outside),
+//                long green-cloth table in front(). center (= desk) stands behind the desk at the far end of the table.
+//                setOpts: lamp (true) = green-shaded desk lamp lit.
+//   frontRoad    dirt road running to the horizon across flat land, birches, telegraph poles.
+//                setOpts: season 'summer' | 'winter'; trucks (false) = a column of canvas-covered trucks driving
+//                along the road from the horizon (left) toward the right edge, behind the people.
+//   arcticPort   Arkhangelsk docks in winter: icy water with floes, far shore, two dock cranes (hooks sway), crates,
+//                wooden quay. setOpts: ship (true) = moored cargo ship with funnel smoke; snow (true).
+//
 // Exported helper: manhattan(t, opts) draws the Lower Manhattan silhouette with its base at y = 0 (wrap it in a
 // translate/scale) for other sets or screens.
 
@@ -56,6 +69,16 @@ const T = {
   facade: '#3e3644', facadeDark: '#2f2934', cinemaRoom: '#211c24',
   sand: '#d6bf95', sandDark: '#bfa478', seaDusk: '#7a7f93', gulfBack: '#6c6e83', gulfFront: '#4a4e64', corniche: '#c7b79a',
   glass: '#a9c0c8', glassDark: '#56687a', iron: '#2b2622',
+  // WW2 Eastern Front sets
+  snowSkyTop: '#9ea6a8', snowSky: '#cbcfcb', snow: '#ebe9e1', snowShade: '#d2d3cd', flake: '#f7f5ef',
+  brick: '#924f42', brickDark: '#773e34', brickLight: '#ad6b5c', spire: '#557461', spireDark: '#41594b',
+  cobble: '#8d877d', cobbleDark: '#736d65', tank: '#5d6a48', tankDark: '#454f37', track: '#3e3b36',
+  studyWall: '#b49a74', studyWallDark: '#9b815e', curtain: '#7a3d35', curtainDark: '#5f2f29', runner: '#6e3a33',
+  mapSea: '#a3b6ba', lampShade: '#4f7a55',
+  skyPale: '#cbd8d8', skyPaleTop: '#a9bfc5', field: '#9eaa76', fieldGold: '#bfb07c', dirt: '#a68b6c', dirtDark: '#8b7258',
+  slush: '#9a8e80', birch: '#efebe0', leaf: '#9fb178', leafDark: '#80975f', canvas: '#9b9672', canvasDark: '#827d5d',
+  sea: '#8b9b9d', seaLine: '#a9b6b6', ice: '#e4e8e4', hull: '#3d4045', plank: '#8f7e6a', plankDark: '#716253',
+  crane: '#a9804e', craneDark: '#86643c', smoke: '#b9bcb8', shore: '#5e6a66', shoreDark: '#4b5653',
 };
 
 // ---------- small local helpers (sets.js requires this file, so nothing is imported from it) ----------
@@ -895,5 +918,485 @@ SETS.cinemaInside = {
   spots: { farLeft: [300, 410, 0.58], left: [440, 410, 0.58], center: [640, 410, 0.58], right: [840, 410, 0.58], farRight: [980, 410, 0.58] },
   close: { fx: 640, fy: 300, zoom: 1.8 },
 };
+
+// ====================================================================== WW2 Eastern Front sets
+// Shared bits. Everything that moves is a continuous function of t; wraps happen off-screen.
+
+// Falling snow: flakes fall and sway, wrapping above/below and left/right of the frame.
+function snowfall(t, seed, { count = 90, size = 1, speed = 1, op = 0.9, y0 = -12, y1 = H + 12 } = {}) {
+  const r = rng(seed), span = y1 - y0, wspan = W + 24;
+  let s = '';
+  for (let i = 0; i < count; i++) {
+    const bx = r() * wspan, by = r() * span, v = (24 + r() * 30) * speed, rr = (1.5 + r() * 2.3) * size, ph = r() * 6.28;
+    const y = y0 + ((by + t * v) % span);
+    const x = -12 + ((((bx + t * 7 * speed + Math.sin(t * 0.9 + ph) * 9) % wspan) + wspan) % wspan);
+    s += `<circle cx="${n(x)}" cy="${n(y)}" r="${n(rr)}" fill="${T.flake}" opacity="${op}"/>`;
+  }
+  return s;
+}
+const snowSky = (id) => grad(id, [[0, T.snowSkyTop], [1, T.snowSky]]) + `<rect width="${W}" height="${H}" fill="url(#${id})"/>`;
+// Five-pointed star.
+function star(cx, cy, R, fill = P.red, sw = 2) {
+  const pts = Array.from({ length: 10 }, (_, i) => { const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? R * 0.42 : R; return [cx + rr * Math.cos(a), cy + rr * Math.sin(a)]; });
+  return poly(pts, `fill="${fill}" stroke="${P.ink}" stroke-width="${sw}" stroke-linejoin="round"`);
+}
+// Wheel with turning spokes (local coords).
+const wheel = (x, y, r, deg, fill = T.tankDark, sw = 2.5) => `<g transform="translate(${n(x)} ${n(y)}) rotate(${n(deg % 360)})"><circle r="${r}" fill="${fill}" stroke="${P.ink}" stroke-width="${sw}"/><path d="M${-r * 0.7} 0 H${r * 0.7} M0 ${-r * 0.7} V${r * 0.7}" stroke="${P.ink}" stroke-width="${n(sw * 0.8)}"/><circle r="${n(r * 0.28)}" fill="${P.ink}"/></g>`;
+// Simple boxy tank facing right, base (track bottom) at y = 0, ~250 long at scale 1. `roll` = distance travelled
+// in local units (turns the wheels). A small red star on the turret.
+function tank(x, base, s, roll, { snow = false } = {}) {
+  const deg = (roll / 15) * 57.3;
+  return `<g transform="translate(${n(x)} ${n(base)}) scale(${n(s)})">
+    <rect x="-104" y="-42" width="208" height="42" rx="21" fill="${T.track}" ${o(3.5)}/>
+    ${[-74, -37, 0, 37, 74].map((wx) => wheel(wx, -20, 15, deg)).join('')}
+    <path d="M-110 -40 L-98 -68 H72 L116 -40 Z" fill="${T.tank}" ${o(4)}/>
+    <path d="M-100 -54 H96" stroke="${T.tankDark}" stroke-width="3"/>
+    <path d="M38 -93 H124 V-84 H38 Z" fill="${T.tankDark}" ${o(3)}/><rect x="120" y="-96" width="10" height="15" rx="2" fill="${T.tankDark}" ${o(2.5)}/>
+    <path d="M-56 -68 L-46 -100 Q-8 -110 30 -100 L44 -68 Z" fill="${T.tank}" ${o(4)}/>
+    <ellipse cx="-16" cy="-104" rx="14" ry="5" fill="${T.tankDark}" ${o(2.5)}/>
+    ${star(-6, -83, 10, P.red, 2)}
+    ${snow ? `<path d="M-94 -69 H70 M-44 -103 Q-8 -112 26 -103" stroke="${T.snow}" stroke-width="5" stroke-linecap="round" fill="none"/>` : ''}
+  </g>`;
+}
+// Boxy canvas-covered army truck facing right, base (tyre bottoms) at y = 0, ~260 long at scale 1.
+function truck(x, base, s, t, { snow = false } = {}) {
+  const deg = t * 260;
+  return `<g transform="translate(${n(x)} ${n(base)}) scale(${n(s)})">
+    <rect x="-128" y="-34" width="262" height="12" fill="${P.ink}"/>
+    <path d="M-124 -54 V-104 Q-124 -116 -110 -116 H26 Q40 -116 40 -104 V-54 Z" fill="${T.canvas}" ${o(4)}/>
+    ${[-86, -46, -6].map((rx) => `<path d="M${rx} -114 V-56" stroke="${T.canvasDark}" stroke-width="3"/>`).join('')}
+    <rect x="-128" y="-56" width="172" height="24" fill="${P.olive}" ${o(3.5)}/><path d="M-128 -44 H44" stroke="${P.oliveDark}" stroke-width="2.5"/>
+    <path d="M50 -32 V-92 Q50 -100 58 -100 H96 L106 -66 H134 Q140 -66 140 -58 V-32 Z" fill="${P.olive}" ${o(4)}/>
+    <path d="M60 -90 H92 L100 -66 H60 Z" fill="${T.glass}" ${o(2.5)}/>
+    <path d="M86 -32 Q86 -54 108 -54 Q130 -54 130 -32" fill="${P.oliveDark}" ${o(3)}/>
+    ${wheel(-92, -18, 18, deg, P.charcoal)}${wheel(-54, -18, 18, deg, P.charcoal)}${wheel(108, -18, 18, deg, P.charcoal)}
+    ${snow ? `<path d="M-116 -117 H32" stroke="${T.snow}" stroke-width="6" stroke-linecap="round"/><path d="M62 -101 H94" stroke="${T.snow}" stroke-width="4" stroke-linecap="round"/>` : ''}
+  </g>`;
+}
+// Birch: white trunk with ink bark marks; summer = airy light-green canopy, winter = bare branches. Sways ~1 degree.
+function birch(x, base, s = 1, { winter = false, t = 0, seed = 1, h = 300 } = {}) {
+  const r = rng(seed);
+  const hw = (y) => 9 - 5 * (-y / h);
+  let b = '';
+  const br = [[-0.55, -1], [-0.62, 1], [-0.72, -1], [-0.8, 1], [-0.88, -1], [-0.45, 1]];
+  br.forEach(([f, d], i) => { const y = h * f, L = 40 + r() * 30; b += `<path d="M0 ${n(y)} Q${n(d * L * 0.5)} ${n(y - 14)} ${n(d * L)} ${n(y - 40 - i * 4)}" stroke="${P.ink}" stroke-width="${winter ? 3 : 2.5}" fill="none" stroke-linecap="round"/>`; if (winter) b += `<path d="M${n(d * L * 0.6)} ${n(y - 22)} l${n(d * 14)} -14" stroke="${P.ink}" stroke-width="2" stroke-linecap="round"/>`; });
+  let marks = '';
+  for (let i = 0; i < 10; i++) {
+    const y = -16 - r() * (h - 36), side = r() < 0.5 ? -1 : 1, w = 3 + r() * 5;
+    marks += `<path d="M${n(side * hw(y))} ${n(y)} h${n(-side * w)}" stroke="${P.ink}" stroke-width="3" stroke-linecap="round"/>`;
+  }
+  const trunk = `<path d="M-9 0 Q-7 ${-h * 0.5} -4 ${-h} H4 Q7 ${-h * 0.5} 9 0 Z" fill="${T.birch}" stroke="${P.ink}" stroke-width="3.5" stroke-linejoin="round"/>${marks}`;
+  let canopy = '';
+  if (!winter) {
+    const blobs = [[0, -h - 4, 32], [-30, -h + 30, 30], [30, -h + 38, 30], [-16, -h + 74, 28], [26, -h + 96, 26], [-36, -h + 112, 22], [4, -h + 50, 30], [38, -h + 140, 18], [-30, -h + 150, 18]];
+    canopy = blobs.map(([bx, by, rr]) => `<circle cx="${bx}" cy="${by}" r="${rr}" fill="${P.ink}" stroke="${P.ink}" stroke-width="6"/>`).join('')
+      + blobs.map(([bx, by, rr], i) => `<circle cx="${bx}" cy="${by}" r="${rr}" fill="${i % 3 === 1 ? T.leafDark : T.leaf}"/>`).join('')
+      + blobs.filter((_, i) => i % 2 === 0).map(([bx, by, rr]) => `<path d="M${bx - rr * 0.5} ${by + rr * 0.2} q${n(rr * 0.4)} ${n(rr * 0.35)} ${n(rr * 0.8)} 0" stroke="${T.leafDark}" stroke-width="2.5" fill="none"/>`).join('');
+  }
+  const sway = Math.sin(t * 1.1 + seed) * 1.1;
+  return `<g transform="translate(${n(x)} ${n(base)}) scale(${n(s)}) rotate(${n(sway)})">${b}${trunk}${canopy}</g>`;
+}
+// Smoke puffs rising from (x, y), drifting right: each puff is born transparent and fades out (continuous in t).
+function smoke(x, y, t, { count = 6, period = 6, rise = 150, drift = 120, r0 = 8, r1 = 30, op = 0.6, seed = 0 } = {}) {
+  let s = '';
+  for (let i = 0; i < count; i++) {
+    const k = (((t + seed * 1.7 + (i * period) / count) % period) + period) % period / period;
+    const a = op * Math.min(1, k * 5) * (1 - k);
+    s += `<circle cx="${n(x + k * drift + Math.sin(k * 6 + i) * 5)}" cy="${n(y - k * rise)}" r="${n(r0 + (r1 - r0) * k)}" fill="${T.smoke}" opacity="${n(a)}"/>`;
+  }
+  return s;
+}
+// Onion dome on its base centre (x, y): colour c1 with twisting c2 stripes, small gold spire and cross.
+function onion(x, y, w, h, c1, c2) {
+  const shape = (k, tw = 0) => `M${n(x + k * w * 0.42)} ${y} C${n(x + k * w * 0.78 + tw)} ${n(y - h * 0.34)} ${n(x + k * w * 0.32 + tw * 0.6)} ${n(y - h * 0.62)} ${x} ${n(y - h)}`;
+  const full = `${shape(-1)} C${n(x + w * 0.32)} ${n(y - h * 0.62)} ${n(x + w * 0.78)} ${n(y - h * 0.34)} ${n(x + w * 0.42)} ${y} Z`;
+  return `<path d="${full}" fill="${c1}"/>`
+    + [-0.6, 0, 0.6].map((k) => `<path d="${shape(k, w * 0.28)}" fill="none" stroke="${c2}" stroke-width="${n(w * 0.13)}" stroke-linecap="round"/>`).join('')
+    + `<path d="${full}" fill="none" ${o(3)}/>`
+    + `<path d="M${x} ${n(y - h)} V${n(y - h - 18)} M${x - 6} ${n(y - h - 12)} H${x + 6}" stroke="${P.ink}" stroke-width="4"/><path d="M${x} ${n(y - h)} V${n(y - h - 18)} M${x - 5} ${n(y - h - 12)} H${x + 5}" stroke="${P.goldDark}" stroke-width="2"/>`;
+}
+
+// ---------- Red Square pieces ----------
+// Kremlin wall across the frame: swallowtail merlons from yTop, base at yBase.
+function kremlinWall(yTop, yBase, snow) {
+  const top = yTop + 24;
+  let s = `<rect x="-10" y="${top}" width="${W + 20}" height="${yBase - top}" fill="${T.brick}" ${o(4)}/>`;
+  for (let y = top + 16; y < yBase - 4; y += 16) s += `<path d="M0 ${y} H${W}" stroke="${T.brickDark}" stroke-width="1.5" opacity=".4"/>`;
+  s += `<path d="M0 ${top + 12} H${W}" stroke="${T.brickDark}" stroke-width="3" opacity=".6"/>`;
+  for (let x = -8; x < W + 8; x += 34) {
+    const w = 22, d = `M${x} ${top} V${yTop + 6} L${n(x + w * 0.2)} ${yTop} L${n(x + w / 2)} ${yTop + 9} L${n(x + w * 0.8)} ${yTop} L${x + w} ${yTop + 6} V${top} Z`;
+    s += `<path d="${d}" fill="${T.brick}" ${o(2.5)}/>`;
+    if (snow) s += `<path d="M${x + 1} ${yTop + 6} L${n(x + w * 0.2)} ${yTop + 1} L${n(x + w / 2)} ${yTop + 10} L${n(x + w * 0.8)} ${yTop + 1} L${x + w - 1} ${yTop + 6}" fill="none" stroke="${T.snow}" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>`;
+  }
+  if (snow) s += `<path d="M-10 ${top} H${W + 10}" stroke="${T.snow}" stroke-width="5"/>`;
+  return s;
+}
+// Spasskaya-style gate tower: brick shaft, gate arch, white trims, clock stage, open belfry, green tent spire, red star.
+function clockTower(cx, base, t, snow) {
+  const sn = (x1, x2, y) => (snow ? `<path d="M${x1} ${y} H${x2}" stroke="${T.snow}" stroke-width="5" stroke-linecap="round"/>` : '');
+  const pin = (x, y) => `<path d="M${x - 7} ${y} L${x} ${y - 30} L${x + 7} ${y} Z" fill="${T.spire}" ${o(2)}/><rect x="${x - 7}" y="${y}" width="14" height="10" fill="${T.stone}" ${o(2)}/>`;
+  const m = (t * 6) % 360;
+  return `<g>
+    <rect x="${cx - 66}" y="${base - 210}" width="132" height="210" fill="${T.brick}" ${o(4)}/>
+    ${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => `<path d="M${cx - 66} ${base - 196 + i * 16} H${cx + 66}" stroke="${T.brickDark}" stroke-width="1.5" opacity=".4"/>`).join('')}
+    <path d="M${cx - 24} ${base} V${base - 52} Q${cx} ${base - 80} ${cx + 24} ${base - 52} V${base} Z" fill="${P.charcoal}" ${o(3)}/>
+    <path d="M${cx - 30} ${base} V${base - 54} Q${cx} ${base - 88} ${cx + 30} ${base - 54} V${base}" fill="none" stroke="${T.stone}" stroke-width="4"/>
+    <rect x="${cx - 70}" y="${base - 150}" width="140" height="9" fill="${T.stone}" ${o(2)}/>
+    <rect x="${cx - 72}" y="${base - 214}" width="144" height="12" fill="${T.stone}" ${o(2.5)}/>
+    ${pin(cx - 60, base - 214)}${pin(cx + 60, base - 214)}
+    ${sn(cx - 72, cx + 72, base - 216)}
+    <rect x="${cx - 46}" y="${base - 290}" width="92" height="76" fill="${T.brick}" ${o(4)}/>
+    <circle cx="${cx}" cy="${base - 252}" r="27" fill="${P.navy}" stroke="${P.goldDark}" stroke-width="4"/><circle cx="${cx}" cy="${base - 252}" r="29" fill="none" stroke="${P.ink}" stroke-width="2.5"/>
+    ${Array.from({ length: 12 }, (_, i) => { const a = (i * Math.PI) / 6; return `<circle cx="${n(cx + 21 * Math.cos(a))}" cy="${n(base - 252 + 21 * Math.sin(a))}" r="1.8" fill="${P.gold}"/>`; }).join('')}
+    <path d="M0 0 V-19" stroke="${P.gold}" stroke-width="3" stroke-linecap="round" transform="translate(${cx} ${base - 252}) rotate(${n(m)})"/>
+    <path d="M0 0 V-13" stroke="${P.gold}" stroke-width="4" stroke-linecap="round" transform="translate(${cx} ${base - 252}) rotate(${n(330 + m / 12)})"/>
+    <rect x="${cx - 50}" y="${base - 296}" width="100" height="10" fill="${T.stone}" ${o(2.5)}/>${sn(cx - 50, cx + 50, base - 298)}
+    <rect x="${cx - 34}" y="${base - 344}" width="68" height="48" fill="${T.stone}" ${o(3.5)}/>
+    ${[-17, 0, 17].map((dx) => `<path d="M${cx + dx - 6} ${base - 300} V${base - 326} Q${cx + dx} ${base - 336} ${cx + dx + 6} ${base - 326} V${base - 300} Z" fill="${P.charcoal}"/>`).join('')}
+    <path d="M${cx - 38} ${base - 344} L${cx} ${base - 452} L${cx + 38} ${base - 344} Z" fill="${T.spire}" ${o(4)}/>
+    ${[0.25, 0.5, 0.75].map((f) => `<path d="M${n(cx - 38 * (1 - f))} ${n(base - 344 - 108 * f)} H${n(cx + 38 * (1 - f))}" stroke="${T.spireDark}" stroke-width="2.5"/>`).join('')}
+    ${snow ? `<path d="M${cx - 30} ${base - 352} L${cx - 14} ${base - 396}" stroke="${T.snow}" stroke-width="4" stroke-linecap="round" opacity=".8"/>` : ''}
+    <path d="M${cx} ${base - 452} V${base - 470}" stroke="${P.ink}" stroke-width="3"/>
+    ${star(cx, base - 486, 17, P.red, 2.5)}
+  </g>`;
+}
+// A small far Kremlin tower standing on the wall.
+function wallTower(cx, base, h, snow) {
+  return `<rect x="${cx - 26}" y="${base - h}" width="52" height="${h}" fill="${T.brick}" ${o(3.5)}/><rect x="${cx - 29}" y="${base - h}" width="58" height="8" fill="${T.stone}" ${o(2)}/>`
+    + (snow ? `<path d="M${cx - 29} ${base - h - 1} H${cx + 29}" stroke="${T.snow}" stroke-width="4" stroke-linecap="round"/>` : '')
+    + `<path d="M${cx - 22} ${base - h} L${cx} ${base - h - 70} L${cx + 22} ${base - h} Z" fill="${T.spire}" ${o(3)}/><path d="M${cx} ${base - h - 70} V${base - h - 80}" stroke="${P.ink}" stroke-width="2.5"/>`
+    + star(cx, base - h - 89, 10, P.red, 2)
+    + `<path d="M${cx - 10} ${base - h + 40} V${base - h + 24} Q${cx} ${base - h + 14} ${cx + 10} ${base - h + 24} V${base - h + 40} Z" fill="${P.charcoal}"/>`;
+}
+// St Basil's-like cathedral: brick body with arched windows, central tent tower, four striped onion domes on drums.
+function cathedral(cx, base, snow) {
+  let s = '';
+  const drum = (x, top, w, d) => `<rect x="${x - w / 2}" y="${top}" width="${w}" height="${d - top}" fill="${T.brick}" ${o(3)}/><rect x="${x - w / 2 - 3}" y="${top}" width="${w + 6}" height="7" fill="${T.stone}" ${o(2)}/>`
+    + `<path d="M${x - 5} ${top + 34} V${top + 20} Q${x} ${top + 12} ${x + 5} ${top + 20} V${top + 34} Z" fill="${P.charcoal}"/>`;
+  const bodyTop = base - 120;
+  // back drums and domes (outer pair is lower, inner pair taller)
+  const domes = [
+    [cx - 118, bodyTop - 40, 30, 48, 58, P.green, P.gold],
+    [cx + 118, bodyTop - 44, 30, 48, 58, P.gold, P.greenDark],
+    [cx - 66, bodyTop - 92, 34, 56, 66, T.brickLight, P.paper],
+    [cx + 66, bodyTop - 86, 34, 56, 66, P.blue, P.paper],
+  ];
+  domes.forEach(([x, top, dw]) => { s += drum(x, top, dw, bodyTop + 4); });
+  // central tent tower
+  s += `<rect x="${cx - 26}" y="${bodyTop - 150}" width="52" height="154" fill="${T.brick}" ${o(3.5)}/>`
+    + `<rect x="${cx - 30}" y="${bodyTop - 150}" width="60" height="9" fill="${T.stone}" ${o(2)}/>`
+    + `<rect x="${cx - 30}" y="${bodyTop - 70}" width="60" height="8" fill="${T.stone}" ${o(2)}/>`
+    + [-12, 12].map((dx) => `<path d="M${cx + dx - 5} ${bodyTop - 80} V${bodyTop - 104} Q${cx + dx} ${bodyTop - 114} ${cx + dx + 5} ${bodyTop - 104} V${bodyTop - 80} Z" fill="${P.charcoal}"/>`).join('')
+    + `<path d="M${cx - 28} ${bodyTop - 150} L${cx} ${bodyTop - 262} L${cx + 28} ${bodyTop - 150} Z" fill="${T.stone}" ${o(3.5)}/>`
+    + [0.2, 0.42, 0.64].map((f) => `<path d="M${n(cx - 28 * (1 - f))} ${n(bodyTop - 150 - 112 * f)} L${cx} ${n(bodyTop - 150 - 112 * f - 8)} L${n(cx + 28 * (1 - f))} ${n(bodyTop - 150 - 112 * f)}" stroke="${P.green}" stroke-width="3" fill="none"/>`).join('')
+    + onion(cx, bodyTop - 258, 22, 26, P.gold, P.goldDark);
+  domes.forEach(([x, top, , w, h, c1, c2]) => { s += onion(x, top, w, h, c1, c2); });
+  // body: wide brick block with stone trims and arched windows, a porch on the left
+  s += `<rect x="${cx - 150}" y="${bodyTop}" width="300" height="120" fill="${T.brick}" ${o(4)}/>`
+    + `<rect x="${cx - 154}" y="${bodyTop - 4}" width="308" height="12" fill="${T.stone}" ${o(2.5)}/>`
+    + `<rect x="${cx - 150}" y="${base - 18}" width="300" height="18" fill="${T.brickDark}" ${o(3)}/>`
+    + [-110, -60, 60, 110].map((dx) => `<path d="M${cx + dx - 9} ${bodyTop + 76} V${bodyTop + 40} Q${cx + dx} ${bodyTop + 26} ${cx + dx + 9} ${bodyTop + 40} V${bodyTop + 76} Z" fill="${P.charcoal}" stroke="${T.stone}" stroke-width="3"/>`).join('')
+    + `<path d="M${cx - 22} ${base} V${bodyTop + 54} Q${cx} ${bodyTop + 30} ${cx + 22} ${bodyTop + 54} V${base} Z" fill="${P.charcoal}" stroke="${T.stone}" stroke-width="4"/>`;
+  if (snow) s += `<path d="M${cx - 154} ${bodyTop - 5} H${cx + 154}" stroke="${T.snow}" stroke-width="6" stroke-linecap="round"/>`
+    + [[cx - 30, cx + 30, bodyTop - 151], [cx - 30, cx + 30, bodyTop - 71]].map(([a, b, y]) => `<path d="M${a} ${y} H${b}" stroke="${T.snow}" stroke-width="4" stroke-linecap="round"/>`).join('');
+  return s;
+}
+
+// ---------- the Kremlin study map (Europe / western USSR, lon 0..60 E, lat 40..66 N) ----------
+const EU_SEAS = [
+  // North Sea / Norwegian Sea edge
+  [[0, 51], [1.6, 51], [4, 52], [4.8, 53.3], [8.5, 53.6], [8.3, 55.5], [8.2, 57], [10.5, 57.8], [7, 58.1], [5, 59.5], [5, 62], [8, 63.5], [12, 66], [0, 66]],
+  // Baltic
+  [[10.5, 54.2], [14, 54], [19, 54.5], [21, 56.3], [23.8, 57], [24.4, 59.3], [30, 59.9], [27, 60.5], [22.4, 60.2], [21.4, 61.5], [21.6, 63.5], [25.2, 65.5], [22, 66], [17.6, 62.6], [17, 60.6], [18.8, 59.3], [16.6, 57], [15.8, 56.1], [13, 55.5], [12.6, 56.4], [10.8, 57.6], [10, 56.5], [10.8, 55.4]],
+  // Mediterranean, Adriatic, Aegean (closed along the bottom edge)
+  [[0, 40], [0, 43], [3, 43.3], [6, 43.1], [8.7, 44.4], [10.2, 43.7], [11.2, 42.4], [12.6, 41.4], [14.6, 40], [17.2, 40], [16.3, 41.3], [13.8, 43.6], [12.3, 44.6], [13.6, 45.7], [15, 44.8], [17.5, 43], [19.6, 41.7], [19.6, 40], [22.6, 40], [23, 40.6], [24.2, 40.9], [26, 40.7], [26.6, 40]],
+  // Black Sea and Azov
+  [[28, 41.5], [28.6, 43.5], [29.8, 45.3], [30.6, 46.6], [33, 46], [32.6, 45.3], [33.6, 44.4], [35.2, 44.8], [35.8, 45.4], [34.8, 46.2], [35.4, 46.8], [38.6, 47.2], [38.2, 46.4], [37.4, 45.4], [38, 44.4], [40, 43.4], [41.6, 41.6], [38, 40.9], [34, 42], [31, 41.2]],
+  // Caspian
+  [[47, 45], [47.5, 46.8], [49.5, 46.7], [53, 45.6], [51, 44.2], [51.4, 42.6], [52.8, 41.6], [54, 40], [49.6, 40], [49.4, 40.6], [47.6, 42]],
+  // White Sea
+  [[32.4, 66], [34.8, 64.6], [37, 63.9], [39.8, 64.6], [41, 66]],
+  // Ladoga and Onega
+  [[30, 60.8], [31.5, 60.2], [32.8, 60.6], [32.8, 61.3], [31.2, 61.7]],
+  [[34.6, 61.2], [35.6, 60.9], [36.4, 61.4], [35.6, 62.6], [34.8, 62.3]],
+];
+// The front line, late autumn 1941 (approximate, illustrative): Karelia, around Leningrad, west of Moscow, south to Rostov,
+// Crimea.
+const FRONT_1941 = [[30.6, 66], [32.6, 63.4], [33.6, 61.4], [33.2, 60.6], [31.8, 60.1], [30.8, 59.7], [31.6, 59], [33.4, 58.7], [32.8, 57.4], [35.4, 56.9], [36.1, 56], [36.4, 55.3], [37.1, 54.6], [37.5, 54.1], [38.3, 54.3], [38.6, 53], [37.4, 52], [36.6, 50.5], [37.4, 49.4], [38.8, 48.1], [39.6, 47.3], [36.2, 46.6], [34.2, 46.2], [33.6, 44.7]];
+function warMap(x, y, w, h) {
+  const p = ([lon, lat]) => [x + (lon / 60) * w, y + ((66 - lat) / 26) * h];
+  let s = `<defs><clipPath id="esKsMap"><rect x="${x}" y="${y}" width="${w}" height="${h}"/></clipPath></defs>`
+    + `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${P.paperDim}"/><g clip-path="url(#esKsMap)">`;
+  for (let i = 1; i < 6; i++) s += `<path d="M${n(x + (i * w) / 6)} ${y} V${y + h}" stroke="${P.inkSoft}" stroke-width="1" opacity=".25"/>`;
+  for (let j = 1; j < 3; j++) s += `<path d="M${x} ${n(y + (j * h) / 3)} H${x + w}" stroke="${P.inkSoft}" stroke-width="1" opacity=".25"/>`;
+  s += EU_SEAS.map((sea) => poly(sea.map(p), `fill="${T.mapSea}" stroke="${P.ink}" stroke-width="2" stroke-linejoin="round"`)).join('');
+  const fl = ptsStr(FRONT_1941.map(p));
+  s += `<polyline points="${fl}" fill="none" stroke="${P.red}" stroke-width="10" stroke-linejoin="round" opacity=".25"/>`
+    + `<polyline points="${fl}" fill="none" stroke="${P.red}" stroke-width="4" stroke-linejoin="round" stroke-dasharray="14 5"/>`;
+  [[37.6, 55.75], [30.3, 59.95]].forEach((c) => { const [cx, cy] = p(c); s += `<circle cx="${n(cx)}" cy="${n(cy)}" r="5" fill="${P.ink}"/><circle cx="${n(cx)}" cy="${n(cy)}" r="2" fill="${P.paper}"/>`; });
+  return s + '</g>';
+}
+
+// ---------- the front road (curve from the horizon at left to the right edge) ----------
+const ROAD = { p0: [290, 376], c: [520, 474], p1: [1360, 566] };
+const roadAt = (u) => {
+  const a = (1 - u) * (1 - u), b = 2 * u * (1 - u), c = u * u;
+  return { x: a * ROAD.p0[0] + b * ROAD.c[0] + c * ROAD.p1[0], y: a * ROAD.p0[1] + b * ROAD.c[1] + c * ROAD.p1[1], w: 2 + 96 * Math.pow(Math.max(0, u), 1.25) };
+};
+
+Object.assign(SETS, {
+  // ------------------------------------------------------------------ Red Square, Moscow, November 1941
+  redSquare: {
+    mood: 'day',
+    draw(t, { snow = true, tanks = false } = {}) {
+      const WB = 432; // wall base = back edge of the square
+      let s = snow ? snowSky('esRsSky') : daySky('esRsSkyD') + clouds(41, t, { count: 4, yMax: 120 });
+      s += wallTower(800, 330, 70, snow) + kremlinWall(300, WB, snow);
+      // the square: snow with faint cobble rows, or bare cobbles
+      s += `<rect y="${WB}" width="${W}" height="${H - WB}" fill="${snow ? T.snow : T.cobble}"/><path d="M0 ${WB} H${W}" stroke="${P.ink}" stroke-width="4"/>`;
+      for (let k = 0; k < 16; k++) {
+        const f = k / 15, y = WB + 8 + 284 * Math.pow(f, 1.45), cw = 9 + 40 * f, ch = 3 + 9 * f;
+        s += `<path d="M0 ${n(y)} H${W}" stroke="${snow ? T.snowShade : T.cobbleDark}" stroke-width="${n(ch)}" stroke-dasharray="${n(cw)} ${n(cw * 0.35)}" stroke-dashoffset="${n((k % 2) * cw * 0.6)}" stroke-linecap="round" opacity="${snow ? 0.35 : 0.6}"/>`;
+      }
+      if (snow) s += `<path d="M0 ${WB + 4} Q160 ${WB - 8} 330 ${WB + 3} T700 ${WB + 2} T1280 ${WB + 3} V${WB + 14} H0 Z" fill="${T.flake}"/>`;
+      // the tanks' lane: trodden darker band
+      if (tanks) s += `<rect y="474" width="${W}" height="30" fill="${snow ? T.snowShade : T.cobbleDark}" opacity=".7"/>`;
+      s += `<g transform="translate(225 ${WB + 6}) scale(.84) translate(-225 ${-(WB + 6)})">${clockTower(225, WB + 6, t, snow)}</g>` + cathedral(1085, WB + 14, snow);
+      if (tanks) {
+        const v = 62, sc = 0.46, cyc = W + 420;
+        for (let i = 0; i < 4; i++) {
+          const x = ((t * v + i * 300 + 120) % cyc) - 200;
+          s += tank(x, 500, sc, (t * v) / sc, { snow });
+        }
+      }
+      if (snow) s += snowfall(t, 411, { count: 110 });
+      return s;
+    },
+    front: (t, { snow = true } = {}) => (snow ? snowfall(t, 412, { count: 12, size: 1.7, speed: 1.6 }) : ''),
+    spots: { farLeft: [130, 704, 0.62], left: [385, 700, 0.62], center: [640, 706, 0.62], right: [895, 700, 0.62], farRight: [1150, 704, 0.62] },
+    close: { fx: 640, fy: 560, zoom: 1.6 },
+  },
+
+  // ------------------------------------------------------------------ Stalin's study in the Kremlin
+  kremlinStudy: {
+    mood: 'night',
+    draw(t, { lamp = true } = {}) {
+      const FL = 534; // floor line at the back wall
+      let s = `<rect width="${W}" height="${H}" fill="${T.studyWall}"/>`
+        + `<rect width="${W}" height="30" fill="${P.woodDeep}"/><path d="M0 30 H${W}" stroke="${P.ink}" stroke-width="4"/><path d="M0 40 H${W}" stroke="${T.studyWallDark}" stroke-width="5"/>`;
+      // upper wall panels at the sides
+      [[262, 60, 50, 320], [968, 60, 50, 320]].forEach(([x, y, w, h]) => { s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="${T.studyWallDark}" stroke-width="4"/>`; });
+      // wainscot
+      s += `<rect y="400" width="${W}" height="${FL - 400}" fill="${P.woodMid}" ${o(4)}/><rect y="396" width="${W}" height="10" fill="${P.wood}" ${o(3)}/>`;
+      for (let x = 10; x < W; x += 128) s += `<rect x="${x}" y="420" width="108" height="${FL - 438}" fill="none" stroke="${P.woodDeep}" stroke-width="4"/>`;
+      // floor (parquet) and a long runner under the table
+      s += `<rect y="${FL}" width="${W}" height="${H - FL}" fill="${P.floor}"/><path d="M0 ${FL} H${W}" stroke="${P.ink}" stroke-width="4"/>`;
+      for (let k = 1; k < 7; k++) s += `<path d="M0 ${FL + k * k * 4.6} H${W}" stroke="${P.floorLine}" stroke-width="2"/>`;
+      s += `<path d="M400 ${FL + 8} H880 L1080 ${H} H200 Z" fill="${T.runner}" ${o(3)}/><path d="M418 ${FL + 16} H862 L1046 ${H} H234 Z" fill="none" stroke="${P.goldDark}" stroke-width="3" opacity=".6"/>`;
+      // two tall windows with snow falling outside, heavy curtains and valances
+      const wins = [[70, 210], [1070, 1210]];
+      s += `<defs><clipPath id="esKsWin">${wins.map(([a, b]) => `<rect x="${a}" y="96" width="${b - a}" height="290"/>`).join('')}</clipPath></defs>`;
+      wins.forEach(([a, b]) => { s += `<rect x="${a}" y="96" width="${b - a}" height="290" fill="${T.snowSky}"/><path d="M${a} 330 Q${(a + b) / 2} 316 ${b} 326 V386 H${a} Z" fill="${T.snowShade}"/>`; });
+      s += `<g clip-path="url(#esKsWin)">${snowfall(t, 421, { count: 60, size: 0.8, speed: 0.8 })}</g>`;
+      wins.forEach(([a, b]) => {
+        const m = (a + b) / 2;
+        s += `<rect x="${a}" y="96" width="${b - a}" height="290" fill="none" ${o(5)}/><path d="M${m} 96 V386 M${a} 190 H${b} M${a} 284 H${b}" stroke="${P.woodDeep}" stroke-width="5"/><path d="M${m} 96 V386 M${a} 190 H${b} M${a} 284 H${b}" stroke="${P.ink}" stroke-width="1.5" opacity=".5"/>`
+          + `<rect x="${a - 10}" y="384" width="${b - a + 20}" height="12" fill="${P.wood}" ${o(3)}/>`;
+        const drape = (x, dir) => `<path d="M${x} 70 H${x + dir * 52} Q${x + dir * 40} 260 ${x + dir * 60} 404 Q${x + dir * 30} 414 ${x} 404 Z" fill="${T.curtain}" ${o(4)}/>`
+          + [0.35, 0.7].map((f) => `<path d="M${n(x + dir * 52 * f)} 78 Q${n(x + dir * 46 * f)} 250 ${n(x + dir * 58 * f)} 400" stroke="${T.curtainDark}" stroke-width="4" fill="none"/>`).join('')
+          + `<path d="M${x + dir * 6} 250 Q${x + dir * 30} 262 ${x + dir * 52} 246" stroke="${P.goldDark}" stroke-width="5" fill="none"/>`;
+        s += drape(a - 6, 1) + drape(b + 6, -1)
+          + `<path d="M${a - 30} 56 H${b + 30} V86 Q${m} 104 ${a - 30} 86 Z" fill="${T.curtain}" ${o(4)}/><path d="M${a - 30} 72 Q${m} 90 ${b + 30} 72" stroke="${T.curtainDark}" stroke-width="3" fill="none"/>`;
+      });
+      // the big wall map with the red front line
+      const mx = 352, my = 58, mw = 576, mh = 250;
+      s += `<g filter="url(#softShadow)"><rect x="${mx - 14}" y="${my - 14}" width="${mw + 28}" height="${mh + 28}" fill="${P.woodDeep}" ${o(4)}/></g>`
+        + warMap(mx, my, mw, mh) + `<rect x="${mx}" y="${my}" width="${mw}" height="${mh}" fill="none" stroke="${P.ink}" stroke-width="3"/>`
+        + `<path d="M${mx + 20} ${my - 14} V${my - 40} M${mx + mw - 20} ${my - 14} V${my - 40}" stroke="${P.ink}" stroke-width="2"/>`;
+      // wall clock
+      s += props.clock(1012, 130, t, { r: 24, hour: 2 });
+      if (lamp) s += pool(800, 430, 150, 70, 0.2) + pool(640, 300, 520, 260, 0.05);
+      return s;
+    },
+    front(t, { lamp = true } = {}) {
+      const DT = 474; // desk top front edge
+      // the desk across the far end
+      let s = `<path d="M452 ${DT - 16} H828 L836 ${DT} H444 Z" fill="${P.wood}" ${o(4)}/>`
+        + `<rect x="444" y="${DT}" width="392" height="80" fill="${P.woodMid}" ${o(4)}/>`
+        + `<rect x="456" y="${DT + 12}" width="70" height="58" fill="none" stroke="${P.woodDeep}" stroke-width="3"/><rect x="754" y="${DT + 12}" width="70" height="58" fill="none" stroke="${P.woodDeep}" stroke-width="3"/>`;
+      // desk things: papers, an inkstand, the lamp
+      s += `<g transform="rotate(-3 500 ${DT - 8})"><rect x="470" y="${DT - 14}" width="58" height="8" fill="${P.paper}" stroke="${P.ink}" stroke-width="2"/><rect x="474" y="${DT - 20}" width="56" height="7" fill="${P.paperDim}" stroke="${P.ink}" stroke-width="2"/></g>`
+        + `<rect x="544" y="${DT - 16}" width="36" height="9" rx="2" fill="${P.charcoal}" stroke="${P.ink}" stroke-width="2"/><path d="M556 ${DT - 16} L548 ${DT - 34}" stroke="${P.ink}" stroke-width="2.5"/>`;
+      const lx = 790;
+      if (lamp) s += `<ellipse cx="${lx}" cy="${DT - 4}" rx="70" ry="12" fill="${P.windowLit}" opacity=".55"/>`;
+      s += `<ellipse cx="${lx}" cy="${DT - 9}" rx="16" ry="5" fill="${P.goldDark}" ${o(2.5)}/><path d="M${lx} ${DT - 12} V${DT - 58}" stroke="${P.ink}" stroke-width="6"/><path d="M${lx} ${DT - 12} V${DT - 58}" stroke="${P.goldDark}" stroke-width="2.5"/>`
+        + (lamp ? `<ellipse cx="${lx}" cy="${DT - 60}" rx="24" ry="6" fill="${P.windowLit}"/>` : '')
+        + `<path d="M${lx - 28} ${DT - 58} Q${lx - 26} ${DT - 84} ${lx} ${DT - 86} Q${lx + 26} ${DT - 84} ${lx + 28} ${DT - 58} Z" fill="${T.lampShade}" ${o(3)}/>`
+        + `<path d="M${lx - 18} ${DT - 72} Q${lx - 10} ${DT - 80} ${lx} ${DT - 80}" stroke="${P.paper}" stroke-width="2.5" fill="none" opacity=".45"/>`;
+      if (lamp) s += pool(lx, DT - 40, 70, 40, 0.3);
+      // the long table running toward the camera (green cloth, wood edges)
+      const far = [[548, DT], [732, DT]], near = [[384, H + 6], [896, H + 6]];
+      s += poly([[far[0][0] - 10, DT], [far[1][0] + 10, DT], [near[1][0] + 22, H + 6], [near[0][0] - 22, H + 6]], `fill="${P.woodMid}" ${o(4)}`)
+        + poly([far[0], far[1], near[1], near[0]], `fill="${P.felt}" ${o(3)}`);
+      // chairs along both sides (backs seen from the head of the table)
+      const edge = (side, y) => { const k = (y - DT) / (H + 6 - DT); return side < 0 ? far[0][0] + (near[0][0] - far[0][0]) * k : far[1][0] + (near[1][0] - far[1][0]) * k; };
+      [[548, 0.55], [622, 0.75]].forEach(([y, sc]) => {
+        [-1, 1].forEach((side) => {
+          const x = edge(side, y) + side * 26 * sc, w = 44 * sc, h = 86 * sc;
+          s += `<rect x="${n(x - w / 2)}" y="${n(y - h)}" width="${n(w)}" height="${n(h)}" rx="${n(6 * sc)}" fill="${P.woodDeep}" ${o(3)}/><rect x="${n(x - w / 2 + 6 * sc)}" y="${n(y - h + 8 * sc)}" width="${n(w - 12 * sc)}" height="${n(h * 0.62)}" rx="${n(4 * sc)}" fill="${P.feltDark}" stroke="${P.ink}" stroke-width="2"/>`;
+        });
+      });
+      // a few papers and a carafe with glasses on the table
+      s += `<g transform="rotate(4 560 590)"><rect x="530" y="580" width="56" height="34" fill="${P.paper}" stroke="${P.ink}" stroke-width="2"/></g>`
+        + `<g transform="rotate(-6 760 660)"><rect x="724" y="646" width="70" height="40" fill="${P.paper}" stroke="${P.ink}" stroke-width="2"/></g>`
+        + `<path d="M630 ${DT + 54} Q622 ${DT + 40} 632 ${DT + 30} V${DT + 18} H644 V${DT + 30} Q654 ${DT + 40} 646 ${DT + 54} Z" fill="${T.glass}" opacity=".9" ${o(2.5)}/>`
+        + `<rect x="658" y="${DT + 36}" width="12" height="18" fill="${T.glass}" ${o(2)}/>`;
+      return s;
+    },
+    spots: { desk: [640, 528, 0.62], farLeft: [95, 708, 0.8], left: [235, 704, 0.8], center: [640, 528, 0.62], right: [1045, 704, 0.8], farRight: [1185, 708, 0.8] },
+    close: { fx: 640, fy: 420, zoom: 1.7 },
+  },
+
+  // ------------------------------------------------------------------ a road at the front, flat land, birches
+  frontRoad: {
+    mood: 'day',
+    draw(t, { season = 'summer', trucks = false } = {}) {
+      const winter = season === 'winter', HZ = 372;
+      let s = winter ? snowSky('esFrSkyW') : grad('esFrSkyS', [[0, T.skyPaleTop], [1, T.skyPale]]) + `<rect width="${W}" height="${H}" fill="url(#esFrSkyS)"/>` + clouds(52, t, { count: 5, yMax: 130 });
+      // land in bands toward the viewer
+      s += `<rect y="${HZ}" width="${W}" height="${H - HZ}" fill="${winter ? T.snow : T.field}"/>`;
+      const bands = winter ? [T.snowShade, T.snow] : [T.grass, T.fieldGold, T.field, T.grassLight];
+      for (let k = 0; k < 9; k++) { const y0 = HZ + 4 + 300 * Math.pow(k / 9, 1.8), y1 = HZ + 4 + 300 * Math.pow((k + 0.5) / 9, 1.8); s += `<rect y="${n(y0)}" width="${W}" height="${n(y1 - y0)}" fill="${bands[k % bands.length]}" opacity="${winter ? 0.6 : 0.75}"/>`; }
+      // far tree line (birch groves) on the horizon, with a gap where the road meets it
+      const r = rng(63);
+      const blobs = [];
+      for (let x = -10; x < W + 20; x += 13) { if (x > 230 && x < 360) continue; const big = Math.sin(x * 0.011) > 0.1 || x > 900; if (!big && r() < 0.6) continue; blobs.push([x, HZ - 3 - r() * 8, 7 + r() * (big ? 12 : 6)]); }
+      const tc = winter ? T.shore : T.treeDark;
+      s += blobs.map(([x, y, rr]) => `<circle cx="${n(x)}" cy="${n(y)}" r="${n(rr)}" fill="${P.ink}" stroke="${P.ink}" stroke-width="4"/>`).join('')
+        + blobs.map(([x, y, rr], i) => `<circle cx="${n(x)}" cy="${n(y)}" r="${n(rr)}" fill="${i % 3 ? tc : (winter ? T.shoreDark : T.tree)}"/>`).join('')
+        + `<rect y="${HZ}" width="${W}" height="6" fill="${winter ? T.snowShade : T.grassDark}"/><path d="M0 ${HZ} H${W}" stroke="${P.ink}" stroke-width="2.5"/>`;
+      // the road
+      const top = [], bot = [];
+      for (let u = 0; u <= 1.16; u += 0.02) { const p = roadAt(u); top.push([p.x, p.y - p.w / 2]); bot.push([p.x, p.y + p.w / 2]); }
+      s += poly(top.concat(bot.reverse()), `fill="${winter ? T.snowShade : T.dirt}" ${o(3)}`);
+      [-0.28, 0.32].forEach((f) => { const line = []; for (let u = 0.04; u <= 1.16; u += 0.02) { const p = roadAt(u); line.push([p.x, p.y + (p.w / 2) * f]); } s += `<polyline points="${ptsStr(line)}" fill="none" stroke="${winter ? T.slush : T.dirtDark}" stroke-width="4" stroke-linejoin="round" opacity=".8"/>`; });
+      // telegraph poles along the far side of the road, with a sagging wire
+      const poles = [0.12, 0.26, 0.4, 0.55, 0.7, 0.86, 1.02].map((u) => { const p = roadAt(u); return [p.x + 6, p.y - p.w / 2 - 3, 6 + 120 * Math.pow(u, 1.25)]; });
+      let wire = '';
+      for (let i = 1; i < poles.length; i++) { const [x0, y0, h0] = poles[i - 1], [x1, y1, h1] = poles[i]; wire += `<path d="M${n(x0)} ${n(y0 - h0 * 0.94)} Q${n((x0 + x1) / 2)} ${n((y0 - h0 * 0.94 + y1 - h1 * 0.94) / 2 + 4 + h1 * 0.08)} ${n(x1)} ${n(y1 - h1 * 0.94)}" stroke="${P.ink}" stroke-width="1.5" fill="none" opacity=".75"/>`; }
+      s += poles.map(([x, y, h]) => `<path d="M${n(x)} ${n(y)} V${n(y - h)}" stroke="${P.ink}" stroke-width="${n(1.5 + h * 0.035)}" stroke-linecap="round"/><path d="M${n(x - h * 0.13)} ${n(y - h * 0.94)} H${n(x + h * 0.13)}" stroke="${P.ink}" stroke-width="${n(1.2 + h * 0.025)}"/>`).join('') + wire;
+      // the truck column (far ones first)
+      if (trucks) {
+        const list = [];
+        for (let i = 0; i < 6; i++) { const u = ((t * 0.06 + i * 0.21) % 1.26); list.push(u); }
+        list.sort((a, b) => a - b).forEach((u) => { const p = roadAt(u); s += truck(p.x, p.y + p.w * 0.16, 0.52 * (p.w / 98), t + u * 10, { snow: winter }); });
+      }
+      // foreground verge
+      s += `<path d="M0 640 Q320 628 640 636 T${W} 630 V${H} H0 Z" fill="${winter ? T.snow : T.grass}"/><path d="M0 640 Q320 628 640 636 T${W} 630" fill="none" stroke="${winter ? T.snowShade : T.grassDark}" stroke-width="4"/>`;
+      const fr = rng(71);
+      for (let i = 0; i < 46; i++) {
+        const x = fr() * W, y = 650 + fr() * 66, hgt = 8 + fr() * 12, sway = Math.sin(t * 1.5 + i) * 2;
+        if (x > 470 && x < 810) continue;
+        s += `<path d="M${n(x - 5)} ${n(y)} L${n(x + sway)} ${n(y - hgt)} M${n(x)} ${n(y)} L${n(x + 6 + sway)} ${n(y - hgt * 0.8)}" stroke="${winter ? T.slush : T.grassDark}" stroke-width="2.5" stroke-linecap="round"/>`;
+      }
+      // birches: a pair at the left, one at the right (outside the centre third)
+      s += birch(1238, 560, 0.62, { winter, t, seed: 3, h: 300 }) + birch(1176, 700, 1.05, { winter, t, seed: 4 })
+        + birch(64, 704, 1.12, { winter, t, seed: 1 }) + birch(150, 650, 0.86, { winter, t, seed: 2 });
+      if (winter) s += snowfall(t, 431, { count: 100 });
+      return s;
+    },
+    front: (t, { season = 'summer' } = {}) => (season === 'winter' ? snowfall(t, 432, { count: 12, size: 1.7, speed: 1.6 }) : ''),
+    spots: { farLeft: [250, 706, 0.62], left: [420, 702, 0.62], center: [640, 706, 0.62], right: [870, 702, 0.62], farRight: [1060, 706, 0.62] },
+    close: { fx: 640, fy: 560, zoom: 1.6 },
+  },
+
+  // ------------------------------------------------------------------ Arkhangelsk docks in winter
+  arcticPort: {
+    mood: 'day',
+    draw(t, { ship = true, snow = true } = {}) {
+      const HZ = 336, QY = 548; // far shore waterline, front quay edge
+      let s = snowSky('esApSky');
+      // far shore: low snowy bank, dark spruce, warehouses, a chimney with smoke
+      s += `<path d="M0 ${HZ - 10} Q300 ${HZ - 26} 640 ${HZ - 16} T${W} ${HZ - 18} V${HZ} H0 Z" fill="${T.snowShade}" ${o(2.5)}/>`;
+      const r = rng(91);
+      for (let x = -8; x < W; x += 15) { if (r() < 0.35) continue; const h = 14 + r() * 18; s += `<path d="M${n(x - 7)} ${HZ - 14} L${n(x)} ${n(HZ - 14 - h)} L${n(x + 7)} ${HZ - 14} Z" fill="${T.shoreDark}" stroke="${P.ink}" stroke-width="1.5" stroke-linejoin="round"/>`; }
+      [[930, 70, 26], [1010, 50, 20], [1150, 90, 30]].forEach(([x, w, h]) => { s += `<rect x="${x}" y="${HZ - 14 - h}" width="${w}" height="${h}" fill="${T.shore}" stroke="${P.ink}" stroke-width="2"/><path d="M${x - 3} ${HZ - 14 - h} L${x + w / 2} ${HZ - 24 - h} L${x + w + 3} ${HZ - 14 - h} Z" fill="${T.snow}" stroke="${P.ink}" stroke-width="2" stroke-linejoin="round"/>`; });
+      s += `<rect x="1110" y="${HZ - 110}" width="12" height="70" fill="${T.brickDark}" stroke="${P.ink}" stroke-width="2"/>` + smoke(1116, HZ - 114, t, { count: 6, period: 7, rise: 120, drift: 90, r0: 5, r1: 20, op: 0.5 });
+      // water with drifting ice floes and ripples
+      s += `<rect y="${HZ}" width="${W}" height="${QY - HZ}" fill="${T.sea}"/><path d="M0 ${HZ} H${W}" stroke="${P.ink}" stroke-width="2.5"/>`;
+      for (let k = 0; k < 6; k++) {
+        const y = HZ + 12 + k * k * 5 + k * 8, dash = 30 + k * 12, gap = 50 + k * 16;
+        s += `<path d="M0 ${n(y)} H${W}" stroke="${T.seaLine}" stroke-width="${n(2 + k * 0.4)}" stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${n(-(t * (5 + k * 2)) % (dash + gap) - k * 37)}" opacity=".7"/>`;
+      }
+      const fl = rng(97);
+      for (let i = 0; i < 16; i++) {
+        const f = fl(), y = HZ + 12 + f * f * (QY - HZ - 24), sc = 0.4 + f * 1.1, w = (22 + fl() * 34) * sc, h = (5 + fl() * 4) * sc;
+        const x = ((fl() * (W + 200) + t * (3 + f * 5)) % (W + 200)) - 100;
+        s += `<path d="M${n(x - w)} ${n(y)} L${n(x - w * 0.6)} ${n(y - h)} L${n(x + w * 0.5)} ${n(y - h * 1.1)} L${n(x + w)} ${n(y - h * 0.2)} L${n(x + w * 0.4)} ${n(y + h * 0.5)} Z" fill="${T.ice}" stroke="${P.ink}" stroke-width="${n(1.2 + sc)}" stroke-linejoin="round"/>`;
+      }
+      // the cargo ship moored at the left (stern superstructure, two masts, funnel smoke)
+      if (ship) {
+        const WL = 480;
+        s += `<path d="M118 ${WL - 30} V300 M524 ${WL - 34} V246" stroke="${P.ink}" stroke-width="6"/><path d="M118 ${WL - 30} V300 M524 ${WL - 34} V246" stroke="${P.greyDark}" stroke-width="2.5"/>`
+          + `<path d="M118 304 L60 ${WL - 62} M118 304 L330 ${WL - 112} M524 250 L330 ${WL - 112} M524 250 L716 ${WL - 80}" stroke="${P.ink}" stroke-width="1.5" opacity=".8"/>`
+          + `<path d="M524 ${WL - 50} L452 ${WL - 92} M524 ${WL - 50} L600 ${WL - 92}" stroke="${P.ink}" stroke-width="4"/>`;
+        s += `<path d="M66 ${WL} L52 ${WL - 64} H650 L718 ${WL - 82} L686 ${WL} Z" fill="${T.hull}" ${o(4)}/>`
+          + `<path d="M64 ${WL - 10} H688 L686 ${WL} H66 Z" fill="${P.redDark}" ${o(2.5)}/>`
+          + `<path d="M54 ${WL - 54} H652" stroke="${P.vanWhite}" stroke-width="3" opacity=".7"/>`
+          + Array.from({ length: 12 }, (_, i) => `<circle cx="${100 + i * 46}" cy="${WL - 36}" r="4" fill="${P.greyLight}" stroke="${P.ink}" stroke-width="1.5"/>`).join('')
+          + `<rect x="140" y="${WL - 112}" width="206" height="48" fill="${P.vanWhite}" ${o(3.5)}/><rect x="170" y="${WL - 146}" width="146" height="34" fill="${P.vanWhite}" ${o(3.5)}/><rect x="196" y="${WL - 172}" width="96" height="26" fill="${P.vanWhite}" ${o(3.5)}/>`
+          + Array.from({ length: 7 }, (_, i) => `<rect x="${156 + i * 27}" y="${WL - 100}" width="14" height="10" fill="${T.glassDark}"/>`).join('')
+          + Array.from({ length: 4 }, (_, i) => `<rect x="${206 + i * 21}" y="${WL - 166}" width="12" height="10" fill="${T.glassDark}"/>`).join('')
+          + `<path d="M228 ${WL - 172} L232 ${WL - 236} H266 L262 ${WL - 172} Z" fill="${P.charcoal}" ${o(3.5)}/><rect x="230" y="${WL - 222}" width="34" height="12" fill="${P.redDark}" stroke="${P.ink}" stroke-width="2"/>`
+          + `<rect x="410" y="${WL - 78}" width="80" height="14" fill="${T.plankDark}" ${o(2.5)}/><rect x="560" y="${WL - 78}" width="70" height="14" fill="${T.plankDark}" ${o(2.5)}/>`
+          + smoke(249, WL - 240, t, { count: 7, period: 6, rise: 170, drift: 150, r0: 10, r1: 34, op: 0.6 });
+        if (snow) s += `<path d="M144 ${WL - 114} H342 M174 ${WL - 148} H312 M200 ${WL - 174} H288 M412 ${WL - 80} H488 M562 ${WL - 80} H628" stroke="${T.snow}" stroke-width="5" stroke-linecap="round"/>`;
+      }
+      // the pier on the right with two portal cranes (hooks sway)
+      const PY = 452;
+      s += `<path d="M740 ${PY} H${W + 10} V${PY + 18} H740 Z" fill="${T.plank}" ${o(3)}/>`
+        + Array.from({ length: 12 }, (_, i) => `<path d="M${756 + i * 46} ${PY + 18} V${PY + 34}" stroke="${P.ink}" stroke-width="4"/>`).join('');
+      if (snow) s += `<path d="M742 ${PY - 1} H${W + 10}" stroke="${T.snow}" stroke-width="5"/>`;
+      const crane = (x, tip, L, ph, load) => {
+        const [tx, ty] = tip, a = 0.07 * Math.sin(t * 1.15 + ph), hx = tx + Math.sin(a) * L, hy = ty + Math.cos(a) * L;
+        const px = x - 8, py = PY - 132; // jib pivot
+        const lat = Array.from({ length: 8 }, (_, i) => { const k0 = i / 8, k1 = (i + 1) / 8; const ax = px + (tx - px) * k0, ay = py + (ty - py) * k0, bx = px + (tx - px) * k1, by = py + (ty - py) * k1; return `M${n(ax)} ${n(ay)} L${n(bx + 6)} ${n(by + 9)}`; }).join(' ');
+        return `<g>
+          <path d="M${x - 46} ${PY} L${x - 18} ${PY - 104} M${x + 46} ${PY} L${x + 18} ${PY - 104} M${x - 36} ${PY - 40} H${x + 36} M${x - 36} ${PY - 40} L${x + 26} ${PY - 90} M${x + 36} ${PY - 40} L${x - 26} ${PY - 90}" stroke="${P.ink}" stroke-width="9" stroke-linecap="round"/>
+          <path d="M${x - 46} ${PY} L${x - 18} ${PY - 104} M${x + 46} ${PY} L${x + 18} ${PY - 104} M${x - 36} ${PY - 40} H${x + 36}" stroke="${T.crane}" stroke-width="4.5" stroke-linecap="round"/>
+          <path d="M${x - 36} ${PY - 40} L${x + 26} ${PY - 90} M${x + 36} ${PY - 40} L${x - 26} ${PY - 90}" stroke="${T.craneDark}" stroke-width="3" stroke-linecap="round"/>
+          <path d="M${n(px)} ${n(py)} L${n(tx)} ${n(ty)} M${n(px + 6)} ${n(py + 9)} L${n(tx + 3)} ${n(ty + 4)}" stroke="${P.ink}" stroke-width="7" stroke-linecap="round"/>
+          <path d="M${n(px)} ${n(py)} L${n(tx)} ${n(ty)} M${n(px + 6)} ${n(py + 9)} L${n(tx + 3)} ${n(ty + 4)}" stroke="${T.crane}" stroke-width="3" stroke-linecap="round"/>
+          <path d="${lat}" stroke="${T.craneDark}" stroke-width="2"/>
+          <path d="M${x + 22} ${PY - 140} L${x + 4} ${PY - 186} L${n(tx)} ${n(ty)}" stroke="${P.ink}" stroke-width="2" fill="none"/>
+          <rect x="${x - 34}" y="${PY - 144}" width="70" height="44" rx="3" fill="${T.crane}" ${o(3.5)}/><rect x="${x - 26}" y="${PY - 136}" width="20" height="16" fill="${T.glass}" stroke="${P.ink}" stroke-width="2"/>
+          <rect x="${x + 10}" y="${PY - 156}" width="30" height="14" fill="${T.craneDark}" ${o(2.5)}/>
+          ${snow ? `<path d="M${x - 36} ${PY - 146} H${x + 38}" stroke="${T.snow}" stroke-width="5" stroke-linecap="round"/>` : ''}
+          <path d="M${n(tx)} ${n(ty)} L${n(hx)} ${n(hy)}" stroke="${P.ink}" stroke-width="2"/>
+          <g transform="translate(${n(hx)} ${n(hy)}) rotate(${n((-a * 180) / Math.PI)})"><rect x="-7" y="0" width="14" height="12" fill="${P.charcoal}" stroke="${P.ink}" stroke-width="2"/>
+            ${load ? `<path d="M-4 12 L-22 30 M4 12 L22 30" stroke="${P.ink}" stroke-width="2"/><rect x="-30" y="30" width="60" height="40" fill="${P.wood}" ${o(3)}/><path d="M-30 30 L30 70 M-30 50 H30" stroke="${P.woodDeep}" stroke-width="2.5"/>${snow ? '<path d="M-28 29 H28" stroke="' + T.snow + '" stroke-width="4" stroke-linecap="round"/>' : ''}` : `<path d="M0 12 V20 Q0 30 -8 26" stroke="${P.ink}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`}</g>
+        </g>`;
+      };
+      s += crane(1170, [1010, 150], 120, 1.7, false) + crane(930, [760, 132], 150, 0, true);
+      // the front quay: edge beam, planks (snowed over), bollards
+      s += `<rect y="${QY}" width="${W}" height="${H - QY}" fill="${snow ? T.snow : T.plank}"/>`;
+      for (let k = 1; k < 9; k++) s += `<path d="M0 ${QY + 14 + k * k * 2.2 + k * 4} H${W}" stroke="${snow ? T.snowShade : T.plankDark}" stroke-width="${n(1.5 + k * 0.3)}"/>`;
+      s += `<rect y="${QY}" width="${W}" height="16" fill="${P.woodDeep}" ${o(3.5)}/>`
+        + Array.from({ length: 14 }, (_, i) => `<path d="M${i * 96 + 30} ${QY} V${QY + 16}" stroke="${P.ink}" stroke-width="2"/>`).join('');
+      if (snow) s += `<path d="M0 ${QY + 1} H${W}" stroke="${T.snow}" stroke-width="4"/>`;
+      [255, 1025].forEach((x) => { s += `<path d="M${x - 15} ${QY + 22} V${QY - 2} Q${x - 15} ${QY - 12} ${x - 20} ${QY - 16} H${x + 20} Q${x + 15} ${QY - 12} ${x + 15} ${QY - 2} V${QY + 22} Z" fill="${P.charcoal}" ${o(3)}/>` + (snow ? `<ellipse cx="${x}" cy="${QY - 17}" rx="20" ry="4" fill="${T.snow}" stroke="${P.ink}" stroke-width="1.5"/>` : ''); });
+      // stacked crates and drums at both sides of the quay
+      const crate = (x, y, w, h, c = P.wood) => `<rect x="${x}" y="${y - h}" width="${w}" height="${h}" fill="${c}" ${o(3)}/><path d="M${x + 4} ${y - h + 4} L${x + w - 4} ${y - 4} M${x} ${y - h / 2} H${x + w}" stroke="${P.woodDeep}" stroke-width="3"/>` + (snow ? `<path d="M${x + 2} ${y - h - 1} H${x + w - 2}" stroke="${T.snow}" stroke-width="6" stroke-linecap="round"/>` : '');
+      s += crate(10, 652, 92, 80) + crate(102, 652, 84, 72, P.woodMid) + crate(30, 572, 84, 70, P.woodMid) + crate(118, 580, 60, 52)
+        + crate(1096, 650, 90, 78, P.woodMid) + crate(1186, 650, 92, 86) + crate(1150, 572, 80, 66);
+      [[1060, 664], [1030, 676]].forEach(([x, y]) => { s += `<rect x="${x - 18}" y="${y - 48}" width="36" height="48" rx="4" fill="${P.greyDark}" ${o(3)}/><path d="M${x - 18} ${y - 32} H${x + 18} M${x - 18} ${y - 16} H${x + 18}" stroke="${P.ink}" stroke-width="2"/>` + (snow ? `<ellipse cx="${x}" cy="${y - 48}" rx="16" ry="4" fill="${T.snow}"/>` : ''); });
+      if (snow) s += snowfall(t, 441, { count: 110 });
+      return s;
+    },
+    front: (t, { snow = true } = {}) => (snow ? snowfall(t, 442, { count: 12, size: 1.7, speed: 1.6 }) : ''),
+    spots: { farLeft: [150, 708, 0.62], left: [390, 704, 0.62], center: [640, 706, 0.62], right: [890, 704, 0.62], farRight: [1130, 708, 0.62] },
+    close: { fx: 640, fy: 560, zoom: 1.6 },
+  },
+});
 
 module.exports = { SETS, manhattan };
