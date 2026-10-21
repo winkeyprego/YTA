@@ -22,7 +22,12 @@ from existing recipes. Only touch `studio/lib/` when a beat truly needs somethin
 4. **Director pass:** read ALL of beats.txt once. Plan the recurring people (header `cast`, 1–2 signature features each),
    chapters (a card every 4–5 minutes), recurring sets and motifs, the biggest moments, and how each PAUSE beat is used.
    Write it to `PLAN.md`. List what the library is missing in `NEEDS.md`.
-5. **Library pass:** build the important NEEDS items once (use the `add-to-library` skill). For minor ones, use the closest existing visual.
+   **Fresh visuals budget:** the video must keep showing new pictures to the end (`--plan` checks every 3 minutes for ~6+
+   looks never shown before). Plan, per chapter, which sets, props, scenes and graphics DEBUT there, and save some of the
+   library for late chapters. Anything the story needs that the library lacks, especially story-specific places and
+   objects, goes in NEEDS.md (a 30-40 min video typically needs 15-30 new episode-specific pieces).
+5. **Library pass:** build the NEEDS items (use the `add-to-library` skill), most important first, spread so every chapter
+   debuts something. They stay in the library, so later videos get cheaper. Only minor gaps use the closest existing visual.
 6. **Storyboard:** write `storyboard.txt`, one line per beat or small beat range, by type:
    - **Stage the moment first** (RECIPES "Staging"): who is doing what, to whom, where? People sit, turn to each other,
      hand things over, take calls; use over-the-shoulder and three-quarter close-ups. About 1 beat in 4 is a scene designed

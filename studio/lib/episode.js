@@ -122,6 +122,21 @@ function lint(spec, plan, style = { pacing: { maxShot: 8, maxBuild: 13, maxGap: 
     if (talks.length >= 10 && flat.length / talks.length > 0.35) {
       warn.push(`${Math.round((100 * flat.length) / talks.length)}% of people shots are one person facing the camera doing nothing (limit 35%; e.g. shots ${flat.slice(0, 8).map(([, i]) => i).join(', ')}): stage them (sit, turn toward someone, "f":"o" over the shoulder, hand something over, walk in, hold a prop)`);
     }
+    // Freshness: the references keep showing new pictures all the way through. Every ~3 minutes must debut new looks
+    // (a set, background, kit kind or prop never shown before); reusing earlier looks is fine as a callback, not a diet.
+    const look = (s) => [s.template + ':' + (s.kind || s.set || s.bg || ''), ...((s.items || []).map((it) => it.prop && `prop:${it.prop}`).filter(Boolean))];
+    const seenLooks = new Set();
+    const span = 180;
+    let winStart = 0, fresh = 0;
+    const stale = [];
+    spec.shots.forEach((s, i) => {
+      const t0 = plan.shots[i] ? plan.shots[i].start : 0;
+      if (t0 - winStart >= span) { if (fresh < 6 && i > 30) stale.push(`${Math.floor(winStart / 60)}:${String(Math.floor(winStart % 60)).padStart(2, '0')} (${fresh} new)`); winStart = t0; fresh = 0; }
+      look(s).forEach((l) => { if (!seenLooks.has(l)) { seenLooks.add(l); fresh++; } });
+    });
+    if (stale.length) warn.push(`nothing new for long stretches: ${stale.join(', ')} -- each 3 minutes needs ~6+ looks never shown before (a new set, prop, scene or graphic). Build episode-specific visuals for these chapters (add-to-library), don't recycle`);
+    const stick = spec.shots.filter((s) => (s.stickers || []).length).length;
+    if (stick / n > 0.35) warn.push(`${Math.round((100 * stick) / n)}% of shots carry stickers (limit 35%): stickers on everything become wallpaper; keep them for the key word of a beat`);
     const setCount = {};
     talks.forEach(([s]) => { setCount[s.set] = (setCount[s.set] || 0) + 1; });
     Object.entries(setCount).forEach(([k, c]) => { if (c > Math.max(8, n * 0.05)) warn.push(`set "${k}" is used ${c} times (limit ~${Math.round(Math.max(8, n * 0.05))}): move some beats to other places`); });

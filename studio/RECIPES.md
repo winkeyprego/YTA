@@ -159,6 +159,9 @@ video feel templated. Before writing a beat, ask: *what is happening in this sen
   with a set as `bg` and props + people placed by hand).
 - **One-off ideas beat reused graphics.** About 1 beat in 4 should be a scene you designed for that sentence (a compose
   with people and props), not a kit graphic.
+- **Keep it fresh to the end.** The first minutes always look good because everything is new; the risk is minute 15 to 35.
+  Every 3 minutes should debut ~6 looks never shown before (`--plan` warns), stickers stay under ~35% of shots, and a
+  recurring device (the fuse, the ledger) comes back as a deliberate callback, not as the default.
 - **Limits `--plan` enforces** (warnings): any one graphic kind ~2% of shots (min 5; e.g. 10 for a 500-shot video), any one
   set ~5% of shots (min 8), and at most 35% of people shots may be one person facing the camera doing nothing.
 
