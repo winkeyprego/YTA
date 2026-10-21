@@ -75,17 +75,18 @@ function expand(line, beats, lineNo) {
   const out = {};
   if (s.t) { out.template = s.t; delete s.t; }
   if (s.k) { out.kind = s.k; delete s.k; }
-  if (s.beat != null) { s.b = s.beat; delete s.beat; } // "beat" = "b", for kits with their own "b" field (dualChart)
-  if (s.b != null && typeof s.b !== 'object') { // (an object "b" is a kit field, e.g. dualChart's second line)
-    const [a, b] = String(s.b).split('-').map(Number);
+  // "beat" = "b", for templates with their own "b" field (dualChart, pipes): then "b" stays theirs
+  const beatRef = s.beat != null ? s.beat : s.b != null && typeof s.b !== 'object' ? s.b : null;
+  if (s.beat != null) delete s.beat; else if (beatRef != null) delete s.b;
+  if (beatRef != null) {
+    const [a, b] = String(beatRef).split('-').map(Number);
     const list = beats.filter((x) => x.n >= a && x.n <= (b || a));
-    if (!list.length) throw new Error(`storyboard ${lineNo}: beat "${s.b}" not found (beats.txt has 1-${beats.length})`);
+    if (!list.length) throw new Error(`storyboard ${lineNo}: beat "${beatRef}" not found (beats.txt has 1-${beats.length})`);
     if (list.every((x) => x.pause)) { out.fill = +(list[list.length - 1].e - list[0].s).toFixed(2); out._pause = true; } // uses an existing silence
     else out.vo = list.filter((x) => !x.pause).map((x) => x.text).join(' ');
     out._beats = [a, b || a];
     const voiced = list.find((x) => !x.pause);
     if (voiced) out._t0 = voiced.s;
-    delete s.b;
   }
   if (s.who) {
     out.chars = (Array.isArray(s.who) ? s.who : [s.who]).map(parseWho);

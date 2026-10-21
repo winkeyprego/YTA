@@ -252,8 +252,11 @@ function talk(shot, ctx) {
     const boxes = chars.map((ch) => { const [x, y, s] = spotOf(ch); return { x0: x - 110 * s, x1: x + 110 * s, y0: y - (ch.sit ? 290 : 330) * s, y1: y + 10 }; });
     const x0 = Math.min(...boxes.map((b) => b.x0)), x1 = Math.max(...boxes.map((b) => b.x1));
     const y0 = Math.min(...boxes.map((b) => b.y0)), y1 = Math.max(...boxes.map((b) => b.y1));
-    const zoom = Math.max(1, Math.min(1.55, (720 * 0.78) / (y1 - y0), (1280 * 0.8) / (x1 - x0)));
-    return { zoom, fx: (x0 + x1) / 2, fy: Math.min(y0 + (y1 - y0) * 0.42, 420) };
+    // sets with small, low-standing people (outdoor wides, scale ~0.6) may zoom further; the view stays inside the set
+    const minS = Math.min(...chars.map((ch) => spotOf(ch)[2]));
+    const zoom = Math.max(1, Math.min(Math.min(2.4, 1.55 / Math.min(1, minS)), (720 * 0.78) / (y1 - y0), (1280 * 0.8) / (x1 - x0)));
+    const hw = 640 / zoom, hh = 360 / zoom;
+    return { zoom, fx: Math.min(Math.max((x0 + x1) / 2, hw), 1280 - hw), fy: Math.min(Math.max(y0 + (y1 - y0) * 0.42, hh), 720 - hh) };
   };
 
   return (t) => {
@@ -275,6 +278,8 @@ function talk(shot, ctx) {
       const zoom = cameraZoom(shot.camera || style.camera, t, ctx, shot.zoom || fit.zoom);
       const [fx, fy] = shot.focusXY || (shot.zoom || fit.zoom === 1 ? (focusChar ? [spotOf(focusChar)[0], spotOf(focusChar)[1] - 200] : [640, 360]) : [fit.fx, fit.fy]);
       c = { zoom, fx, fy };
+      // a fitted medium shot centres the cast (the anchor goes to the frame centre; fitCast keeps the view inside the set)
+      if (!shot.focusXY && !shot.zoom && fit.zoom > 1) { c.x = 640 - fx; c.y = 360 - fy; }
     }
     const people = chars.filter((ch) => ch !== overChar).map((ch) => {
       const [x, y, s] = spotOf(ch);
@@ -371,7 +376,9 @@ function versus(shot, ctx) {
   return (t) => {
     const panels = sides.map((sd, i) => {
       const x0 = i * 640;
-      const bg = sd.color || (i === 0 ? '#8fa3b5' : '#c09a8f');
+      // panel colours: palette names map to muted tints (a whole panel of pure red/blue is garish)
+      const TINT = { red: '#c09a8f', blue: '#8fa3b5', green: '#a3b59a', gold: '#cdb98f', grey: '#b5b5ad', navy: '#8f97a8' };
+      const bg = TINT[sd.color] || P[sd.color] || sd.color || (i === 0 ? '#8fa3b5' : '#c09a8f');
       const lab = sd.label ? ui.sticker(sd.label, x0 + 320, 92, t, ctx.cue(sd.labelOn, 0.2 + i * 0.5), { size: 40, rot: i ? 2 : -2, color: P.ink }) : '';
       const who = sd.who ? g(tr(x0 + 320, 640, 0.95), character(resolveCast(sd.who, ctx), actor(sd, t, ctx, sd.line ? { talkFrom: ctx.cue(sd.lineOn, 1 + i) + 0.2, talkTo: ctx.cue(sd.lineOn, 1 + i) + 0.2 + sd.line.length / 18 } : {}))) : '';
       const bub = sd.line ? ui.bubble({ x: x0 + 60, y: 140, w: 520, lines: wrap(sd.line, 28), tail: [x0 + 320, 320], size: 28 }, t, ctx.cue(sd.lineOn, 1 + i)).svg : '';

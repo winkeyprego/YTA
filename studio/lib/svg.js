@@ -4,7 +4,7 @@ const P = require('./palette');
 const W = 1280;
 const H = 720;
 
-const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); // quotes too: text also lands in attributes (data-qn)
 const n = (v) => Math.round(v * 100) / 100;
 
 const g = (attrs, ...children) => `<g ${attrs}>${children.join('')}</g>`;

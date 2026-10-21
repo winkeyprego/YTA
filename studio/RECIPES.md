@@ -223,5 +223,7 @@ Over a limit? Split the beat into two shots.
 - **Skylines and memorials:** `skylineWTC` with `towers:false` shows only absence (empty sky); the light beams only at night.
   Never add smoke, glow or damage to a set. Aircraft (`jet`) only in open sky, never near a building. A structural point is a
   `diagram:section` schematic, never a picture of the real building. Small places are a `map` with `city` (labelled illustrative).
+- **Never the 'brush' (toothbrush) moustache on a generic character**, especially with a side parting or a peaked cap: it reads as
+  a Hitler caricature. Use it only on the cast entry for that real person, when the story is about him.
 - **Real people:** caricature only through the cast's signature features. Never show them doing something the narration
   doesn't say they did, and never put invented quotes in their mouths. Quotes on screen must be the narration's own words.

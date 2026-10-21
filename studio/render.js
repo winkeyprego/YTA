@@ -105,7 +105,8 @@ async function edgeDensity(page, s, lt, fps) {
   return page.evaluate(async (m) => {
     const img = new Image();
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(m);
-    await img.decode().catch(() => null);
+    const ok = await img.decode().then(() => true, () => false);
+    if (!ok) return -1; // the frame's SVG doesn't parse
     const c = document.createElement('canvas'); c.width = 128; c.height = 72;
     const g = c.getContext('2d'); g.drawImage(img, 0, 0, 128, 72);
     const d = g.getImageData(0, 0, 128, 72).data;
@@ -161,13 +162,15 @@ async function runQA(browser, tl, fps, name, outDir, from = 0, to = Infinity) {
         return out;
       }, svg);
       // nearly empty frame (a misspelled field, a kit with no data, a screen that left)
-      if (lt > 0.8 && !EMPTY_OK.has(s.template) && (await edgeDensity(page, s, lt, fps)) < EMPTY_EDGES) {
+      const ed = lt > 0.8 ? await edgeDensity(page, s, lt, fps) : 1;
+      if (ed < 0) found.push('the frame SVG does not parse (an unescaped & or < in some text?)');
+      else if (lt > 0.8 && !EMPTY_OK.has(s.template) && ed < EMPTY_EDGES) {
         found.push(`frame is almost empty (check field names against the kit header in SHOTS.md, or the cue times)`);
       }
       found.forEach((f) => { if (!seen.has(f)) { seen.add(f); issues.push({ shot: i + 1, name: s.name, t: s.start + lt, msg: f }); } });
     }
     // the cut must land on something: an opening that builds from an empty backdrop reads as a gap
-    if (!EMPTY_OK.has(s.template) && s.dur > 1 && (await edgeDensity(page, s, 0.2, fps)) < EMPTY_EDGES) {
+    if (!EMPTY_OK.has(s.template) && s.dur > 1 && (await edgeDensity(page, s, 0.2, fps)) >= 0 && (await edgeDensity(page, s, 0.2, fps)) < EMPTY_EDGES) {
       issues.push({ shot: i + 1, name: s.name, t: s.start + 0.2, msg: 'opens on an almost empty frame (something should be on screen within 0.2s of the cut)' });
     }
   }

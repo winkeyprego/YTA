@@ -621,7 +621,7 @@ const CAST = {
   crowdC: { outfit: 'suit', suit: '#5a4a3a', tie: P.gold, hair: 'bald', hairColor: '#4a4038' },
 
   // uniforms & occupations
-  officer: { outfit: 'uniform', suit: P.olive, hat: 'service', hair: 'side', hairColor: '#4a4038', moustache: 'brush', moustacheColor: '#4a4038', skin: P.skin2 },
+  officer: { outfit: 'uniform', suit: P.olive, hat: 'service', hair: 'side', hairColor: '#4a4038', skin: P.skin2 },
   pilot: { outfit: 'uniform', suit: P.navy, shirt: '#f2efe6', tie: P.ink, hat: 'service', hatColor: P.navy, hatBand: P.ink, hair: 'side', hairColor: P.greyLight, skin: P.skin1 },
   fighterPilot: { outfit: 'flightsuit', hat: 'pilotHelmet', hair: 'none', skin: P.skin4 },
   controller: { outfit: 'shirt', shirt: '#c9d6e3', hair: 'curly', hairColor: '#2f2a26', headset: true, skin: P.skin5 },
