@@ -922,8 +922,79 @@ function book(o) {
     </g>`);
 }
 
+// ---------- staircase ----------
+// Steps rising left to right, a big label on each (o.steps), and a little figure that hops up one step every o.every
+// seconds after `at`. When the labels' numbers jump (GRADE 5 -> GRADE 7), the skipped ones (GRADE 6) flash up struck
+// through as it hops past. Up to 7 steps. Anchor bottom-centre; ~720 x 500 at s = 1.
+function staircase(o, t) {
+  const { character } = require('./characters'); // lazy: characters.js is not needed by any other prop
+  const { measure } = require('./screens'); // per-glyph text widths (labels must fit their step)
+  const steps = (o.steps && o.steps.length ? o.steps : ['GRADE 5', 'GRADE 7', 'GRADE 9', 'GRADE 12']).slice(0, 7).map(String);
+  const N = steps.length, every = o.every ?? 1, at0 = AT(o) + 0.4;
+  const sw = Math.min(190, 800 / N), rise = Math.min(90, 380 / N), W = N * sw;
+  const xL = (i) => -W / 2 + i * sw, top = (i) => -(i + 1) * rise;
+  const hopDur = 0.42;
+  const hopAt = (k) => at0 + k * every - hopDur; // lands on step k at at0 + k * every
+  // where the figure is: step index (fractional while hopping) and the arc height
+  let pos = 0, lift = 0, hopping = false;
+  for (let k = 1; k < N; k++) {
+    const h = prog(t, hopAt(k), hopDur);
+    if (h <= 0) break;
+    pos = k - 1 + ease.inOut(h);
+    lift = Math.sin(Math.PI * h) * (rise + 50);
+    hopping = h < 1;
+  }
+  const onStep = Math.round(pos);
+  // the stair block, treads (gold once reached), labels in the clean band under each tread
+  let outline = `M${-W / 2} 0`;
+  for (let i = 0; i < N; i++) outline += ` V${n(top(i))} H${n(xL(i) + sw)}`;
+  outline += ' V0 Z';
+  const joints = steps.map((_, i) => (i ? `M${n(xL(i))} ${n(top(i - 1))} V0` : '')).join(' ');
+  const treads = steps.map((_, i) => {
+    const reached = t >= (i ? hopAt(i) + hopDur : at0 - 0.4);
+    const flash = i && t >= hopAt(i) + hopDur ? clamp(1 - (t - hopAt(i) - hopDur) / 0.5) : 0;
+    return `<rect x="${n(xL(i) - 4)}" y="${n(top(i) - 12)}" width="${n(sw + 4)}" height="14" rx="3" fill="${reached ? P.gold : P.wood}" ${ol(2.5)}/>`
+      + (flash > 0 ? `<rect x="${n(xL(i) - 4)}" y="${n(top(i) - 12)}" width="${n(sw + 4)}" height="14" rx="3" fill="${P.paper}" opacity="${n(flash * 0.8)}"/>` : '');
+  }).join('');
+  const labels = steps.map((l, i) => {
+    const size = clamp((sw - 24) / Math.max(1, measure(l, 1, 'hand')), 28, 40);
+    return `<g data-qa="text" data-qn="step '${l.slice(0, 18).replace(/"/g, '')}'">${text(l, xL(i) + sw / 2, top(i) + 2 + rise / 2 + size * 0.36, { size: n(size), anchor: 'middle', font: 'hand', fill: P.ink })}</g>`;
+  }).join('');
+  // skipped numbers between two labels: a paper chip in the air above the lower step, struck through in red, flashing
+  const num = (l) => { const m = /^(.*?)(\d+)\s*$/.exec(l); return m ? [m[1], Number(m[2])] : null; };
+  const skipped = steps.map((l, k) => {
+    if (!k) return '';
+    const a = num(steps[k - 1]), b = num(l);
+    if (!a || !b || a[0] !== b[0] || b[1] - a[1] < 2 || b[1] - a[1] > 4) return '';
+    const miss = Array.from({ length: b[1] - a[1] - 1 }, (_, j) => a[1] + 1 + j);
+    const str = miss.length === 1 ? `${a[0]}${miss[0]}` : miss.join(', ');
+    const sAt = hopAt(k) + hopDur * 0.6;
+    if (t < sAt) return '';
+    const size = clamp((sw * 0.84 - 26) / Math.max(1, measure(str, 1, 'hand')), 28, 34);
+    const cw = measure(str, size, 'hand') + 26, cx = xL(k) - sw * 0.42, cy = top(k - 1) - 12 - 46;
+    const sk = ease.out(prog(t, sAt + 0.12, 0.2));
+    const fl = t - sAt < 0.75 ? (Math.floor((t - sAt) / 0.125) % 2 ? 0.35 : 1) : 0.9;
+    return `<g opacity="${n(fl)}"><g data-qa="text" data-qn="skipped '${str}'"><rect x="${n(cx - cw / 2)}" y="${n(cy - size * 0.6 - 6)}" width="${n(cw)}" height="${n(size * 1.2 + 12)}" rx="6" fill="${P.paper}" ${ol(2.5)}/>
+      ${text(str, cx, cy + size * 0.32, { size: n(size), anchor: 'middle', font: 'hand', fill: P.inkSoft })}</g>
+      ${sk > 0.05 ? `<path d="M${n(cx - cw / 2 + 8)} ${n(cy + 2)} L${n(cx - cw / 2 + 8 + (cw - 16) * sk)} ${n(cy - 4 * sk)}" stroke="${P.red}" stroke-width="5" stroke-linecap="round"/>` : ''}</g>`;
+  }).join('');
+  // the climber: a little character (from character(), never freehand), arms up mid-hop
+  const k0 = Math.floor(pos), f = pos - k0;
+  const fx = lerp(xL(k0) + sw / 2, xL(Math.min(N - 1, k0 + 1)) + sw / 2, f);
+  const fy = lerp(top(k0), top(Math.min(N - 1, k0 + 1)), f) - 12 - lift;
+  const kid = { outfit: 'tshirt', shirt: P.blue, hair: 'spiky', hairColor: '#4a3020', skin: P.skin2 };
+  const state = hopping ? { eyes: 'happy', mouth: 'grin', brows: 'raised', armL: [150, 12], armR: [150, 12] } : { eyes: 'dot', mouth: 'smile', brows: 'flat' };
+  const figS = Math.min(0.42, rise / 230 + 0.06);
+  const fig = `<g transform="translate(${n(fx)} ${n(fy)}) scale(${n(figS)})">${character(kid, state)}</g>`;
+  const shadowE = `<ellipse cx="${n(fx)}" cy="${n(top(onStep) - 12)}" rx="${n(26 * (1 - lift / (rise + 120)))}" ry="5" fill="${P.ink}" opacity=".18"/>`;
+  return place(o, `<ellipse cx="0" cy="2" rx="${n(W / 2 + 30)}" ry="10" fill="${P.ink}" opacity=".15"/>
+    <path d="${outline}" fill="${P.paperDim}" ${ol(3)}/>
+    <path d="${joints}" stroke="${P.paperShade}" stroke-width="3"/>
+    ${treads}${labels}${skipped}${hopping ? '' : shadowE}${fig}`);
+}
+
 module.exports = {
   balanceScale, bell, countdownClock, wallClock, invitation, doorsRow, sharkFins, circuitBreaker, weather, photocopier,
   badge, van, radarScope, blackBox, jet, thermometer, pokerTable, puzzle, coffeeCup, clipboard, evidenceTray, houseOfCards, rocket,
-  tank, tankColumn, truck, cargoShip, book,
+  tank, tankColumn, truck, cargoShip, book, staircase,
 };

@@ -87,6 +87,7 @@ const DOCS = {
   truck: 'Studebaker-style 6x6 truck, side view (cargo canvas|crates|rockets (Katyusha)|bread, dir, drive px/s, star: white door star, color)',
   cargoShip: 'Liberty-style cargo ship on a full-width strip of water, crates on deck, funnel smoke, bobs (dir, sail px/s from `at`, water; s ~0.7)',
   book: 'hardback book standing tilted with a cover title (title, color, tilt), or open: true lying open with two pages of lines',
+  staircase: 'steps rising left to right, a big label on each; a little figure hops up one step every `every` s after `at`, skipped numbers flash struck through (steps: ["GRADE 5","GRADE 7",...], every)',
 };
 
 module.exports = { PROPS, DOCS };

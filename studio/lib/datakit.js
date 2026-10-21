@@ -43,6 +43,14 @@
 //     equation on top. At moveAt the price move (move: -30, '-30%' or -0.3) pops; a loss chunk turns red and tumbles off
 //     the top (it eats your part first), or a gain grows on top in green. The result card shows "YOUR $1 -> $0" and a
 //     stamp: WIPED OUT (red) when the loss is >= your stake, else the % change on your money.
+//   extrapolate({ title, points: [[x, y], ...], xLabels, yLabel, rulerAt, extendAt, target: { label, sub }, doubtAt, doubt, at })
+//     The house device "he finds a trend, follows the line forward, and believes where it lands". A chart card on the left
+//     (~60%): 4-8 dots plot one by one from `at`, a wooden ruler slides in and lies along the trend (least-squares fit) at
+//     rulerAt, then at extendAt a dashed line runs from the last dot past the card's edge to a target marker in the empty
+//     right side, where a paper plate pops with target.label (big) and target.sub. doubt ('?' default, or a word such as
+//     'REALLY?') slams onto the target at doubtAt; it only shows when doubt or doubtAt is given. xLabels: ['2019', ...]
+//     (one per point) or [[x, 'label'], ...]. The scale always keeps the landing point on screen (rising: high on the right,
+//     falling: low). Defaults chain from `at`: dots every 0.3s, ruler, extend, doubt; given cues squeeze the dots to fit.
 //
 // No real logos anywhere: companies are lettered emblems plus names.
 
@@ -774,10 +782,163 @@ function leverage(spec, t) {
     ${yoursLbl}${borLbl}${chip}${math}${card}${stamp}`;
 }
 
+// ---------- extrapolate ----------
+// The house device: dots -> ruler along the trend -> dashed line out of the chart -> the target he believes in -> doubt.
+function extrapolate(spec, t) {
+  const pts = (spec.points && spec.points.length ? spec.points : [[1, 2], [2, 2.9], [3, 3.4], [4, 4.6], [5, 5.1], [6, 6.2]])
+    .map((p, i) => (Array.isArray(p) ? [Number(p[0]), Number(p[1])] : [i, Number(p)])).slice(0, 8);
+  const title = spec.title ?? 'Follow the line';
+  const target = typeof spec.target === 'string' ? { label: spec.target } : spec.target || { label: 'WHERE IT LANDS' };
+  const at = spec.at ?? 0.3;
+  const N = pts.length;
+  // timing: dots, ruler, extension, landing, doubt (given cues win; the dots squeeze in before the ruler)
+  const extDur = 1.0;
+  const rulerAt = spec.rulerAt ?? (spec.extendAt != null ? Math.max(at + 0.6, spec.extendAt - 0.8) : at + 0.15 + (N - 1) * 0.3 + 0.45);
+  const stagger = N > 1 ? clamp((rulerAt - at - 0.5) / (N - 1), 0.1, 0.3) : 0;
+  const dotAt = (i) => at + 0.15 + i * stagger;
+  const extendAt = spec.extendAt ?? rulerAt + 0.8;
+  const landAt = extendAt + extDur;
+  const showDoubt = spec.doubt != null || spec.doubtAt != null;
+  const doubtAt = spec.doubtAt ?? landAt + 0.8;
+  const doubt = String(spec.doubt ?? '?');
+
+  // card + plot geometry (left ~60%); the target lives in the free space on the right
+  const card = { x: 50, y: 62, w: 720, h: 576 }; // top-left stays clear for the corner caption / date tag
+  const ax = 120, axisY = 548, plotL = 160, plotR = 690, TX = 1000;
+  const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+  const xMin = Math.min(...xs), xMax = Math.max(...xs), xSpan = xMax - xMin || 1;
+  const px = (v) => plotL + ((v - xMin) / xSpan) * (plotR - plotL);
+  const xT = xMin + ((TX - plotL) / (plotR - plotL)) * xSpan; // the target's x in data units
+  // least-squares trend
+  const mx = xs.reduce((a, b) => a + b, 0) / N, my = ys.reduce((a, b) => a + b, 0) / N;
+  const sxx = xs.reduce((a, x) => a + (x - mx) ** 2, 0);
+  const slope = sxx ? xs.reduce((a, x, i) => a + (x - mx) * (ys[i] - my), 0) / sxx : 0;
+  const [lx, ly] = pts[N - 1];
+  const yT = ly + slope * (xT - lx);
+  const rising = slope >= 0;
+  // the scale keeps the landing point on screen with room for its plate (above it when rising, below when falling)
+  const lo = Math.min(...ys, yT), hi = Math.max(...ys, yT), span = hi - lo || 1;
+  const [top, bot] = rising ? [244, 520] : [218, 450];
+  const py = (v) => bot - ((v - lo) / span) * (bot - top);
+  const fitY = (x) => my + slope * (x - mx);
+  const P0 = [lx, ly].map((v, i) => (i ? py(v) : px(v)));
+  const T = [TX, py(yT)];
+
+  // axes, grid, labels
+  const grid = [0, 1, 2, 3].map((i) => `<path d="M${ax + 6} ${n(220 + i * 100)} H735" stroke="${C.grid}" stroke-width="2"/>`).join('');
+  const axes = `<path d="M${ax} 194 V${axisY} H742" fill="none" stroke="${C.ink}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M${ax - 9} 206 L${ax} 190 L${ax + 9} 206 M730 ${axisY - 9} L746 ${axisY} L730 ${axisY + 9}" fill="none" stroke="${C.ink}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const tSize = clamp(640 / Math.max(1, measure(title, 1, 'display')), 40, 48);
+  const head = qa('chart title', text(title, 90, 128, { size: n(tSize), font: 'display' }))
+    + (spec.yLabel ? qa('y label', text(spec.yLabel, ax + 22, 184, { size: 34, font: 'hand', fill: C.soft })) : '');
+  const xl = (spec.xLabels || []).map((l, i) => (Array.isArray(l) ? [Number(l[0]), String(l[1])] : [pts[i] ? pts[i][0] : null, String(l)])).filter((l) => l[0] != null);
+  const gapPx = xl.length > 1 ? (plotR - plotL) / Math.max(1, (Math.max(...xl.map((l) => l[0])) - Math.min(...xl.map((l) => l[0]))) / xSpan * (xl.length - 1)) : 999;
+  const lw = Math.max(0, ...xl.map((l) => measure(l[1], 32, 'hand')));
+  const every = lw > gapPx * 0.9 ? 2 : 1; // too crowded: every other label (keeps them 32px)
+  const xLab = xl.filter((_, i) => i % every === 0).map(([x, l]) => qa(`x '${l}'`, text(l, px(x), 592, { size: 32, font: 'hand', fill: C.soft, anchor: 'middle' }))).join('');
+
+  // the wooden ruler: its edge on the trend line, its body on the empty side (above when rising), slides along itself
+  let ruler = '';
+  if (t >= rulerAt && N > 1) {
+    const ra = [px(xMin) - 34, py(fitY(xMin - (34 / (plotR - plotL)) * xSpan))];
+    const rb = [px(xMax) + 46, py(fitY(xMax + (46 / (plotR - plotL)) * xSpan))];
+    const L = Math.hypot(rb[0] - ra[0], rb[1] - ra[1]);
+    const ang = (Math.atan2(rb[1] - ra[1], rb[0] - ra[0]) * 180) / Math.PI;
+    const k = ease.out(prog(t, rulerAt, 0.55));
+    const W = 40, side = rising ? -1 : 1; // body above (-) or below (+) the edge
+    const y0 = side < 0 ? -W : 0;
+    let ticks = '';
+    for (let d = 14; d < L - 8; d += 14) {
+      const big = Math.round(d / 14) % 5 === 0;
+      ticks += `M${n(d)} 0 V${n(-side * -(big ? 16 : 9))} `;
+    }
+    ruler = `<g opacity="${n(clamp(k * 2.5))}" transform="translate(${n(ra[0])} ${n(ra[1])}) rotate(${n(ang)}) translate(${n(-(1 - k) * L * 0.55)} ${n(side * (1 - k) * 14)})">
+      <rect x="4" y="${n(y0 + side * 6)}" width="${n(L)}" height="${W}" rx="5" fill="#000" opacity=".12"/>
+      <rect x="0" y="${y0}" width="${n(L)}" height="${W}" rx="5" fill="${P.goldDark}" stroke="${C.ink}" stroke-width="3"/>
+      <rect x="6" y="${n(side < 0 ? -W + 8 : W - 14)}" width="${n(L - 12)}" height="6" rx="3" fill="${P.gold}" opacity=".7"/>
+      <path d="${ticks}" stroke="${P.woodDark}" stroke-width="2.5"/>
+      <circle cx="${n(L - 22)}" cy="${n(side * W / 2)}" r="6" fill="${P.paper}" stroke="${C.ink}" stroke-width="2"/></g>`;
+  }
+
+  // the dots
+  const dots = pts.map(([x, y], i) => {
+    const p = pop(t, dotAt(i), 0.22);
+    return p.on ? popAt(px(x), py(y), p, `<circle cx="${n(px(x))}" cy="${n(py(y))}" r="12" fill="${C.navy}" stroke="${C.ink}" stroke-width="3"/>`) : '';
+  }).join('');
+
+  // the dashed line out of the chart, toward the target
+  let ext = '';
+  if (t >= extendAt) {
+    const k = ease.inOut(prog(t, extendAt, extDur));
+    const hx = lerp(P0[0], T[0], k), hy = lerp(P0[1], T[1], k);
+    ext = `<path d="M${n(P0[0])} ${n(P0[1])} L${n(hx)} ${n(hy)}" stroke="${P.paper}" stroke-width="11" stroke-linecap="round" opacity=".7"/>
+      <path d="M${n(P0[0])} ${n(P0[1])} L${n(hx)} ${n(hy)}" stroke="${C.ink}" stroke-width="5" stroke-dasharray="18 12" stroke-linecap="round"/>
+      ${k < 1 ? `<circle cx="${n(hx)}" cy="${n(hy)}" r="7" fill="${C.ink}"/>` : ''}`;
+  }
+
+  // the target and its plate
+  let tgt = '', plate = '';
+  if (t >= landAt) {
+    const p = pop(t, landAt, 0.22);
+    const ring = t < landAt + 0.6 ? `<circle cx="${T[0]}" cy="${n(T[1])}" r="${n(30 + (t - landAt) * 70)}" fill="none" stroke="${P.gold}" stroke-width="4" opacity="${n(1 - (t - landAt) / 0.6)}"/>` : '';
+    tgt = ring + popAt(T[0], T[1], p, `<circle cx="${T[0]}" cy="${n(T[1])}" r="30" fill="${C.card}" stroke="${C.ink}" stroke-width="3.5"/>
+      <circle cx="${T[0]}" cy="${n(T[1])}" r="19" fill="${P.gold}" stroke="${C.ink}" stroke-width="2.5"/><circle cx="${T[0]}" cy="${n(T[1])}" r="7" fill="${C.ink}"/>`);
+    // label: Lilita 40-52, wrapped onto two lines if it can't fit at 40
+    const label = String(target.label ?? ''), sub = target.sub ? String(target.sub) : '';
+    const maxW = 392;
+    let lines = [label];
+    if (measure(label, 40, 'display') > maxW && label.includes(' ')) {
+      const words = label.split(' ');
+      let best = 1, bestW = Infinity;
+      for (let i = 1; i < words.length; i++) {
+        const w = Math.max(measure(words.slice(0, i).join(' '), 1, 'display'), measure(words.slice(i).join(' '), 1, 'display'));
+        if (w < bestW) { bestW = w; best = i; }
+      }
+      lines = [words.slice(0, best).join(' '), words.slice(best).join(' ')];
+    }
+    const ls = clamp(maxW / Math.max(1, ...lines.map((l) => measure(l, 1, 'display'))), 40, 52);
+    const ss = sub ? clamp(maxW / Math.max(1, measure(sub, 1, 'hand')), 28, 32) : 0;
+    const pw = clamp(Math.max(...lines.map((l) => measure(l, ls, 'display')), sub ? measure(sub, ss, 'hand') : 0) + 48, 220, 440);
+    const ph = 26 + lines.length * ls * 1.02 + (sub ? ss + 24 : 0) + 16;
+    const pcx = Math.min(TX, 1236 - pw / 2);
+    const py0 = rising ? T[1] - 70 - ph : T[1] + 70;
+    const pk = ease.out(prog(t, landAt + 0.15, 0.3));
+    plate = pk > 0 ? `<g opacity="${n(clamp(pk * 1.5))}" transform="translate(0 ${n((1 - pk) * (rising ? -24 : 24))})">
+      <g ${shadow}><rect x="${n(pcx - pw / 2)}" y="${n(py0)}" width="${n(pw)}" height="${n(ph)}" rx="12" fill="${C.card}" stroke="${C.ink}" stroke-width="3"/></g>
+      <rect x="${n(pcx - 38)}" y="${n(py0 - 12)}" width="76" height="24" fill="${P.tape}" opacity=".9" transform="rotate(-4 ${n(pcx)} ${n(py0)})"/>
+      ${qa('target label', lines.map((l, i) => text(l, pcx, py0 + 18 + ls * 0.86 + i * ls * 1.02, { size: n(ls), font: 'display', anchor: 'middle' })).join(''))}
+      ${sub ? qa('target sub', text(sub, pcx, py0 + 18 + lines.length * ls * 1.02 + 14 + ss * 0.9, { size: n(ss), font: 'hand', fill: C.soft, anchor: 'middle' })) : ''}
+    </g>` : '';
+  }
+
+  // doubt: a red '?' (or a stamped word) slams onto the target
+  let dbt = '';
+  if (showDoubt && t >= doubtAt) {
+    const k = prog(t, doubtAt, 0.2);
+    const s = lerp(1.8, 1, ease.out(k));
+    const o = clamp(k * 3);
+    if (doubt.length <= 2) {
+      dbt = `<g opacity="${n(o)}" transform="translate(${T[0]} ${n(T[1])}) rotate(8) scale(${n(s)})">
+        ${qa('doubt', `<text x="0" y="40" class="t-display" font-size="120" fill="${P.red}" text-anchor="middle" stroke="${C.card}" stroke-width="12" stroke-linejoin="round" paint-order="stroke">${esc(doubt)}</text>`)}</g>`;
+    } else {
+      const ds = clamp(330 / Math.max(1, measure(doubt, 1, 'display')), 30, 44);
+      const dw = measure(doubt, ds, 'display') + 44;
+      dbt = `<g opacity="${n(o)}" transform="translate(${T[0]} ${n(T[1])}) rotate(-7) scale(${n(s)})">
+        ${qa('doubt', `<rect x="${n(-dw / 2)}" y="${n(-(ds + 30) / 2)}" width="${n(dw)}" height="${n(ds + 30)}" rx="8" fill="${C.card}" fill-opacity=".9" stroke="${P.red}" stroke-width="6"/>
+        <rect x="${n(-dw / 2 + 7)}" y="${n(-(ds + 30) / 2 + 7)}" width="${n(dw - 14)}" height="${n(ds + 16)}" rx="4" fill="none" stroke="${P.red}" stroke-width="2"/>
+        ${text(doubt, 0, ds * 0.36, { size: n(ds), font: 'display', fill: P.red, anchor: 'middle' })}`)}</g>`;
+    }
+  }
+
+  return backdrop() + `<g ${shadow}><rect x="${card.x}" y="${card.y}" width="${card.w}" height="${card.h}" rx="20" fill="${C.card}" stroke="${C.ink}" stroke-width="3"/></g>
+    ${head}<path d="M90 150 H730" stroke="${C.grid}" stroke-width="2"/>
+    ${grid}${axes}${xLab}${ruler}${dots}${ext}${plate}${tgt}${dbt}`;
+}
+
 function rise(t, at, inner, dy = 30) {
   if (t < at) return '';
   const k = ease.out(prog(t, at, 0.3));
   return `<g opacity="${n(clamp(k * 1.4))}" transform="translate(0 ${n((1 - k) * dy)})">${inner}</g>`;
 }
 
-module.exports = { stockChart, tickerChip, rankingBoard, winnersLosers, calendarFlip, cheque, countUp, countDown, ledger, donut, dualChart, leverage, DATAKIT_COLORS: C };
+module.exports = { stockChart, tickerChip, rankingBoard, winnersLosers, calendarFlip, cheque, countUp, countDown, ledger, donut, dualChart, leverage, extrapolate, DATAKIT_COLORS: C };

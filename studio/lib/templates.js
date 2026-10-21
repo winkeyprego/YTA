@@ -676,7 +676,7 @@ const KIT_FILES = { screen: './screens', data: './datakit', diagram: './diagrams
 // The kinds each kit offers (other exports are helpers).
 const KIT_KINDS = {
   screen: ['socialPost', 'phoneNotification', 'browserArticle', 'appPage', 'newsLive', 'terminal', 'chatThread', 'email', 'videoPage', 'cctv', 'radar'],
-  data: ['stockChart', 'rankingBoard', 'winnersLosers', 'calendarFlip', 'cheque', 'countUp', 'tickerChip', 'countDown', 'ledger', 'donut', 'dualChart', 'leverage'],
+  data: ['stockChart', 'rankingBoard', 'winnersLosers', 'calendarFlip', 'cheque', 'countUp', 'tickerChip', 'countDown', 'ledger', 'donut', 'dualChart', 'leverage', 'extrapolate'],
   diagram: ['equation', 'loop', 'funnel', 'orgTree', 'portraits', 'steps', 'split', 'montage', 'section'],
 };
 const KIT_SKIP = ['template', 'kind', 'vo', 'dur', 'minDur', 'tail', 'id', 'vignette', 'fill', 'stamp', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note', '_t0'];
@@ -695,7 +695,7 @@ function subShots(list, ctx) {
 
 const OPEN_AT = -0.12; // entrances start just before the cut, so the first frames already show the graphic
 const KEY_MOMENT = { browserArticle: 'highlightAt', socialPost: 'likesAt', email: 'sendAt', videoPage: 'viewsAt', cheque: 'signAt',
-  leverage: 'moveAt', dualChart: 'splitAt', winnersLosers: 'verdictAt' };
+  leverage: 'moveAt', dualChart: 'splitAt', winnersLosers: 'verdictAt', extrapolate: 'extendAt' };
 const BUILD_LISTS = ['terms', 'nodes', 'stages', 'people', 'steps', 'rows', 'slices', 'cards', 'messages', 'lines', 'blips', 'items'];
 function leadFirst(list) {
   if (Array.isArray(list) && list[0] && typeof list[0] === 'object' && typeof list[0].at === 'number' && list[0].at > 0.15) list[0] = { ...list[0], at: 0.05 };

@@ -153,8 +153,8 @@ function hair(kind, color) {
 
 // Default colours for hats that have an obvious one (used when the spec gives no hatColor / hatBand).
 const HAT_COLOR = { service: P.olive, police: P.policeNavy, hardhat: P.gold, helmet: P.redDark, pilotHelmet: P.greyLight,
-  ushanka: P.furDark, stahlhelm: P.greyDark, peaked: P.olive };
-const HAT_BAND = { service: P.oliveDark, police: P.policeNavy, pilotHelmet: P.red, ushanka: P.fur, peaked: P.redDark };
+  ushanka: P.furDark, stahlhelm: P.greyDark, peaked: P.olive, mortarboard: P.navy };
+const HAT_BAND = { service: P.oliveDark, police: P.policeNavy, pilotHelmet: P.red, ushanka: P.fur, peaked: P.redDark, mortarboard: P.gold };
 function hat(kind, color = P.charcoal, band = P.redDark, back = false) {
   const o = `stroke="${P.ink}" stroke-width="3.5" stroke-linejoin="round"`;
   switch (kind) {
@@ -219,6 +219,14 @@ function hat(kind, color = P.charcoal, band = P.redDark, back = false) {
         <path d="M-30 -268 Q0 -262 30 -268" stroke="${P.greyDark}" stroke-width="2" fill="none"/>
         <path d="M-50 -284 Q0 -276 50 -284" stroke="${P.goldDark}" stroke-width="2.5" fill="none"/>
         <circle cx="0" cy="-290" r="6.5" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/><circle cx="0" cy="-290" r="2.5" fill="${P.redDark}"/>`;
+    case 'mortarboard': // academic cap: skullcap band, flat square board seen from the front, button, tassel (band = tassel colour)
+      return `<path d="M-56 -282 Q-60 -314 -48 -320 H48 Q60 -314 56 -282 Q0 -296 -56 -282 Z" fill="${color}" ${o}/>
+        <path d="M-92 -322 L0 -346 L92 -322 L0 -300 Z" fill="${color}" ${o}/>
+        <path d="M-60 -322 L0 -338 L60 -322" stroke="#fff" stroke-width="2.5" fill="none" opacity=".18" stroke-linejoin="round"/>
+        ${back ? '' : `<path d="M0 -323 Q38 -322 66 -316 Q70 -300 70 -270" stroke="${band}" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M64 -274 H76 L80 -242 H60 Z" fill="${band}" stroke="${P.ink}" stroke-width="2.2" stroke-linejoin="round"/>
+        <path d="M66 -262 V-244 M70 -262 V-244 M74 -262 V-244" stroke="${P.ink}" stroke-width="1.4" opacity=".45"/>`}
+        <circle cx="0" cy="-323" r="6" fill="${band}" stroke="${P.ink}" stroke-width="2"/>`;
     default:
       return '';
   }
@@ -379,6 +387,17 @@ function body(spec) {
         <rect x="-42" y="-94" width="84" height="12" fill="${P.leather}" stroke="${P.ink}" stroke-width="2.5"/>
         <rect x="-7" y="-97" width="14" height="18" rx="2" fill="${P.goldDark}" stroke="${P.ink}" stroke-width="2"/>
         ${[-1, 1].map((sd) => `<g transform="translate(${sd * 34} -164) rotate(${sd * 26})"><rect x="-12" y="-5" width="24" height="10" rx="3" fill="${c}" stroke="${P.ink}" stroke-width="2"/></g>`).join('')}`;
+    }
+    case 'gown': { // academic gown to below the knee: V-neck, gold stole down both front edges, pleats (from behind: a gold hood). suit = gown colour, tie = stole colour
+      const c = spec.suit || P.navy, stole = spec.silhouette ? c : spec.tie || P.gold;
+      if (spec.back) return `<path d="M-60 -18 Q-56 -150 -28 -170 L28 -170 Q56 -150 60 -18 Q0 -10 -60 -18 Z" fill="${c}" ${o}/>
+        <path d="M-30 -166 Q0 -158 30 -166 L14 -112 Q0 -100 -14 -112 Z" fill="${spec.silhouette ? c : P.gold}" stroke="${P.ink}" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M-32 -96 L-42 -24 M32 -96 L42 -24 M0 -90 V-16" stroke="${P.ink}" stroke-width="2.5" opacity=".3"/>`;
+      return `<path d="M-60 -18 Q-56 -150 -28 -170 L28 -170 Q56 -150 60 -18 Q0 -10 -60 -18 Z" fill="${c}" ${o}/>
+        <path d="M-15 -170 L0 -140 L15 -170 Z" fill="${spec.shirt || '#f2efe6'}" stroke="${P.ink}" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M-22 -168 Q-8 -150 -10 -60 M22 -168 Q8 -150 10 -60" stroke="${P.ink}" stroke-width="13" fill="none" stroke-linecap="round"/>
+        <path d="M-22 -168 Q-8 -150 -10 -60 M22 -168 Q8 -150 10 -60" stroke="${stole}" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <path d="M-32 -96 L-42 -24 M32 -96 L42 -24 M0 -56 V-16" stroke="${P.ink}" stroke-width="2.5" opacity=".3"/>`;
     }
     default: // suit
       return `<path d="${torso}" fill="${spec.suit || P.navy}" ${o}/>
@@ -570,7 +589,7 @@ function seatedLegs() {
 // Seen from behind (over-the-shoulder foregrounds): back of the head (hair), ears, the jacket's back, arms.
 function backView(spec, st, skin) {
   const hc = ['bald', 'none'].includes(spec.hair) ? skin : spec.hairColor || '#4a4038';
-  const backBody = body({ ...spec, tie: null, shirt: spec.outfit === 'shirt' || spec.outfit === 'tshirt' || spec.outfit === 'hoodie' ? spec.shirt : spec.suit || spec.shirt, print: null });
+  const backBody = body({ ...spec, back: true, tie: null, shirt: spec.outfit === 'shirt' || spec.outfit === 'tshirt' || spec.outfit === 'hoodie' ? spec.shirt : spec.suit || spec.shirt, print: null });
   const o = `stroke="${P.ink}" stroke-width="${OUT}"`;
   const armL = st.armL || [10, -6], armR = st.armR || [10, -6];
   const sitY = st.sit ? 40 : 0;
@@ -686,8 +705,8 @@ function crowd(seed, rows, cols, x, y, w, h, scale = 0.3) {
 const FEATURES = {
   hair: ['slick', 'side', 'bald', 'bob', 'curly', 'long', 'spiky', 'ponytail', 'bun', 'none'],
   outfit: ['suit', 'shirt', 'dress', 'coat', 'hoodie', 'turtleneck', 'vest', 'robe', 'overalls', 'blazer',
-    'uniform', 'police', 'firefighter', 'flightsuit', 'labcoat', 'tuxedo', 'weddingDress', 'tshirt', 'greatcoat', 'tunic'],
-  hat: ['tophat', 'fedora', 'cap', 'service', 'police', 'hardhat', 'helmet', 'pilotHelmet', 'ushanka', 'stahlhelm', 'peaked'],
+    'uniform', 'police', 'firefighter', 'flightsuit', 'labcoat', 'tuxedo', 'weddingDress', 'tshirt', 'greatcoat', 'tunic', 'gown'],
+  hat: ['tophat', 'fedora', 'cap', 'service', 'police', 'hardhat', 'helmet', 'pilotHelmet', 'ushanka', 'stahlhelm', 'peaked', 'mortarboard'],
   moustache: ['brush', 'walrus', 'thin'],
   beard: ['short', 'full'],
   colors: ['suit', 'shirt', 'tie', 'hairColor', 'skin', 'hatColor', 'hatBand', 'moustacheColor', 'blushColor', 'beardColor', 'necklace', 'printColor'],
