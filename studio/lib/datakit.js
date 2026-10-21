@@ -85,7 +85,7 @@ const shadow = 'filter="url(#shadow)"';
 
 // The room behind the graphic (lib/backdrops.js; the kit template picks a light room per shot).
 function backdrop() {
-  return require('./backdrops').room(undefined, { deskY: 566 }); // graphics stand on the desk (the old floor line)
+  return require('./backdrops').room(undefined, { deskY: 566, rail: false }); // graphics stand on the desk; no chair rail behind captions
 }
 
 function emblem(cx, cy, r, letters, color = C.navy) {
@@ -404,7 +404,7 @@ function countUp(spec, t) {
   const o = clamp((t - at) * 5);
   return backdrop() + `<g opacity="${n(o)}">
     ${text(str, 640, 380, { size: n(size), font: 'display', fill: C.ink, anchor: 'middle' })}
-    ${caption ? text(caption, 640, 380 + size * 0.5 + 10, { size: 40, font: 'hand', fill: C.soft, anchor: 'middle' }) : ''}
+    ${caption ? text(caption, 640, 380 + size * 0.5 + 10, { size: 40, font: 'hand', fill: C.soft, anchor: 'middle' }).replace('<text ', `<text paint-order="stroke" stroke="${P.paper}" stroke-width="7" stroke-linejoin="round" `) : ''}
   </g>`;
 }
 
@@ -452,7 +452,7 @@ function countDown(spec, t) {
   return backdrop() + `<g opacity="${n(o)}">
     ${downArrow(ax, ay, size * 0.95, P.red)}
     ${qa(`count '${longest}'`, text(str, cx, 380, { size: n(size), font: 'display', fill: P.red, anchor: 'middle' }))}
-    ${caption ? qa('caption', text(caption, 640, 380 + size * 0.5 + 10, { size: 40, font: 'hand', fill: C.soft, anchor: 'middle' })) : ''}
+    ${caption ? qa('caption', text(caption, 640, 380 + size * 0.5 + 10, { size: 40, font: 'hand', fill: C.soft, anchor: 'middle' }).replace('<text ', `<text paint-order="stroke" stroke="${P.paper}" stroke-width="7" stroke-linejoin="round" `)) : ''}
   </g>`;
 }
 

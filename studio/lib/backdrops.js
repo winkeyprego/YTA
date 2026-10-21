@@ -41,14 +41,14 @@ function edge(kind, side, R, t, deskY = 628) {
   }
 }
 
-function room(v = current, { desk = true, t = 0, deskY = 628 } = {}) {
+function room(v = current, { desk = true, t = 0, deskY = 628, rail = true } = {}) {
   const R = ROOMS[((v % ROOMS.length) + ROOMS.length) % ROOMS.length];
   // wall with soft vertical wallpaper stripes and a chair rail, then the desk across the bottom
   let stripes = '';
   for (let x = -200; x < 1480; x += 48) stripes += `<rect x="${x}" y="-200" width="22" height="1200" fill="${R.wallDark}" opacity=".18"/>`;
   return `<rect x="-200" y="-200" width="1680" height="1120" fill="${R.wall}"/>${stripes}
-    <rect x="-200" y="${deskY - 108}" width="1680" height="400" fill="${R.wallDark}" opacity=".35"/>
-    <path d="M-200 ${deskY - 108} H1480" stroke="${R.trim}" stroke-width="10"/>
+    ${rail ? `<rect x="-200" y="${deskY - 108}" width="1680" height="400" fill="${R.wallDark}" opacity=".35"/>
+    <path d="M-200 ${deskY - 108} H1480" stroke="${R.trim}" stroke-width="10"/>` : ''}
     ${edge(R.left, 'left', R, t, deskY)}${edge(R.right, 'right', R, t, deskY)}
     ${desk ? `<rect x="-200" y="${deskY}" width="1680" height="400" fill="${R.desk}"/>
       <path d="M-200 ${deskY} H1480" stroke="${P.ink}" stroke-width="4"/><path d="M-200 ${deskY + 22} H1480" stroke="${R.deskDark}" stroke-width="3" opacity=".7"/>
