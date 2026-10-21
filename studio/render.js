@@ -136,7 +136,7 @@ async function main() {
     console.log(`total ${total.toFixed(1)}s`);
     if (ep.lint) {
       const w = ep.lint();
-      console.log(w.length ? `\npacing warnings (${w.length}):\n- ${w.join('\n- ')}` : '\npacing: OK');
+      console.log(w.length ? `\nwarnings (${w.length}):\n- ${w.join('\n- ')}` : '\nchecks: OK');
     }
     return;
   }
@@ -203,4 +203,4 @@ async function main() {
   console.log(`${out}  (${frames} frames, ${segs.length} workers, ${((Date.now() - t0) / 1000).toFixed(0)}s)`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => { console.error(e.message && e.message.startsWith('shots.json') ? e.message : e); process.exit(1); });

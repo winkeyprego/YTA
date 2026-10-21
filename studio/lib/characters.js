@@ -166,6 +166,13 @@ function body(spec) {
         <path d="M-24 -118 L-28 -166 M24 -118 L28 -166" stroke="${spec.suit || P.blue}" stroke-width="9"/>
         <path d="M-24 -118 L-28 -166 M24 -118 L28 -166" stroke="${P.ink}" stroke-width="2" opacity=".5"/>
         <rect x="-12" y="-110" width="24" height="18" fill="none" stroke="${P.ink}" stroke-width="2.5"/>`;
+    case 'blazer': // open-neck shirt with collar points, no tie (the finance host)
+      return `<path d="${torso}" fill="${spec.suit || P.navy}" ${o}/>
+        <path d="M-18 -168 L0 -118 L18 -168 Z" fill="${spec.shirt || '#f7f5ef'}" stroke="${P.ink}" stroke-width="3"/>
+        <path d="M-10 -168 L0 -146 L10 -168 Z" fill="${spec.skin || P.skin}"/>
+        <path d="M-18 -170 L-6 -150 L-22 -146 Z M18 -170 L6 -150 L22 -146 Z" fill="${spec.shirt || '#f7f5ef'}" stroke="${P.ink}" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M-28 -166 L-4 -112 M28 -166 L4 -112" stroke="${P.ink}" stroke-width="3" fill="none"/>
+        <circle cx="-2" cy="-98" r="3" fill="${P.ink}"/>`;
     default: // suit
       return `<path d="${torso}" fill="${spec.suit || P.navy}" ${o}/>
         <path d="M-14 -168 L0 -120 L14 -168 Z" fill="${spec.shirt || '#f2efe6'}" stroke="${P.ink}" stroke-width="3"/>
@@ -177,6 +184,13 @@ function body(spec) {
 
 // Small extras worn on the body (drawn over the outfit).
 function bodyExtras(spec) {
+  if (spec.necklace) return necklace(spec) + bodyExtrasRest(spec);
+  return bodyExtrasRest(spec);
+}
+function necklace(spec) {
+  return `<path d="M-15 -166 Q0 -152 15 -166" stroke="${spec.necklace === true ? P.gold : spec.necklace}" stroke-width="3.2" fill="none" stroke-linecap="round"/>`;
+}
+function bodyExtrasRest(spec) {
   let out = '';
   if (spec.pin) out += `<g transform="translate(-24 -142)"><rect x="-7" y="-5" width="14" height="10" fill="#fff" stroke="${P.ink}" stroke-width="1.5"/><rect x="-7" y="-5" width="6" height="5" fill="${P.blue}"/><path d="M-1 -2 H7 M-7 2 H7" stroke="${P.red}" stroke-width="1.6"/></g>`;
   if (spec.badge) out += `<rect x="14" y="-146" width="18" height="12" rx="2" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/>`;
@@ -254,10 +268,13 @@ function character(spec = {}, st = {}) {
   const carry = st.carry === 'box'
     ? `<g><rect x="-46" y="-140" width="92" height="64" fill="${P.paperShade}" stroke="${P.ink}" stroke-width="4" stroke-linejoin="round"/><path d="M-46 -124 H46" stroke="${P.ink}" stroke-width="3"/><rect x="-20" y="-118" width="40" height="14" fill="${P.paper}" stroke="${P.ink}" stroke-width="2"/></g>`
     : '';
-  const head = `<circle cx="0" cy="${HEAD_Y}" r="${HEAD_R}" fill="${spec.skin || P.skin}" stroke="${P.ink}" stroke-width="${OUT}"/>
+  const skin = spec.skin || P.skin;
+  // Hero characters (e.g. the finance host, lib/host.js) bring their own detailed head via spec.drawHead.
+  const head = spec.drawHead ? spec.drawHead(st, spec) : `<circle cx="0" cy="${HEAD_Y}" r="${HEAD_R}" fill="${skin}" stroke="${P.ink}" stroke-width="${OUT}"/>
     ${hair(spec.hair, spec.hairColor || '#4a4038')}
-    <ellipse cx="-38" cy="-210" rx="12" ry="7" fill="${P.blush}" opacity=".75"/>
-    <ellipse cx="38" cy="-210" rx="12" ry="7" fill="${P.blush}" opacity=".75"/>
+    ${spec.earrings ? `<circle cx="-64" cy="-212" r="5" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/><circle cx="64" cy="-212" r="5" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/>` : ''}
+    <ellipse cx="-38" cy="-210" rx="12" ry="7" fill="${spec.blushColor || P.blush}" opacity=".75"/>
+    <ellipse cx="38" cy="-210" rx="12" ry="7" fill="${spec.blushColor || P.blush}" opacity=".75"/>
     ${eyes(eyesKind, st.look || 0)}${glasses(spec.glasses)}${brows(st.brows || 'flat')}
     ${moustache(spec.moustache, spec.moustacheColor)}${mouth(mouthKind)}
     ${spec.cigar ? `<rect x="10" y="-206" width="34" height="9" rx="3" fill="#8a5a3c" stroke="${P.ink}" stroke-width="2.5"/>` : ''}
@@ -266,17 +283,17 @@ function character(spec = {}, st = {}) {
   const held = st.holding && !carry ? heldProp(st.holding, handPosition(1, armR)) : '';
   // re-draw the hand on top of held items so fingers overlap the prop
   const handTop = held && st.holding !== 'briefcase' && st.holding !== 'sign'
-    ? (() => { const [hx, hy] = handPosition(1, armR); return `<circle cx="${n(hx)}" cy="${n(hy)}" r="9" fill="${P.skin}" stroke="${P.ink}" stroke-width="3.5"/>`; })()
+    ? (() => { const [hx, hy] = handPosition(1, armR); return `<circle cx="${n(hx)}" cy="${n(hy)}" r="9" fill="${skin}" stroke="${P.ink}" stroke-width="3.5"/>`; })()
     : '';
   const size = spec.size && spec.size !== 1 ? `transform="scale(${n(spec.size)})"` : '';
   return `<g ${size}><g transform="translate(0 ${n(bob)})">
     ${st.legs === false ? '' : legs(st.walk)}
     <g transform="translate(0 ${HIP_Y}) scale(1 ${n(b)}) translate(0 ${-HIP_Y})">
       ${body(spec)}${bodyExtras(spec)}
-      ${carry ? '' : arm(-1, armL) + arm(1, armR)}
+      ${carry ? '' : arm(-1, armL, skin) + arm(1, armR, skin)}
       ${held}${handTop}
       ${carry}
-      ${carry ? arm(-1, [28, -70]) + arm(1, [28, -70]) : ''}
+      ${carry ? arm(-1, [28, -70], skin) + arm(1, [28, -70], skin) : ''}
       <g ${headTilt}>${head}</g>
     </g>
   </g></g>`;
@@ -323,6 +340,9 @@ const CAST = {
 // ---------- crowds ----------
 // Simple seated crowd of head-and-shoulder busts (parliament, hearing, shareholder meeting).
 // Rows go back -> front, front rows a little bigger. Pure in its seed.
+// The finance host (detailed hero head + house-style twin), see lib/host.js.
+Object.assign(CAST, require('./host').HOST_CAST);
+
 function crowd(seed, rows, cols, x, y, w, h, scale = 0.3) {
   let a = seed >>> 0;
   const r = () => { a = (a * 1664525 + 1013904223) >>> 0; return a / 4294967296; };

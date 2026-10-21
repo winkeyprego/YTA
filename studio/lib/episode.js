@@ -17,7 +17,17 @@ const { schedule, cueFinder } = require('./timing');
 const { TEMPLATES } = require('./templates');
 
 function loadEpisode(dir) {
-  const spec = JSON.parse(fs.readFileSync(path.join(dir, 'shots.json'), 'utf8'));
+  let spec;
+  try {
+    spec = JSON.parse(fs.readFileSync(path.join(dir, 'shots.json'), 'utf8'));
+  } catch (e) {
+    throw new Error(`shots.json is not valid JSON: ${e.message}`);
+  }
+  const check = require('./validate').validate(spec);
+  if (check.errors.length) {
+    throw new Error(`shots.json has ${check.errors.length} problem(s). Fix these first:\n- ${check.errors.join('\n- ')}`
+      + (check.warnings.length ? `\n\nwarnings:\n- ${check.warnings.join('\n- ')}` : ''));
+  }
   const wordsFile = spec.words ? path.join(dir, spec.words) : path.join(dir, 'words.json');
   const words = fs.existsSync(wordsFile) ? JSON.parse(fs.readFileSync(wordsFile, 'utf8')) : null;
   const plan = schedule(spec.shots, words);
@@ -30,7 +40,7 @@ function loadEpisode(dir) {
     return { name: shot.name || `${i + 1}-${shot.template}`, dur: win.dur, render: (t) => render(t) };
   });
   return {
-    lint: () => lint(spec, plan),
+    lint: () => [...check.warnings, ...lint(spec, plan)],
     fps: spec.fps || 24,
     audio: spec.audio,
     gaps: plan.gaps,

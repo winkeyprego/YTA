@@ -24,6 +24,14 @@ The owner is not a developer. Explain things step by step in plain words, and sh
 - **Style numbers were measured from the reference videos** and are the lib defaults
   (`docs/REFERENCE-ANALYSIS.md`, `STYLE-GUIDE.md`, `MOTION.md`).
 - **Render output (`renders/`) is not committed.** Regenerate it with `node render.js …`.
+- **Two style packs planned:** `war` (history) and `finance` (informed by Crayon Capital: see `docs/CRAYON-ANALYSIS.md`
+  once written). Same engine and cast; the pack changes look, dialogue style, pacing and devices.
+- **The finance host** (`CAST.host`, `lib/host.js`, from the owner's illustration) is an occasional recurring character:
+  she appears sometimes, as a shot or inside an explanation. She is NOT a presenter on every shot; most scenes use the
+  regular cast, as in the history style. The default build is the detailed "hero" head (`host`); a house-style twin is
+  `hostHouse`. The owner hasn't confirmed which one yet.
+- **Validation:** `lib/validate.js` checks every shots.json before rendering (unknown names, typos with suggestions,
+  cue words missing from the narration, long labels, repetition).
 - **Copyright:** never commit reference frames or footage, or other channels' audio. The Ozempic MP3 the owner
   uploaded appears to be Crayon Capital's own narration (same title, same 12:41 length). It may be used **only as
   private test material** for VO timing, never in a published video, and it is not in the repo.
