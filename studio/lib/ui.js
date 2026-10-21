@@ -173,4 +173,81 @@ function chapterCard(label, sub, t, at = 0) {
     </g>`;
 }
 
-module.exports = { chapterCard, dateTag, namePlate, sticker, bubble, indexCard, stamp, bigStat, highlight, pencilCircle, arrow, titleCard, popAround, esc };
+// ===================== finance pack pieces (docs/CRAYON-ANALYSIS.md) =====================
+
+// Floating dialogue: a handwritten italic line above the speaker with a small tick pointing at them.
+// Types at ~30 cps. Returns { svg, end }. x,y = text centre; tail = [x, y] of the speaker's head top.
+function floatLine({ x, y, text: str, tail, size = 40, cps = 30, color = P.ink, halo = P.paper }, t, at) {
+  const end = at + str.length / cps;
+  if (t < at) return { svg: '', end };
+  const shown = typed(str, t, at, cps);
+  const w = textWidth(str, size, 'script');
+  const left = x - w / 2;
+  // tick: short stroke from just under the text toward the speaker
+  const [tx, ty] = tail || [x, y + 60];
+  const sx = Math.max(left + 10, Math.min(left + w - 10, tx)), sy = y + 14;
+  const k = Math.min(1, 26 / Math.max(1, Math.hypot(tx - sx, ty - sy)));
+  const tick = tail ? `<path d="M${n(sx)} ${n(sy)} L${n(sx + (tx - sx) * k)} ${n(sy + (ty - sy) * k)}" stroke="${color}" stroke-width="3" stroke-linecap="round"/>` : '';
+  const halos = `stroke="${halo}" stroke-width="7" stroke-linejoin="round" paint-order="stroke"`;
+  return {
+    svg: `<g opacity="${n(clamp((t - at) * 6))}">${tick}<text x="${n(left)}" y="${n(y)}" class="t-script" font-size="${size}" fill="${color}" ${halos}>${esc(shown)}</text></g>`,
+    end,
+  };
+}
+
+// Corner script caption for place/time ("New York, 2008"): handwritten, no paper tag.
+function scriptCaption(label, t, at = 0.1, { x = 40, y = 64, size = 42, color = P.ink, halo = P.paper } = {}) {
+  if (t < at) return '';
+  const shown = typed(label, t, at, 30);
+  return `<text x="${x}" y="${y}" class="t-script" font-size="${size}" fill="${color}" stroke="${halo}" stroke-width="7" paint-order="stroke" stroke-linejoin="round" opacity="${n(clamp((t - at) * 6))}">${esc(shown)}</text>`;
+}
+
+// Black narration card for pivot sentences: centred white script, typed ~28 cps, fade in 0.3s.
+// lines: [{ text, at }] — later lines REPLACE earlier ones (as in the references) unless stack: true.
+function blackCard(lines, t, { size = 58, stack = false } = {}) {
+  const k = ease.out(prog(t, 0, 0.3));
+  const shownLines = lines.filter((l) => t >= l.at);
+  const visible = stack ? shownLines : shownLines.slice(-1);
+  const rows = visible.map((l, i) => {
+    const y = 360 - ((visible.length - 1) * size * 1.25) / 2 + i * size * 1.25 + size * 0.3;
+    return text(typed(l.text, t, l.at, 28), 640, y, { size, font: 'script', fill: '#f4efe4', anchor: 'middle' });
+  }).join('');
+  return `<rect width="1280" height="720" fill="#0e0e10"/><g opacity="${n(k)}">${rows}</g>`;
+}
+
+// Finance chapter card: black, handwritten script title (~6% of frame height), 2.0s, fade in 0.3s.
+function chapterScript(label, sub, t, at = 0) {
+  const k = ease.out(prog(t, at, 0.3));
+  return `<rect width="1280" height="720" fill="#0e0e10"/>
+    <g opacity="${n(k)}">
+      ${text(label, 640, 372, { size: 72, font: 'script', fill: '#f4efe4', anchor: 'middle' })}
+      ${sub ? text(sub, 640, 430, { size: 30, font: 'hand', fill: '#a9a49a', anchor: 'middle', spacing: 2 }) : ''}
+    </g>`;
+}
+
+// Handwritten name + curved arrow pointing at a person (first appearance of someone).
+// (x, y) = where the name sits; (tx, ty) = the point to aim at (e.g. head edge). Arrow draws on, then the name types.
+function nameArrow(label, x, y, tx, ty, t, at, { size = 38, color = P.ink, halo = P.paper } = {}) {
+  if (t < at) return '';
+  const k = ease.out(prog(t, at, 0.35));
+  const sx = x, sy = y + 12;
+  const cx = (sx + tx) / 2 + (ty - sy) * 0.35, cy = (sy + ty) / 2 - (tx - sx) * 0.35;
+  const len = Math.hypot(tx - sx, ty - sy) * 1.25;
+  const ex = tx - (tx - cx) * 0.12, ey = ty - (ty - cy) * 0.12;
+  const ang = (Math.atan2(ty - ey, tx - ex) * 180) / Math.PI;
+  return `<g>
+    <path d="M${n(sx)} ${n(sy)} Q${n(cx)} ${n(cy)} ${n(tx)} ${n(ty)}" fill="none" stroke="${halo}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${n(len)}" stroke-dashoffset="${n(len * (1 - k))}"/>
+    <path d="M${n(sx)} ${n(sy)} Q${n(cx)} ${n(cy)} ${n(tx)} ${n(ty)}" fill="none" stroke="${color}" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="${n(len)}" stroke-dashoffset="${n(len * (1 - k))}"/>
+    ${k >= 1 ? `<path d="M0 0 L-16 -8 M0 0 L-16 8" stroke="${color}" stroke-width="3.5" stroke-linecap="round" transform="translate(${n(tx)} ${n(ty)}) rotate(${n(ang)})"/>` : ''}
+    <text x="${n(x)}" y="${n(y)}" class="t-script" font-size="${size}" fill="${color}" text-anchor="middle" stroke="${halo}" stroke-width="7" paint-order="stroke">${esc(typed(label, t, at + 0.2, 30))}</text>
+  </g>`;
+}
+
+// Spotlight: darkens the frame except a soft pool around (cx, cy). Drama beats, lone figures.
+function spotlight(cx, cy, { r = 260, dark = 0.55, id = 'spot' } = {}) {
+  return `<defs><radialGradient id="${id}" cx="${n(cx)}" cy="${n(cy)}" r="${r}" gradientUnits="userSpaceOnUse">
+      <stop offset="0.55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="${dark}"/></radialGradient></defs>
+    <rect width="1280" height="720" fill="url(#${id})"/>`;
+}
+
+module.exports = { floatLine, scriptCaption, blackCard, chapterScript, nameArrow, spotlight, chapterCard, dateTag, namePlate, sticker, bubble, indexCard, stamp, bigStat, highlight, pencilCircle, arrow, titleCard, popAround, esc };

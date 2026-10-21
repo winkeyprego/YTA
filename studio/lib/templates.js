@@ -76,6 +76,8 @@ const SET_ZONES = {
   streetDay: { left: [300, 560], right: [980, 560] },     // below the shop signs
   bankExterior: { left: [240, 470], right: [1040, 470] },
 };
+// Sets with busy tops (ticker boards, screens, signs): finance captions go bottom-left instead.
+const CAPTION_LOW = new Set(['tradingFloor', 'studioNews', 'streetDay', 'bankExterior', 'hall']);
 function stickerXY(i, side, setName) {
   const z = SET_ZONES[setName];
   const [x, y0] = (z && z[side]) || [side === 'right' ? 980 : 300, 400];
@@ -98,7 +100,9 @@ function overlays(shot, t, ctx, { side = 'left', skipStickers = false } = {}) {
   if (!skipStickers) out += stickersSvg(shot.stickers, t, ctx, side);
   if (shot.tag) {
     const tg = typeof shot.tag === 'string' ? { text: shot.tag } : shot.tag;
-    out += ui.dateTag(tg.text, t, ctx.cue(tg.on, tg.at ?? 0.1));
+    out += ctx.style && ctx.style.tag === 'script'
+      ? ui.scriptCaption(tg.text, t, ctx.cue(tg.on, tg.at ?? 0.1), CAPTION_LOW.has(shot.set) || tg.low ? { y: 692 } : {})
+      : ui.dateTag(tg.text, t, ctx.cue(tg.on, tg.at ?? 0.1));
   }
   if (shot.plate) out += ui.namePlate(shot.plate.name, shot.plate.role || '', t, ctx.cue(shot.plate.on, shot.plate.at ?? 0.5));
   if (shot.source) out += text(shot.source, 1250, 702, { size: 17, anchor: 'end', fill: P.paper, opacity: 0.75 });
@@ -160,40 +164,61 @@ function wrap(str, max = 24) {
 // Screen position of a world point under camera(zoom, fx, fy, x, y).
 const toScreen = (px, py, c) => [(px - c.fx) * c.zoom + c.fx + (c.x || 0), (py - c.fy) * c.zoom + c.fy + (c.y || 0)];
 
-// ---------- talk: characters on a set, optionally one of them speaking a line ----------
-// { template: 'talk', set, setOpts, frame: 'wide'|'close', focus: who, chars: [{ who, spot, mood, pose, poseOn,
-//   mood2, mood2On, pose2, pose2On, holding, carry, walk }], speaker, line, lineOn, speaking: true }
+// ---------- talk: characters on a set, optionally speaking ----------
+// { template: 'talk', set, setOpts, frame: 'wide'|'close'|'reverse', focus: who, light: true,
+//   chars: [{ who, spot, mood, pose, poseOn, mood2, mood2On, pose2, pose2On, holding, carry, walk }],
+//   speaker + line (+ lineOn)           one line of dialogue, or
+//   lines: [{ who, text, on, bubble }]  a conversation; frame 'reverse' cuts close to whoever is speaking
+//   speaking: true                      mouth moves for `speaker`/`focus` with no text (narrated speech)
+//   bubble: true                        force speech bubbles (finance style defaults to floating lines)
+//   nameArrow: { who, text, on }        handwritten name + curved arrow (first appearance) }
 function talk(shot, ctx) {
   const set = sets()[shot.set || 'office'];
   if (!set) throw new Error(`unknown set "${shot.set}" (see lib/sets.js)`);
+  const style = ctx.style;
   const chars = shot.chars || [];
-  const speaker = chars.find((c) => c.who === shot.speaker) || null;
-  const focusChar = chars.find((c) => c.who === (shot.focus || shot.speaker)) || chars[0];
+  const byWho = (w) => chars.find((c) => c.who === w);
   const spotOf = (c) => set.spots[c.spot || 'center'] || set.spots.center;
-  const lines = shot.line ? wrap(shot.line, shot.lineWidth || 24) : null;
-  const lineAt = ctx.cue(shot.lineOn, shot.lineAt ?? 0.3);
-  const typing = lines ? { from: lineAt + 0.2, to: lineAt + 0.2 + lines.join(' ').length / (shot.cps || 18) } : null;
+
+  // dialogue, normalised: [{ who, text, at, end, mode, cps }]
+  const raw = shot.lines || (shot.line ? [{ who: shot.speaker, text: shot.line, on: shot.lineOn, at: shot.lineAt }] : []);
+  const dlg = [];
+  raw.forEach((l, i) => {
+    const mode = l.bubble || shot.bubble || style.dialogue === 'bubble' ? 'bubble' : 'float';
+    const cps = shot.cps || (mode === 'bubble' ? (style.name === 'war' ? 18 : 24) : 30);
+    const prevEnd = i ? dlg[i - 1].end + 0.4 : 0.3;
+    const at = ctx.cue(l.on, l.at ?? prevEnd);
+    dlg.push({ ...l, who: l.who || shot.speaker, at, mode, cps, end: at + 0.2 + l.text.length / cps });
+  });
+  const current = (t) => { let c = null; dlg.forEach((d) => { if (t >= d.at) c = d; }); return c; };
+  const focusOf = (t) => {
+    if (shot.frame === 'reverse' && dlg.length) return byWho((current(t) || dlg[0]).who) || chars[0];
+    return byWho(shot.focus || shot.speaker) || chars[0];
+  };
+  const closeFrame = shot.frame === 'close' || shot.frame === 'reverse';
 
   return (t) => {
-    // camera
+    const focusChar = focusOf(t);
     let c;
-    if (shot.frame === 'close' && focusChar) {
+    if (closeFrame && focusChar) {
       const [x, y, s] = spotOf(focusChar);
       const hx = x, hy = y - 236 * s;
       const z0 = shot.zoom || Math.min(3, Math.max(1.3, 220 / (132 * s)));
-      const zoom = cameraZoom(shot.camera || 'creep', t, ctx, z0);
-      const sx = hx < 640 ? 470 : 810; // head off-centre so the bubble/stickers get the other side
+      const zoom = cameraZoom(shot.camera || style.camera, t, ctx, z0);
+      const sx = hx < 640 ? 470 : 810; // head off-centre; dialogue and stickers get the other side
       c = { zoom, fx: hx, fy: hy, x: sx - hx, y: 330 - hy };
     } else {
-      const zoom = cameraZoom(shot.camera || 'creep', t, ctx, shot.zoom || 1);
+      const zoom = cameraZoom(shot.camera || style.camera, t, ctx, shot.zoom || 1);
       const [fx, fy] = shot.focusXY || (focusChar ? [spotOf(focusChar)[0], spotOf(focusChar)[1] - 200] : [640, 360]);
       c = { zoom, fx, fy };
     }
     const people = chars.map((ch) => {
       const [x, y, s] = spotOf(ch);
-      const isSpeaker = speaker && ch.who === speaker.who;
-      const talkFrom = isSpeaker && typing ? typing.from : shot.speaking && isSpeaker ? 0.1 : null;
-      const talkTo = isSpeaker && typing ? typing.to : shot.speaking && isSpeaker ? ctx.dur - 0.3 : null;
+      const mine = dlg.filter((d) => d.who === ch.who);
+      const live = mine.find((d) => t >= d.at && t <= d.end);
+      const speaksFree = shot.speaking && ch.who === (shot.speaker || shot.focus || chars[0].who);
+      const talkFrom = live ? live.at + 0.1 : speaksFree ? 0.1 : null;
+      const talkTo = live ? live.end : speaksFree ? ctx.dur - 0.3 : null;
       let px = x;
       if (ch.walk) px = M.tween(t, ch.walkAt ?? 0, ch.walkDur ?? ctx.dur, x + (ch.walk === 'in' ? -420 : 0), x + (ch.walk === 'out' ? 420 : 0), M.ease.linear);
       return g(tr(px, y, s), character(resolveCast(ch.who, ctx), actor(ch, t, ctx, { talkFrom, talkTo })));
@@ -201,26 +226,57 @@ function talk(shot, ctx) {
     const world = set.draw(t, shot.setOpts || {}) + people + (set.front ? set.front(t, shot.setOpts || {}) : '');
     let out = cam(world, c);
 
-    // speech bubble in screen space, beside the speaker's head
-    let side = 'left';
-    if (speaker && lines) {
-      const [x, y, s] = spotOf(speaker);
+    const headOf = (ch) => {
+      const [x, y, s] = spotOf(ch);
       const [hx, hy] = toScreen(x, y - 236 * s, c);
-      const hr = 66 * s * c.zoom;
-      const size = 30;
-      const w = Math.min(500, Math.max(250, Math.max(...lines.map((l) => l.length)) * size * 0.47 + 56));
-      const h = lines.length * size * 1.28 + 34;
-      const right = hx < 640;
-      // beside the head and clear of it; if there's no room at the side, sit above the head
-      let bx = right ? hx + hr * 1.0 : hx - hr * 1.0 - w;
-      let by = Math.max(84, Math.min(560 - h, hy - hr * 0.6 - h / 2));
-      if (bx < 20 || bx + w > 1260) { bx = Math.max(20, Math.min(1260 - w, hx - w / 2)); by = Math.max(84, hy - hr * 1.15 - h - 30); }
-      const ang = Math.atan2(by + h / 2 - hy, (bx + w / 2) - hx);
-      const tail = [hx + Math.cos(ang) * hr * 1.12, hy + Math.sin(ang) * hr * 1.12];
-      out += ui.bubble({ x: bx, y: by, w, lines, tail, size, cps: shot.cps || 18 }, t, lineAt).svg;
-      side = right ? 'right' : 'left'; // stickers stack under the bubble, on the side away from the speaker
-    } else if (focusChar) {
-      side = spotOf(focusChar)[0] < 640 ? 'right' : 'left';
+      return { hx, hy, hr: 66 * s * c.zoom };
+    };
+    if (shot.light && focusChar) {
+      const { hx, hy, hr } = headOf(focusChar);
+      out += ui.spotlight(hx, hy + hr * 1.2, { r: Math.max(280, hr * 4) });
+    }
+
+    // dialogue: the line currently being said (earlier lines are replaced, as in both references)
+    let side = focusChar && headOf(focusChar).hx < 640 ? 'right' : 'left';
+    const d = current(t);
+    const sp = d && byWho(d.who);
+    if (d && sp) {
+      const { hx, hy, hr } = headOf(sp);
+      if (d.mode === 'bubble') {
+        const lines = wrap(d.text, shot.lineWidth || 24);
+        const size = 30;
+        const w = Math.min(500, Math.max(250, Math.max(...lines.map((l) => l.length)) * size * 0.47 + 56));
+        const h = lines.length * size * 1.28 + 34;
+        const right = hx < 640;
+        let bx = right ? hx + hr * 1.0 : hx - hr * 1.0 - w;
+        let by = Math.max(84, Math.min(560 - h, hy - hr * 0.6 - h / 2));
+        if (bx < 20 || bx + w > 1260) { bx = Math.max(20, Math.min(1260 - w, hx - w / 2)); by = Math.max(84, hy - hr * 1.15 - h - 30); }
+        const ang = Math.atan2(by + h / 2 - hy, (bx + w / 2) - hx);
+        const tail = [hx + Math.cos(ang) * hr * 1.12, hy + Math.sin(ang) * hr * 1.12];
+        out += ui.bubble({ x: bx, y: by, w, lines, tail, size, cps: d.cps }, t, d.at).svg;
+        side = right ? 'right' : 'left';
+      } else {
+        const lines = wrap(d.text, 34);
+        const size = closeFrame ? 46 : 40;
+        let lt = d.at;
+        lines.forEach((ln, i) => {
+          const w = ln.length * size * 0.42;
+          const y = Math.max(64 + size * 0.8, hy - hr * 1.2 - 34 - (lines.length - 1 - i) * size * 1.1);
+          const x = Math.max(30 + w / 2, Math.min(1250 - w / 2, hx));
+          out += ui.floatLine({ x, y, text: ln, tail: i === lines.length - 1 ? [hx, hy - hr * 1.08] : null, size, cps: d.cps }, t, lt).svg;
+          lt += ln.length / d.cps;
+        });
+      }
+    }
+    if (shot.nameArrow) {
+      const na = shot.nameArrow;
+      const who = byWho(na.who) || focusChar;
+      if (who) {
+        const { hx, hy, hr } = headOf(who);
+        const nx = hx < 640 ? Math.min(1100, hx + hr + 190) : Math.max(180, hx - hr - 190);
+        const ny = Math.max(90, hy - hr * 0.9);
+        out += ui.nameArrow(na.text, nx, ny, hx + (nx > hx ? hr * 1.05 : -hr * 1.05), hy - hr * 0.2, t, ctx.cue(na.on, na.at ?? 0.5));
+      }
     }
     return out + overlays(shot, t, ctx, { side });
   };
@@ -445,8 +501,52 @@ function title(shot, ctx) {
 
 // ---------- chapter: black card, serif small caps ----------
 // { template: 'chapter', label: 'PART ONE', sub: 'Cheap Money', dur: 2 }
-const chapter = (shot) => (t) => ui.chapterCard(shot.label, shot.sub, t);
+const chapter = (shot, ctx) => (t) => (ctx.style.chapter === 'script' ? ui.chapterScript(shot.label, shot.sub, t) : ui.chapterCard(shot.label, shot.sub, t));
 
-const TEMPLATES = { talk, versus, document: documentShot, chart, stat, fuse, map: mapShot, money, title, chapter };
+// ---------- card: black narration card for pivot sentences (finance pack; works in war too) ----------
+// { template: 'card', vo: '...', text: 'But there was a problem.' | lines: [{ text, on }], stack: false }
+// Each line types in (~28 cps); a later line replaces the previous one unless stack: true.
+function card(shot, ctx) {
+  const lines = (shot.lines || [{ text: shot.text }]).map((l, i) => ({ text: l.text, at: ctx.cue(l.on, l.at ?? 0.35 + i * 1.6) }));
+  return (t) => ui.blackCard(lines, t, { stack: !!shot.stack, size: shot.size || 58 });
+}
+
+// ---------- kit templates: screen (lib/screens.js), data (lib/datakit.js), diagram (lib/diagrams.js) ----------
+// { template: 'screen' | 'data' | 'diagram', kind: '<function name>', ...that function's fields }
+// Word cues anywhere inside are converted to seconds: { on: 'word' } -> { at: s }, { likesOn: 'word' } -> { likesAt: s }.
+// Fields that hold people (who) are resolved through the episode cast.
+function resolveCues(obj, ctx) {
+  if (Array.isArray(obj)) return obj.map((x) => resolveCues(x, ctx));
+  if (!obj || typeof obj !== 'object') return obj;
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (k === 'on') out.at = ctx.cue(v, obj.at ?? 0.4);
+    else if (/On$/.test(k)) out[k.replace(/On$/, 'At')] = ctx.cue(v, obj[k.replace(/On$/, 'At')] ?? 0.4);
+    else if (k === 'who' && typeof v === 'string' && ctx.cast && ctx.cast[v]) out.who = resolveCast(v, ctx);
+    else out[k] = resolveCues(v, ctx);
+  }
+  return out;
+}
+const KIT_FILES = { screen: './screens', data: './datakit', diagram: './diagrams' };
+const KIT_SKIP = ['template', 'kind', 'vo', 'dur', 'minDur', 'tail', 'name', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
+function kitTemplate(which) {
+  return (shot, ctx) => {
+    const kit = lazy(KIT_FILES[which]);
+    if (!kit) throw new Error(`${KIT_FILES[which]}.js missing`);
+    const fn = kit[shot.kind];
+    if (typeof fn !== 'function') throw new Error(`${which}: unknown kind "${shot.kind}"`);
+    const spec = resolveCues(Object.fromEntries(Object.entries(shot).filter(([k]) => !KIT_SKIP.includes(k))), ctx);
+    if (spec.at == null) spec.at = 0.3;
+    const builds = which === 'diagram' && typeof kit.buildCamera === 'function' && !shot.camera;
+    return (t) => {
+      const world = fn(spec, t);
+      const c = builds ? kit.buildCamera(t, ctx.dur, spec) : { zoom: cameraZoom(shot.camera || 'locked', t, ctx) };
+      return cam(world, c) + overlays(shot, t, ctx, { side: 'left' });
+    };
+  };
+}
+
+const TEMPLATES = { talk, versus, document: documentShot, chart, stat, fuse, map: mapShot, money, title, chapter, card,
+  screen: kitTemplate('screen'), data: kitTemplate('data'), diagram: kitTemplate('diagram') };
 
 module.exports = { TEMPLATES, MOODS, POSES, wrap };

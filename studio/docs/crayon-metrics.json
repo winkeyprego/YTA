@@ -1,0 +1,239 @@
+{
+ "sources": {
+  "c1": "The Rise of Anthropic Explained Like You're 5 (1070s, 30fps, 720p, no audio)",
+  "c2": "The First Big Victim of the AI Bubble (1125s, 30fps, 720p, no audio)",
+  "narration": "unavailable: YouTube captions blocked (bot check / HTTP 429) and files have no audio; beats inferred from visuals and on-screen text"
+ },
+ "pacing": {
+  "c1": {
+   "n": 307,
+   "per_min": 17.2,
+   "median": 3.0,
+   "mean": 3.47,
+   "p10": 1.57,
+   "p90": 5.81,
+   "first60": 27,
+   "cuts_per_minute": [
+    27,
+    29,
+    16,
+    13,
+    17,
+    17,
+    17,
+    13,
+    17,
+    18,
+    13,
+    17,
+    13,
+    17,
+    21,
+    13,
+    21,
+    8
+   ]
+  },
+  "c2": {
+   "n": 197,
+   "per_min": 10.5,
+   "median": 5.22,
+   "mean": 5.68,
+   "p10": 2.0,
+   "p90": 9.84,
+   "first60": 9,
+   "cuts_per_minute": [
+    9,
+    10,
+    14,
+    14,
+    10,
+    13,
+    8,
+    11,
+    7,
+    8,
+    8,
+    15,
+    8,
+    14,
+    9,
+    10,
+    11,
+    10,
+    8
+   ]
+  }
+ },
+ "pacing_notes": {
+  "detector": "ffmpeg scene>0.25, cuts merged within 0.25s",
+  "c2_long_shots": "50% of c2 runtime is shots >7s: diagram/explainer 'build' shots where an element is added every ~1.5-2.5s, plus slide-in split panels the detector does not count",
+  "cold_open_c1": "27 cuts in first 60s incl. a 0.3s-per-image flash montage (logo over 9 images in 2.5s); body 13-21 cuts/min",
+  "flash_montage_cut_s": 0.3
+ },
+ "camera": {
+  "c1": {
+   "sampled": 36,
+   "no_zoom_pct": 72,
+   "zoom_totals": [
+    0.92,
+    0.97,
+    1.02,
+    1.04,
+    1.04,
+    1.05,
+    1.06,
+    1.1,
+    1.14,
+    1.21
+   ],
+   "zoom_rates_pct_per_s": [
+    -2.86,
+    -0.97,
+    0.57,
+    1.49,
+    1.74,
+    2.04,
+    3.06,
+    3.54,
+    4.73,
+    5.49
+   ],
+   "shots_with_continuous_pixel_change_pct": 81
+  },
+  "c2": {
+   "sampled": 36,
+   "no_zoom_pct": 86,
+   "zoom_totals": [
+    0.92,
+    0.92,
+    0.98,
+    1.13,
+    1.2
+   ],
+   "zoom_rates_pct_per_s": [
+    -2.7,
+    -0.53,
+    -0.37,
+    6.46,
+    6.52
+   ],
+   "shots_with_continuous_pixel_change_pct": 86
+  },
+  "shake": "none observed",
+  "notes": "push-ins 1.04-1.21x over a shot (~1-6%/s) on emotional/close beats; pull-back reveals on build shots (chart -> monitor -> desk); small pans; most shots locked with character/text animation inside"
+ },
+ "transitions": {
+  "hard_cut": "dominant",
+  "slide_push_panels": "common inside long shots (2-3 split panels slide in from the right)",
+  "fade_through_black": "occasional (c2 more)",
+  "zoom_out_reveal": "on diagram builds"
+ },
+ "text": {
+  "black_card_type_speed_cps": [
+   24,
+   31
+  ],
+  "black_card_full_reveal_s": [
+   1.3,
+   2.0
+  ],
+  "black_card_hold_after_s": [
+   0.5,
+   2.4
+  ],
+  "black_card_text_height_pct_frame": 5,
+  "chapter_title_height_pct": 6,
+  "floating_dialogue_height_pct": [
+   3.5,
+   4.5
+  ],
+  "dialogue": "floating italic handwritten line above the speaker with a small tick toward them (most common); white rounded bubbles for emphatic lines; thought clouds; typed out fast",
+  "font_lookalikes": {
+   "script_italic": "Caveat / Kalam",
+   "caps_labels": "Patrick Hand / Gochi Hand",
+   "ui": "Inter-like clean sans inside mockups"
+  }
+ },
+ "colour": {
+  "c1": {
+   "mean_sat": 0.209,
+   "mean_brightness": 0.471,
+   "black_frames_pct": 9.9,
+   "black_text_cards_pct": 3.2,
+   "bright_white_frames_pct": 5.4,
+   "corner_to_centre": 0.96,
+   "palette": [
+    "#202020",
+    "#606060",
+    "#e0e0e0",
+    "#c0c0c0",
+    "#808080",
+    "#404040",
+    "#a0a0a0",
+    "#402020",
+    "#604020",
+    "#000000",
+    "#a0a080",
+    "#406060",
+    "#808060",
+    "#8080a0",
+    "#204040",
+    "#604040"
+   ]
+  },
+  "c2": {
+   "mean_sat": 0.237,
+   "mean_brightness": 0.475,
+   "black_frames_pct": 6.8,
+   "black_text_cards_pct": 1.5,
+   "bright_white_frames_pct": 10.3,
+   "corner_to_centre": 0.88,
+   "palette": [
+    "#e0e0e0",
+    "#202020",
+    "#000000",
+    "#000020",
+    "#404040",
+    "#c0c0c0",
+    "#a0a0a0",
+    "#606060",
+    "#002020",
+    "#c0e0e0",
+    "#204040",
+    "#202040",
+    "#808080",
+    "#a0c0c0",
+    "#402020",
+    "#a0a080"
+   ]
+  }
+ },
+ "colour_notes": "neutral greys (office walls, curved cyclorama corners), warm wood desks, teal/cyan glowing screens, navy data panels; red/green only for down/up; spotlight pools for drama; vignette light (corner/centre 0.88-0.96) vs war refs 0.6",
+ "beat_share_pct_estimate": {
+  "character_story_scene": 22,
+  "dialogue_line_or_shot_reverse_shot": 20,
+  "black_narration_card": 9,
+  "chapter_card": 2,
+  "data_card_chart_rank_ticker": 10,
+  "document_or_screen_closeup": 8,
+  "establishing_place_time_calendar": 8,
+  "ui_mockup_social_phone_news": 7,
+  "explainer_diagram_build": 6,
+  "metaphor_scene": 6,
+  "split_screen": 6,
+  "reaction_closeup": 5,
+  "money_visual": 4,
+  "flash_montage": 3
+ },
+ "beat_sample": "~240 consecutive-run beats viewed: c1 #0-59, #120-159, #230-249; c2 #0-79, #120-139, #150-169",
+ "structure": {
+  "chapter_cards_per_video": 4,
+  "chapter_every_min": [
+   4,
+   5
+  ],
+  "sponsor": "one ~40-50s block at 4:40-6:40, screen recordings + coupon card + 'Okay, back to the video.' black card",
+  "ending": "quote card with portrait, then 'Subscribe' black card (~8s)"
+ }
+}

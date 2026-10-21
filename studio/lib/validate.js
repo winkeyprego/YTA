@@ -11,7 +11,7 @@ const lazy = (m) => { try { return require(m); } catch (e) { return {}; } };
 
 const COMMON = ['template', 'vo', 'dur', 'minDur', 'tail', 'name', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
 const FIELDS = {
-  talk: ['set', 'setOpts', 'chars', 'frame', 'focus', 'focusXY', 'zoom', 'speaker', 'line', 'lineOn', 'lineAt', 'lineWidth', 'cps', 'speaking'],
+  talk: ['set', 'setOpts', 'chars', 'frame', 'focus', 'focusXY', 'zoom', 'speaker', 'line', 'lineOn', 'lineAt', 'lineWidth', 'cps', 'speaking', 'lines', 'bubble', 'light', 'nameArrow'],
   versus: ['left', 'right', 'title'],
   document: ['lines', 'highlight', 'highlightOn', 'pencil', 'pencilOn', 'stamp'],
   chart: ['title', 'data', 'turn', 'turnLabel', 'riseOn', 'fallOn', 'change', 'xLabels', 'color', 'rising', 'drawDur'],
@@ -21,7 +21,10 @@ const FIELDS = {
   money: ['items', 'set', 'setOpts'],
   title: ['text', 'set', 'setOpts', 'size'],
   chapter: ['label', 'sub'],
+  card: ['text', 'lines', 'stack', 'size'],
+  screen: null, data: null, diagram: null, // kit templates: fields depend on `kind` (see the kit file's header)
 };
+const KITS = { screen: './screens', data: './datakit', diagram: './diagrams' };
 const REQUIRED = {
   talk: ['chars'], versus: ['left', 'right'], document: ['lines'], chart: ['data'], stat: ['value'],
   fuse: ['stops'], map: ['view'], money: ['items'], title: ['text'], chapter: ['label'],
@@ -59,13 +62,22 @@ function validate(spec) {
   spec.shots.forEach((shot, i) => {
     const at = `shot ${i + 1}${shot.template ? ` (${shot.template})` : ''}`;
     const tpl = shot.template;
-    if (!FIELDS[tpl]) { errors.push(`${at}: unknown template "${tpl}"${suggest(tpl, Object.keys(FIELDS))}`); return; }
-    const allowed = [...COMMON, ...FIELDS[tpl]];
-    Object.keys(shot).forEach((k) => { if (!allowed.includes(k)) warnings.push(`${at}: unknown field "${k}"${suggest(k, allowed)}. It will be ignored`); });
+    if (!(tpl in FIELDS)) { errors.push(`${at}: unknown template "${tpl}"${suggest(tpl, Object.keys(FIELDS))}`); return; }
+    if (FIELDS[tpl]) {
+      const allowed = [...COMMON, ...FIELDS[tpl]];
+      Object.keys(shot).forEach((k) => { if (!allowed.includes(k)) warnings.push(`${at}: unknown field "${k}"${suggest(k, allowed)}. It will be ignored`); });
+    } else {
+      const kit = lazy(KITS[tpl]);
+      const kinds = Object.keys(kit).filter((k) => typeof kit[k] === 'function' && !/^(buildCamera|_)/.test(k));
+      if (!shot.kind) errors.push(`${at}: missing "kind" (${kinds.join(', ')})`);
+      else if (typeof kit[shot.kind] !== 'function') errors.push(`${at}: unknown kind "${shot.kind}"${suggest(shot.kind, kinds)} (${kinds.join(', ')})`);
+    }
     (REQUIRED[tpl] || []).forEach((k) => { if (shot[k] == null) errors.push(`${at}: missing "${k}"`); });
 
     const voToks = tokens(shot.vo);
     if (tpl !== 'chapter' && !shot.vo && !shot.dur) warnings.push(`${at}: no "vo" and no "dur". It will last 2s with the narration paused`);
+    if (tpl === 'card' && !shot.text && !shot.lines) errors.push(`${at}: card needs "text" or "lines"`);
+    if (spec.style && !['war', 'finance'].includes(spec.style) && i === 0) errors.push(`unknown style "${spec.style}" (war, finance)`);
     if (tpl === 'chapter' && shot.vo) warnings.push(`${at}: chapter cards normally have no "vo" (narration pauses for them)`);
     if (tpl === 'title' && voToks.length > 14) warnings.push(`${at}: ${voToks.length} words on a title card. Keep it under ~12 and move the rest to the next shot`);
 
@@ -105,7 +117,13 @@ function validate(spec) {
       if (shot.speaker && !(shot.chars || []).some((c) => c.who === shot.speaker)) errors.push(`${at}: speaker "${shot.speaker}" is not in chars`);
       if (shot.line && !shot.speaker) errors.push(`${at}: "line" needs a "speaker"`);
       if (shot.line && shot.line.length > 90) warnings.push(`${at}: bubble line is ${shot.line.length} characters. Keep bubbles under ~90`);
-      if (shot.frame && !['wide', 'close'].includes(shot.frame)) errors.push(`${at}: frame must be "wide" or "close"`);
+      if (shot.frame && !['wide', 'close', 'reverse'].includes(shot.frame)) errors.push(`${at}: frame must be "wide", "close" or "reverse"`);
+      (shot.lines || []).forEach((l, k) => {
+        if (!l.text) errors.push(`${at} lines[${k}]: missing "text"`);
+        if (!(shot.chars || []).some((c) => c.who === (l.who || shot.speaker))) errors.push(`${at} lines[${k}]: speaker "${l.who}" is not in chars`);
+      });
+      if (shot.frame === 'reverse' && !(shot.lines || []).length) errors.push(`${at}: frame "reverse" needs a conversation in "lines"`);
+      if (shot.nameArrow && !(shot.chars || []).some((c) => c.who === shot.nameArrow.who)) errors.push(`${at}: nameArrow.who "${shot.nameArrow.who}" is not in chars`);
     }
     ['left', 'right'].forEach((side) => {
       const sd = shot[side];

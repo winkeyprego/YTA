@@ -1,0 +1,21 @@
+{
+  "title": "finance pack: dialogue, cards, host (test)",
+  "style": "finance",
+  "shots": [
+    { "template": "talk", "set": "tradingFloor", "vo": "January 2021. A trading desk in New York, and a problem nobody saw coming.",
+      "tag": "New York, January 2021",
+      "chars": [{ "who": "trader", "spot": "center", "mood": "worried", "pose": "think", "poseOn": "problem" }],
+      "nameArrow": { "who": "trader", "text": "a hedge fund trader", "on": "desk" } },
+    { "template": "talk", "set": "office", "frame": "reverse", "vo": "His boss walked in. Is it bad? It's worse than bad. We're losing billions.",
+      "chars": [{ "who": "ceo", "spot": "left", "mood": "worried" }, { "who": "trader", "spot": "right", "mood": "shocked" }],
+      "lines": [{ "who": "ceo", "text": "Is it bad?", "on": "is" }, { "who": "trader", "text": "It's worse than bad. We're losing billions.", "on": "worse" }] },
+    { "template": "card", "vo": "Because millions of strangers had found the same trade.", "text": "Millions of strangers had found the same trade." },
+    { "template": "talk", "set": "home", "light": true, "vo": "And they were all betting against him.",
+      "chars": [{ "who": "founder", "spot": "center", "mood": "smug", "holding": "phone", "pose": "present" }],
+      "speaker": "founder", "line": "Buy. Buy. Buy.", "lineOn": "betting" },
+    { "template": "talk", "set": "studioNews", "vo": "So what actually happened? Let's break it down.",
+      "chars": [{ "who": "host", "spot": "center", "mood": "happy", "pose": "present", "poseOn": "break" }],
+      "speaker": "host", "speaking": true, "frame": "close" },
+    { "template": "chapter", "label": "The Squeeze", "sub": "part one", "dur": 2 }
+  ]
+}

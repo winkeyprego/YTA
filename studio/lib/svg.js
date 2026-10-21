@@ -11,7 +11,7 @@ const g = (attrs, ...children) => `<g ${attrs}>${children.join('')}</g>`;
 const tr = (x, y, s = 1, r = 0) => `transform="translate(${n(x)} ${n(y)}) rotate(${n(r)}) scale(${n(s)})"`;
 
 // Text. `font` is one of: display (titles, big numbers), hand (tags, bubbles, stickers, plates),
-// type (documents), serif (chapter cards).
+// type (documents), serif (war chapter cards), script (finance dialogue, black cards, captions).
 function text(str, x, y, { font = 'hand', size = 24, fill = P.ink, anchor = 'start', weight, spacing, opacity } = {}) {
   const extra = [
     weight ? `font-weight="${weight}"` : '',
@@ -22,7 +22,7 @@ function text(str, x, y, { font = 'hand', size = 24, fill = P.ink, anchor = 'sta
 }
 
 // Approximate rendered width of a string, for sizing labels around text.
-const FONT_EM = { display: 0.56, hand: 0.47, type: 0.6, serif: 0.62 };
+const FONT_EM = { display: 0.56, hand: 0.47, type: 0.6, serif: 0.62, script: 0.42 };
 const textWidth = (str, size, font = 'hand') => String(str).length * size * (FONT_EM[font] || 0.5);
 
 // Camera: zoom around a focus point plus a pan offset. Wrap the "world" layer of a shot in this;
@@ -59,12 +59,13 @@ const DEFS = (seed) => `
 
 // Wrap a finished shot. Grain is near-invisible on purpose (references show none measurable);
 // it re-seeds 12x a second so flat fields don't band.
+// vignette: true = war strength (corners ~0.6 of centre); a number 0..1 scales it (finance uses ~0.25, corners ~0.9).
 function frame(content, t, { grain = true, vignette = true } = {}) {
   const seed = Math.floor(t * 12) % 50;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${DEFS(seed)}
 <rect width="${W}" height="${H}" fill="${P.nightDeep}"/>
 ${content}
-${vignette ? `<rect width="${W}" height="${H}" fill="url(#vignette)"/>` : ''}
+${vignette ? `<rect width="${W}" height="${H}" fill="url(#vignette)"${typeof vignette === 'number' ? ` opacity="${vignette}"` : ''}/>` : ''}
 ${grain ? `<rect width="${W}" height="${H}" filter="url(#grain)" fill="#fff"/>` : ''}
 </svg>`;
 }
