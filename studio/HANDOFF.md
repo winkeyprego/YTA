@@ -69,6 +69,21 @@ Use the **make-video** skill. In short: style → script → (voice → `words.j
 4. **More sets:** a lab or hospital, casino, port, demolition site, bookshop.
 5. Move derived colours (`T` in sets.js, `C` in maps.js and diagrams.js, `SCREEN_COLORS`, `DATAKIT_COLORS`) into palette.js.
 
+## Known issues from the stress test (fix these next; each is small)
+Eight writers storyboarded two full documentaries from the docs alone. Fixed already: kit field checks, empty-frame QA,
+graphics on screen at the cut, follow camera for builds, rooms behind every graphic, per-part timing (`_t0`), cue matching
+(`$`, `%`, endings), the `beat` alias, stat timing, rankingBoard labels, framing/sticker docs. Still open:
+1. **One part's error blocks `--plan` for every part.** Errors should be grouped per file and the rest still checked.
+2. **Stickers on non-talk shots land on content** (stat numbers, posts, notes). Give each kit a free-zone map like `talk`.
+3. **Card length:** cards warn over 4s, so a one-sentence pivot card only fits a short beat; let a card's limit scale with its text.
+4. **Average shot ~4.5s vs ~3.3s target:** the VO has long gaps between sentences; consider splitting a beat on a long pause.
+5. **Small bugs:** `stockChart` text `change` ignores the data's direction; `calendarFlip` backwards shows "undefined";
+   `card` text doesn't wrap; `document` highlight marks the first match, not the phrase position; `newsLive` always shows a
+   red market zig-zag; `radar` `ghost` blips trip a field warning; `browserArticle` turns `site` into a fake domain;
+   `split` crops its panels; `fuse` always burns to the end (no stop-at option); compose prop sizes vary a lot (document `s`).
+6. **PLAN.md written before a library update goes stale:** the director should re-read NEEDS "LIBRARY UPDATE" before writers start.
+7. QA reports for episodes outside the repo still go to `studio/renders/`; write them next to the episode instead.
+
 ## Open questions for the owner
 - Voice: the owner will use ElevenLabs or another AI voice (decided). Music: Epidemic Sound or a local generator, later.
 - First real episode topic and script? (Claude offered to write "Why the 2008 Crash Was COMPLETELY Avoidable".)
@@ -110,6 +125,9 @@ Package managers (npm, PyPI) are allowed by default.
   shot). The validator now reads kit field names from the kit file headers and `--qa` flags near-empty frames, the two
   silent failure modes the test exposed. Eight parallel writers then storyboarded both episodes from the docs (their
   FRICTION notes feed the next fixes). The test audio and storyboards stay private (scratchpad), never in the repo.
+  Visual pass against the references: every graphic now sits in an illustrated room (lib/backdrops.js), cuts always land on
+  content, diagram builds open tight and widen. The 37-min finance test (499 shots) passes --plan and --qa and was rendered
+  in full; the owner has the storyboards as a zip (no audio).
 - **2026-10-21 (cloud), final:** the owner confirmed the hero host (refined: hair shine, curled ends, lashes, lips, collar)
   and that history and finance must be ONE interchangeable style. The presets were reworked to be defaults only, with per-shot
   overrides; `episodes/test-mixed*` prove the mixing.
