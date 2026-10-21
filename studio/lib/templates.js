@@ -786,7 +786,14 @@ function compose(shot, ctx) {
       }
       if (it.text) {
         const k = M.clamp((t - it.at) * 5);
-        return `<g opacity="${n(k)}" data-qa="text" data-qn="text '${ui.esc(String(it.text).slice(0, 20))}'">${text(it.text, x, y, { size: it.size || 40, font: it.font || 'hand', fill: STICKER_COLORS[it.color] || it.color || (['board', 'night'].includes(shot.bg || 'board') ? P.paper : P.ink), anchor: it.anchor || 'middle' })}</g>`;
+        const fill = STICKER_COLORS[it.color] || P[it.color] || it.color || (['board', 'night'].includes(shot.bg || 'board') ? P.paper : P.ink);
+        // plain text always gets a contrasting outline so it stays readable over any picture
+        const m = /^#([0-9a-f]{6})$/i.exec(fill);
+        const lum = m ? (0.299 * parseInt(m[1].slice(0, 2), 16) + 0.587 * parseInt(m[1].slice(2, 4), 16) + 0.114 * parseInt(m[1].slice(4, 6), 16)) / 255 : 0.3;
+        const size = it.size || 40;
+        const t1 = text(it.text, x, y, { size, font: it.font || 'hand', fill, anchor: it.anchor || 'middle' })
+          .replace('<text ', `<text paint-order="stroke" stroke="${lum < 0.55 ? P.paper : P.ink}" stroke-width="${n(size * 0.16)}" stroke-linejoin="round" `);
+        return `<g opacity="${n(k)}" data-qa="text" data-qn="text '${ui.esc(String(it.text).slice(0, 20))}'">${t1}</g>`;
       }
       if (it.sticker) return ui.sticker(it.sticker, x, y, t, it.at, { size: it.size || 34, rot: it.rot ?? (i % 2 ? 2 : -3), color: STICKER_COLORS[it.color] || P.red });
       return '';
