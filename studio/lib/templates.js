@@ -684,10 +684,12 @@ function kitTemplate(which) {
     const frames = shot.frames ? subShots(resolveCues(evenFrames, ctx), ctx) : null;
     const focus = which === 'diagram' && typeof fn.focus === 'function' ? fn.focus(spec) : null;
     const builds = focus && typeof kit.buildCamera === 'function' && !shot.camera;
+    // builds with known element boxes get the follow camera: tight on what's there, widening as each element lands
+    const els = builds && typeof fn.elements === 'function' && typeof kit.followCamera === 'function' ? fn.elements(spec) : null;
     return (t) => {
       const fill = (list) => list && list.map((p) => ({ ...p, svg: p.render ? p.render(Math.max(0, t - (p.at || 0))) : p.svg || '' }));
       const world = fn({ ...spec, ...(panels ? { panels: fill(panels) } : {}), ...(frames ? { frames: fill(frames) } : {}) }, t);
-      const c = builds ? { zoom: kit.buildCamera(t, ctx.dur, focus).zoom, ...kit.buildCamera(t, ctx.dur, focus) } : { zoom: cameraZoom(shot.camera || 'locked', t, ctx) };
+      const c = els ? kit.followCamera(t, ctx.dur, els, { title: spec.title }) : builds ? kit.buildCamera(t, ctx.dur, focus) : { zoom: cameraZoom(shot.camera || 'locked', t, ctx) };
       return cam(world, c) + overlays(shot, t, ctx, { side: 'left' });
     };
   };

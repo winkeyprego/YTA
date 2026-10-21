@@ -37,7 +37,7 @@
 // Backgrounds are drawn oversized, so zooming out below 1 never shows an empty edge.
 
 const P = require('./palette');
-const { n, text, esc, W, H } = require('./svg');
+const { n, text, esc, textWidth, W, H } = require('./svg');
 const M = require('./motion');
 const { character, CAST } = require('./characters');
 
@@ -160,6 +160,38 @@ function buildCamera(t, dur, focus = [640, 360], { tight = 1.14, end = 0.95, bac
   return { zoom: M.lerp(tight, end, k), fx: M.lerp(focus[0], 640, k), fy: M.lerp(focus[1], 380, k) };
 }
 
+// Follow camera for builds: elements(spec) gives each element's box and entrance time; the camera frames what is
+// on screen so far (tight on the first element, so the cut lands on something big), widens as each new one lands,
+// and pulls back to the whole diagram (and its title) over the last `back` seconds.
+//   const c = D.followCamera(t, dur, D.loop.elements(spec));   // { zoom, fx, fy }
+function followCamera(t, dur, els, opts = {}) {
+  const { max = 1.6, pad = 40, move = 0.7, lead = 0.45, end = 0.97, back = 2.4 } = opts; // opts.title: keep the title in frame
+  const list = (els || []).filter(Boolean).sort((a, b) => a.at - b.at);
+  // the title joins the frame only when the first element sits under it; otherwise it waits for the pull-back
+  if (opts.title && list.length && Math.abs((list[0].x0 + list[0].x1) / 2 - 640) < 250) list.unshift({ x0: 640 - textWidth(opts.title, 52, 'script') / 2, x1: 640 + textWidth(opts.title, 52, 'script') / 2, y0: 40, y1: 100, at: -1 });
+  if (!list.length) return { zoom: 1, fx: 640, fy: 360 };
+  const frameOf = (k) => {
+    const seen = list.slice(0, k + 1);
+    const x0 = Math.min(...seen.map((e) => e.x0)) - pad, x1 = Math.max(...seen.map((e) => e.x1)) + pad;
+    const y0 = Math.min(...seen.map((e) => e.y0)) - pad, y1 = Math.max(...seen.map((e) => e.y1)) + pad;
+    const zoom = Math.max(1, Math.min(max, W / (x1 - x0), H / (y1 - y0)));
+    // keep the view on the background, which is drawn 200px oversized on every side
+    const hw = W / zoom / 2, hh = H / zoom / 2;
+    return { zoom, fx: M.clamp((x0 + x1) / 2, hw - 200, W - hw + 200), fy: M.clamp((y0 + y1) / 2, hh - 200, H - hh + 200) };
+  };
+  let cur = frameOf(0);
+  for (let k = 1; k < list.length; k++) {
+    const p = M.ease.inOut(M.prog(t, list[k].at - lead, move)); // starts moving before the element pops, so it pops in frame
+    if (p <= 0) break;
+    const next = frameOf(k);
+    cur = { zoom: M.lerp(cur.zoom, next.zoom, p), fx: M.lerp(cur.fx, next.fx, p), fy: M.lerp(cur.fy, next.fy, p) };
+  }
+  const startBack = Math.max(list[list.length - 1].at - lead + move, dur - back);
+  const k = M.ease.inOut(M.prog(t, startBack, Math.max(0.5, dur - startBack - 0.15)));
+  const fx = M.lerp(cur.fx, 640, k), fy = M.lerp(cur.fy, 360, k);
+  return { zoom: M.lerp(cur.zoom, end, k), fx, fy, x: 640 - fx, y: 360 - fy }; // x/y bring the framed point to the centre
+}
+
 // Focus for a build whose elements span the box [x0..x1, y0..y1]: centre of the box plus the tightest zoom
 // (<= max) that still shows the whole box with `pad` to spare. Returns [fx, fy, zoom] for buildCamera.
 function fitFocus(x0, x1, y0, y1, { max = 1.14, pad = 26 } = {}) {
@@ -204,6 +236,14 @@ function equation(spec, t) {
   });
   return out;
 }
+equation.elements = (spec) => {
+  const L = eqLayout(spec);
+  const items = [...(spec.terms || []), ...(spec.result ? [spec.result] : [])];
+  return items.map((it, i) => {
+    const x = L.x0 + i * (L.cw + L.gap);
+    return { x0: x - (i ? L.gap / 2 + 30 : 0), x1: x + L.cw, y0: L.y, y1: L.y + L.ch, at: it.at ?? 0.4 + i * 1.8 };
+  });
+};
 equation.focus = (spec) => { const L = eqLayout(spec); return [L.x0 + L.cw / 2 + (L.cw + L.gap) * 0.5, L.y + L.ch / 2]; };
 
 // ---------- loop ----------
@@ -241,14 +281,25 @@ function loop(spec, t) {
   }
   nodes.forEach((nd, i) => {
     const [x, y] = L.pos[i];
+    const lw = Math.max(180, textWidth(String(nd.label).toUpperCase(), 27) + 34); // the plate grows with its label
     const inner = (nd.who || nd.emblem || nd.icon ? badge(nd, x, y, nr) : `<circle cx="${n(x)}" cy="${n(y)}" r="${nr}" fill="${C.card}" stroke="${P.ink}" stroke-width="3.5" filter="url(#shadow)"/>`)
-      + `<rect x="${n(x - 90)}" y="${n(y + nr - 14)}" width="180" height="44" rx="8" fill="${P.paper}" stroke="${P.ink}" stroke-width="3"/>`
+      + `<rect x="${n(x - lw / 2)}" y="${n(y + nr - 14)}" width="${n(lw)}" height="44" rx="8" fill="${P.paper}" stroke="${P.ink}" stroke-width="3"/>`
       + text(String(nd.label).toUpperCase(), x, y + nr + 17, { size: 27, font: 'hand', anchor: 'middle' });
     out += popIn(x, y, t, ats[i], inner, i % 2 ? 2 : -2);
   });
   return out;
 }
 loop.focus = (spec) => loopLayout(spec).pos[0] || [640, 360];
+loop.elements = (spec) => {
+  const L = loopLayout(spec);
+  const els = (spec.nodes || []).map((nd, i) => {
+    const [x, y] = L.pos[i];
+    return { x0: x - 100, x1: x + 100, y0: y - 80, y1: y + 112, at: nd.at ?? 0.4 + i * 1.6 };
+  });
+  // the centre label pops right after the first node: frame both from the start
+  if (spec.center && els.length) els.push({ x0: L.cx - 80, x1: L.cx + 80, y0: L.cy - 80, y1: L.cy + 80, at: els[0].at + 0.01 });
+  return els;
+};
 
 // ---------- funnel ----------
 function funnel(spec, t) {
@@ -290,7 +341,8 @@ function treeLayout(spec) {
   return { root, nodes, twoLevel, rr: twoLevel ? 66 : 78, kr: twoLevel ? 58 : 70, gr: 44 };
 }
 function treeNode(item, x, y, r, t, at, rot) {
-  const plate = `<rect x="${n(x - 100)}" y="${n(y + r - 6)}" width="200" height="${item.sub ? 62 : 40}" rx="8" fill="${P.paper}" stroke="${P.ink}" stroke-width="2.5"/>`
+  const pw = Math.max(200, textWidth(String(item.label || '').toUpperCase(), 24) + 30);
+  const plate = `<rect x="${n(x - pw / 2)}" y="${n(y + r - 6)}" width="${n(pw)}" height="${item.sub ? 62 : 40}" rx="8" fill="${P.paper}" stroke="${P.ink}" stroke-width="2.5"/>`
     + text(String(item.label || '').toUpperCase(), x, y + r + 24, { size: 24, font: 'hand', anchor: 'middle' })
     + (item.sub ? text(item.sub, x, y + r + 48, { size: 24, font: 'script', anchor: 'middle', fill: P.inkSoft }) : '');
   return popIn(x, y, t, at, (item.who || item.emblem || item.icon ? badge(item, x, y, r) : `<circle cx="${n(x)}" cy="${n(y)}" r="${r}" fill="${C.card}" stroke="${P.ink}" stroke-width="3.5"/>`) + plate, rot);
@@ -315,6 +367,19 @@ function orgTree(spec, t) {
   return background(spec.title, t) + lines + treeNode(root, L.root[0], L.root[1], L.rr, t, rootAt, 0) + nodes;
 }
 orgTree.focus = (spec) => treeLayout(spec).root;
+orgTree.elements = (spec) => {
+  const L = treeLayout(spec);
+  const root = spec.root || {};
+  const rootAt = root.at ?? 0.4;
+  const box = (x, y, r, sub, at) => ({ x0: x - Math.max(r, 104), x1: x + Math.max(r, 104), y0: y - r, y1: y + r + (sub ? 60 : 38), at });
+  const out = [box(L.root[0], L.root[1], L.rr, root.sub, rootAt)];
+  (spec.children || []).slice(0, 6).forEach((c, i) => {
+    const at = c.at ?? rootAt + 1.6 * (i + 1);
+    out.push(box(L.nodes[i].pos[0], L.nodes[i].pos[1], L.kr, c.sub, at));
+    (c.children || []).slice(0, 6).forEach((g, j) => out.push(box(L.nodes[i].grand[j][0], L.nodes[i].grand[j][1], L.gr, g.sub, g.at ?? at + 0.8 * (j + 1))));
+  });
+  return out;
+};
 
 // ---------- portraits ----------
 // Initials from a label: "Sarah Connor" -> "SC", "The host" -> "TH", "FBI" -> "FBI".
@@ -611,4 +676,4 @@ function montage(spec, t) {
     + (white > 0 ? `<rect x="-200" y="-200" width="${W + 400}" height="${H + 400}" fill="#fff" opacity="${n(white)}"/>` : '');
 }
 
-module.exports = { equation, loop, funnel, orgTree, portraits, steps, section, split, montage, buildCamera, fitFocus, portrait, silhouette, emblem, initials, ICONS, countUp, C: C };
+module.exports = { followCamera, equation, loop, funnel, orgTree, portraits, steps, section, split, montage, buildCamera, fitFocus, portrait, silhouette, emblem, initials, ICONS, countUp, C: C };
