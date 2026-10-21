@@ -17,6 +17,72 @@ const OUT = 4.5; // outline weight for heads/bodies
 const LIMB = 7; // limb weight
 
 const rad = (d) => (d * Math.PI) / 180;
+const col = (c) => (typeof c === 'string' && P[c]) || c; // palette name or hex
+
+// ---------- head shape (likeness) ----------
+// spec.face: 'round' (default), 'long' (taller oval), 'wide' (broader, flatter), 'square' (square jaw); spec.jowls widens the
+// lower face. The eyes, brows and mouth never move: only the outline changes. Everything that sits ON the head (hair, hats,
+// headset, beard, ears, glasses arms, earrings) is mapped from the round head onto the new one with geo.map / geo.hatMap.
+const FACES = {
+  round: { cy: HEAD_Y, rx: HEAD_R, ry: HEAD_R, sq: 2 },
+  long: { cy: -240, rx: 57, ry: 76, sq: 2 },
+  wide: { cy: -232, rx: 77, ry: 62, sq: 2 },
+  square: { cy: HEAD_Y, rx: 67, ry: HEAD_R, sq: 4.5 }, // round crown, superellipse jaw
+};
+const geoCache = {};
+function headGeom(spec = {}) {
+  const face = FACES[spec.face] ? spec.face : 'round';
+  const key = face + (spec.jowls ? 'J' : '');
+  if (geoCache[key]) return geoCache[key];
+  const f = FACES[face];
+  const plain = key === 'round';
+  // contour: a = angle (0 = right side, +90deg = chin). The upper half is always an ellipse; the lower half can be squared.
+  const pt = (a) => {
+    const c = Math.cos(a), s = Math.sin(a);
+    if (s <= 0) return [f.rx * c, f.cy + f.ry * s];
+    const e = 2 / f.sq;
+    let x = f.rx * Math.sign(c) * Math.abs(c) ** e, y = f.cy + f.ry * s ** e;
+    if (spec.jowls) { x *= 1 + 0.11 * Math.sin(Math.PI * s ** 0.85) ** 1.5; y += 4 * s ** 6; }
+    return [x, y];
+  };
+  const N = 120;
+  const pts = Array.from({ length: N }, (_, i) => pt((i / N) * 2 * Math.PI));
+  // closed Catmull-Rom -> cubic Bezier: smooth at any outline weight
+  let d = `M${n(pts[0][0])} ${n(pts[0][1])}`;
+  for (let i = 0; i < N; i++) {
+    const p0 = pts[(i - 1 + N) % N], p1 = pts[i], p2 = pts[(i + 1) % N], p3 = pts[(i + 2) % N];
+    d += ` C${n(p1[0] + (p2[0] - p0[0]) / 6)} ${n(p1[1] + (p2[1] - p0[1]) / 6)} ${n(p2[0] - (p3[0] - p1[0]) / 6)} ${n(p2[1] - (p3[1] - p1[1]) / 6)} ${n(p2[0])} ${n(p2[1])}`;
+  }
+  d += ' Z';
+  // half-width of the head at height y (right side of the contour)
+  const hw = (y) => {
+    if (plain) { const dy = y - HEAD_Y; return Math.sqrt(Math.max(0, HEAD_R * HEAD_R - dy * dy)); }
+    let best = 0;
+    for (let i = 0; i < N; i++) {
+      const [x1, y1] = pts[i], [x2, y2] = pts[(i + 1) % N];
+      if (x1 < 0 && x2 < 0) continue;
+      if ((y - y1) * (y - y2) <= 0 && y1 !== y2) best = Math.max(best, x1 + ((y - y1) / (y2 - y1)) * (x2 - x1));
+    }
+    return best;
+  };
+  const sx = f.rx / HEAD_R, sy = f.ry / HEAD_R, top = f.cy - f.ry;
+  const bottom = Math.max(...pts.map((p) => p[1]));
+  // round head -> this head: x * sx, and y measured from the head centre * sy
+  const map = face === 'round' ? '' : `transform="translate(0 ${n(f.cy)}) scale(${n(sx)} ${n(sy)}) translate(0 ${-HEAD_Y})"`;
+  // hats keep their own height: move to the new crown and widen with the head
+  const hatMap = face === 'round' ? '' : `transform="translate(0 ${n(top - (HEAD_Y - HEAD_R))}) scale(${n(sx)} 1)"`;
+  const shape = (attrs) => (plain ? `<circle ${attrs} cx="0" cy="${HEAD_Y}" r="${HEAD_R}"/>` : `<path ${attrs} d="${d}"/>`);
+  return (geoCache[key] = { key, face, plain, f, d, hw, sx, sy, top, bottom, map, hatMap, shape, clipId: `headclip-${key}` });
+}
+
+// Ears (front view), only when spec.earSize is set: drawn before the head so the head covers their inner half.
+function ears(G, size, skin) {
+  if (!size) return '';
+  const e = Math.max(0.6, Math.min(1.5, size)), y = -226, x = G.hw(y) - 3;
+  const one = (sd) => `<ellipse cx="${n(sd * x)}" cy="${y}" rx="${n(11 * e)}" ry="${n(15 * e)}" fill="${skin}" stroke="${P.ink}" stroke-width="3.5"/>
+    <path d="M${n(sd * (x + 3 * e))} ${n(y - 7 * e)} Q${n(sd * (x + 8 * e))} ${y} ${n(sd * (x + 3 * e))} ${n(y + 7 * e)}" stroke="${P.ink}" stroke-width="2.2" fill="none" opacity=".45" stroke-linecap="round"/>`;
+  return one(-1) + one(1);
+}
 
 // ---------- face ----------
 function eyes(kind, look = 0) {
@@ -38,17 +104,47 @@ function eyes(kind, look = 0) {
   }
 }
 
-function brows(kind) {
+// kind = the mood (state.brows: angle). style = the person's brows (spec.brows: 'thin', 'thick', 'bushy', 'arched').
+function brows(kind, style) {
   const y = -254;
-  const line = (x1, y1, x2, y2) => `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${P.ink}" stroke-width="5" stroke-linecap="round"/>`;
-  switch (kind) {
-    case 'angry': return line(-38, y - 6, -14, y + 4) + line(14, y + 4, 38, y - 6);
-    case 'worried': return line(-38, y + 4, -14, y - 6) + line(14, y - 6, 38, y + 4);
-    case 'raised': return line(-37, y - 8, -15, y - 12) + line(15, y - 12, 37, y - 8);
-    case 'smug': return line(-36, y + 2, -14, y + 4) + line(14, y - 4, 36, y - 10);
-    case 'none': return '';
-    default: return line(-37, y, -15, y + 2) + line(15, y + 2, 37, y);
-  }
+  const segs = {
+    angry: [[-38, y - 6, -14, y + 4], [14, y + 4, 38, y - 6]],
+    worried: [[-38, y + 4, -14, y - 6], [14, y - 6, 38, y + 4]],
+    raised: [[-37, y - 8, -15, y - 12], [15, y - 12, 37, y - 8]],
+    smug: [[-36, y + 2, -14, y + 4], [14, y - 4, 36, y - 10]],
+  }[kind] || [[-37, y, -15, y + 2], [15, y + 2, 37, y]];
+  if (kind === 'none') return '';
+  const s = (w) => `stroke="${P.ink}" stroke-width="${w}" stroke-linecap="round" fill="none"`;
+  const one = ([x1, y1, x2, y2]) => {
+    switch (style) {
+      case 'thin': return `<path d="M${x1} ${y1} L${x2} ${y2}" ${s(3)}/>`;
+      case 'thick': return `<path d="M${x1} ${y1} L${x2} ${y2}" ${s(8.5)}/>`;
+      case 'arched': { // curve bowed upward over the eye; the mood still sets the two end heights
+        const mx = (x1 + x2) / 2, my = (y1 + y2) / 2 - 9;
+        return `<path d="M${x1} ${y1 + 2} Q${n(mx)} ${n(my)} ${x2} ${y2 + 2}" ${s(5)}/>`;
+      }
+      case 'bushy': { // a heavy shaggy tuft: flat underside, zigzag top edge, points leaning away from the nose
+        const L = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / L, uy = (y2 - y1) / L;
+        const up = -ux < 0 ? [uy, -ux] : [-uy, ux]; // the normal pointing up
+        const dir = Math.sign((x1 + x2) / 2) * Math.sign(ux) || 1; // +1: the segment runs inner -> outer
+        const at = (o, h, lean = 0) => { // o: 0 = inner end, 1 = outer end; h: height above the line
+          const k = dir > 0 ? o : 1 - o, px = x1 + (x2 - x1) * k + ux * dir * lean, py = y1 + (y2 - y1) * k + uy * dir * lean;
+          return `${n(px + up[0] * h)} ${n(py + up[1] * h)}`;
+        };
+        const top = [[-0.06, 3], [0.12, 7], [0.3, 12, 3], [0.46, 7], [0.64, 12, 3], [0.8, 7], [1, 11, 4], [1.08, 2]];
+        const d = `M${at(-0.06, -4)} ${top.map(([o, h, l]) => `L${at(o, h, l)}`).join(' ')} L${at(1.08, -4)} Z`;
+        return `<path d="${d}" fill="${P.ink}" stroke="${P.ink}" stroke-width="3" stroke-linejoin="round"/>`;
+      }
+      default: return `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${P.ink}" stroke-width="5" stroke-linecap="round"/>`;
+    }
+  };
+  return one(segs[0]) + one(segs[1]);
+}
+
+// Two soft age lines from the cheeks down past the mouth corners (spec.lines).
+function ageLines(on) {
+  if (!on) return '';
+  return `<path d="M-21 -213 Q-29 -202 -23 -189 M21 -213 Q29 -202 23 -189" stroke="${P.ink}" stroke-width="2.6" stroke-linecap="round" fill="none" opacity=".45"/>`;
 }
 
 function mouth(kind) {
@@ -76,29 +172,61 @@ function moustache(kind, color = P.ink) {
   }
 }
 
-function glasses(on) {
+// shape: 'round' (default), 'square' (rounded rectangles), 'half' (half-moon reading glasses, low, eyes peek over them).
+// The arms reach the edge of whichever head shape G is.
+function glasses(on, shape, G) {
   if (!on) return '';
   const y = -232;
-  return `<g fill="none" stroke="${P.ink}" stroke-width="3.2"><circle cx="-24" cy="${y}" r="15"/><circle cx="24" cy="${y}" r="15"/><path d="M-9 ${y - 2} Q0 ${y - 8} 9 ${y - 2}"/><path d="M-39 ${y - 3} L-62 ${y - 10} M39 ${y - 3} L62 ${y - 10}"/></g>`;
+  const arm = (x0, ay) => { const ax = G && !G.plain ? n(G.hw(ay - 7) - 4) : 62; return `M-${x0} ${ay} L-${ax} ${ay - 7} M${x0} ${ay} L${ax} ${ay - 7}`; };
+  switch (shape) {
+    case 'square':
+      return `<g fill="none" stroke="${P.ink}" stroke-width="3.2" stroke-linejoin="round"><rect x="-40" y="${y - 13}" width="32" height="26" rx="5"/><rect x="8" y="${y - 13}" width="32" height="26" rx="5"/><path d="M-8 ${y - 4} Q0 ${y - 9} 8 ${y - 4}"/><path d="${arm(40, y - 6)}"/></g>`;
+    case 'half': { // flat top just under the eye line: the dot eyes look over the frames
+      const t = y + 6;
+      const lens = (cx) => `M${cx - 16} ${t} H${cx + 16} Q${cx + 16} ${t + 16} ${cx} ${t + 16} Q${cx - 16} ${t + 16} ${cx - 16} ${t} Z`;
+      return `<g fill="none" stroke="${P.ink}" stroke-width="3.2" stroke-linejoin="round"><path d="${lens(-24)} ${lens(24)}"/><path d="M-8 ${t + 1} Q0 ${t - 4} 8 ${t + 1}"/><path d="${arm(40, t)}"/></g>`;
+    }
+    default:
+      return `<g fill="none" stroke="${P.ink}" stroke-width="3.2"><circle cx="-24" cy="${y}" r="15"/><circle cx="24" cy="${y}" r="15"/><path d="M-9 ${y - 2} Q0 ${y - 8} 9 ${y - 2}"/><path d="${arm(39, y - 3)}"/></g>`;
+  }
 }
 
 // Beards sit on the jaw and leave the mouth clear (draw the moustache separately if wanted).
-function beard(kind, color = '#4a4038') {
+// G = head geometry: on other face shapes the short beard follows that jaw, the full beard is mapped onto it.
+function beard(kind, color = '#4a4038', G) {
   const o = `fill="${color}" stroke="${P.ink}" stroke-width="3.5" stroke-linejoin="round"`;
+  const plain = !G || G.plain;
   switch (kind) {
-    case 'short': // a jaw band following the lower edge of the head
-      return `<path d="M-65 -226 A66 66 0 0 0 65 -226 Q60 -206 44 -196 Q24 -186 0 -186 Q-24 -186 -44 -196 Q-60 -206 -65 -226 Z" ${o}/>`;
-    case 'full': // bushy, past the chin onto the collar
-      return `<path d="M-66 -238 Q-74 -176 -40 -150 Q-18 -132 0 -134 Q18 -132 40 -150 Q74 -176 66 -238 Q62 -210 46 -198 Q24 -184 0 -186 Q-24 -184 -46 -198 Q-62 -210 -66 -238 Z" ${o}/>
+    case 'short': { // a jaw band following the lower edge of the head
+      if (plain) return `<path d="M-65 -226 A66 66 0 0 0 65 -226 Q60 -206 44 -196 Q24 -186 0 -186 Q-24 -186 -44 -196 Q-60 -206 -65 -226 Z" ${o}/>`;
+      // outer edge = the head contour below y0 (left -> chin -> right); inner edge = the round head's, widened to this jaw
+      const y0 = -226, k = G.hw(-200) / 59.4, chin = G.bottom - 16;
+      const jaw = [];
+      for (let i = 0; i <= 48; i++) { // sweep the contour from the left side, under the chin, to the right side
+        const yy = y0 + ((G.bottom - y0) * Math.sin((i / 48) * Math.PI)); // down then back up
+        const x = (i < 24 ? -1 : 1) * G.hw(yy) * (i === 24 ? 0 : 1);
+        jaw.push([x, yy]);
+      }
+      const outer = jaw.map(([x, yy], i) => `${i ? 'L' : 'M'}${n(x)} ${n(yy)}`).join(' ');
+      const hx = G.hw(y0);
+      return `<path d="${outer} Q${n(60 * k)} ${n(chin - 20)} ${n(44 * k)} ${n(chin - 10)} Q${n(24 * k)} ${n(chin)} 0 ${n(chin)} Q${n(-24 * k)} ${n(chin)} ${n(-44 * k)} ${n(chin - 10)} Q${n(-60 * k)} ${n(chin - 20)} ${n(-hx)} ${y0} Z" ${o}/>`;
+    }
+    case 'full': { // bushy, past the chin onto the collar
+      const art = `<path d="M-66 -238 Q-74 -176 -40 -150 Q-18 -132 0 -134 Q18 -132 40 -150 Q74 -176 66 -238 Q62 -210 46 -198 Q24 -184 0 -186 Q-24 -184 -46 -198 Q-62 -210 -66 -238 Z" ${o}/>
         <path d="M-30 -168 Q-24 -160 -16 -164 M18 -164 Q26 -160 32 -170 M-4 -150 Q2 -144 8 -150" stroke="${P.ink}" stroke-width="2" fill="none" opacity=".45"/>`;
+      if (plain) return art;
+      const wx = G.hw(-200) / 59.4; // match the jaw width (square jaws and jowls are wider low down)
+      return `<g transform="translate(0 ${n(G.bottom)}) scale(${n(wx)} ${n(G.sy)}) translate(0 170)">${art}</g>`;
+    }
     default:
       return '';
   }
 }
 
 // Air-traffic-controller headset: band over the head, ear cups, boom mic to the mouth (screen-left side).
-function headset(on) {
+function headset(on, G) {
   if (!on) return '';
+  if (G && !G.plain) return `<g ${G.map || ''}>${headset(on)}</g>`;
   return `<g stroke="${P.ink}" stroke-linejoin="round">
     <path d="M-66 -238 Q-70 -318 0 -318 Q70 -318 66 -238" fill="none" stroke-width="8"/>
     <path d="M-66 -238 Q-70 -318 0 -318 Q70 -318 66 -238" fill="none" stroke="${P.greyDark}" stroke-width="3.5"/>
@@ -146,15 +274,86 @@ function hair(kind, color) {
       return `<path d="M54 -276 Q96 -262 92 -206 Q88 -188 78 -196 Q84 -240 50 -258 Z" fill="${color}" ${o}/><path d="M-64 -240 Q-66 -306 0 -306 Q66 -306 64 -240 Q50 -282 0 -284 Q-50 -282 -64 -240 Z" fill="${color}" ${o}/>`;
     case 'bun':
       return `<circle cx="0" cy="-312" r="24" fill="${color}" ${o}/><path d="M-64 -240 Q-64 -306 0 -306 Q64 -306 64 -240 Q50 -282 0 -284 Q-50 -282 -64 -240 Z" fill="${color}" ${o}/>`;
+    // --- likeness styles ---
+    case 'receding': // hair on the crown and sides, an M-shaped hairline far back from a high forehead
+      return `<path d="M-67 -236 Q-71 -306 0 -309 Q71 -306 67 -236 Q62 -250 58 -266 Q50 -284 32 -294 Q16 -290 0 -286 Q-16 -290 -32 -294 Q-50 -284 -58 -266 Q-62 -250 -67 -236 Z" fill="${color}" ${o}/>`;
+    case 'buzz': { // close crop hugging the skull, a soft rounded hairline, a little stubble texture
+      const dots = [[-40, -284], [-18, -292], [6, -294], [30, -288], [50, -276], [-54, -268], [-28, -280], [18, -282], [40, -268], [-6, -282]]
+        .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.6"/>`).join('');
+      return `<path d="M-67 -234 A67 67 0 0 1 67 -234 Q64 -250 56 -262 Q30 -276 0 -276 Q-30 -276 -56 -262 Q-64 -250 -67 -234 Z" fill="${color}" stroke="${P.ink}" stroke-width="3" stroke-linejoin="round"/>
+        <g fill="${P.ink}" opacity=".22">${dots}</g>`;
+    }
+    case 'wavy': // medium length to the ears, wavy crown and wavy fringe
+      return `<path d="M-70 -224 Q-84 -248 -70 -270 Q-74 -300 -42 -310 Q-20 -324 0 -314 Q20 -324 42 -310 Q74 -300 70 -270 Q84 -248 70 -224 Q64 -212 58 -226 Q62 -246 52 -258 Q46 -274 30 -268 Q18 -284 4 -272 Q-10 -286 -24 -272 Q-40 -282 -50 -262 Q-62 -248 -58 -226 Q-64 -212 -70 -224 Z" fill="${color}" ${o}/>
+        <path d="M-44 -298 Q-32 -290 -38 -278 M6 -306 Q18 -298 12 -286 M46 -294 Q58 -284 54 -270" stroke="${P.ink}" stroke-width="2.2" fill="none" opacity=".45" stroke-linecap="round"/>`;
+    case 'combover': // bald crown with a few long strands swept from the left side over the top
+      return `<path d="M-67 -232 Q-73 -262 -58 -278 Q-56 -252 -60 -228 Z M67 -232 Q73 -262 58 -278 Q56 -252 60 -228 Z" fill="${color}" ${o}/>
+        <path d="M-60 -274 Q-40 -306 18 -307 Q46 -306 58 -290 Q42 -298 18 -299 Q-32 -298 -55 -264 Z" fill="${color}" stroke="${P.ink}" stroke-width="2.8" stroke-linejoin="round"/>
+        <path d="M-62 -262 Q-46 -292 4 -294 Q32 -294 50 -280 Q32 -286 4 -286 Q-38 -284 -58 -254 Z" fill="${color}" stroke="${P.ink}" stroke-width="2.8" stroke-linejoin="round"/>
+        <path d="M-64 -250 Q-50 -276 -12 -280 Q12 -281 34 -272 Q14 -274 -12 -273 Q-42 -270 -61 -243 Z" fill="${color}" stroke="${P.ink}" stroke-width="2.8" stroke-linejoin="round"/>`;
+    case 'afro': // front: a bumpy hairline over the forehead (the big round mass behind the head is hairBack('afro'))
+      return `<path d="M-70 -236 Q-76 -312 0 -314 Q76 -312 70 -236 Q63 -252 54 -262 Q44 -276 30 -272 Q18 -284 6 -274 Q-6 -286 -18 -274 Q-30 -284 -42 -272 Q-54 -270 -59 -256 Q-64 -248 -70 -236 Z" fill="${color}"/>
+        <path d="M70 -236 Q63 -252 54 -262 Q44 -276 30 -272 Q18 -284 6 -274 Q-6 -286 -18 -274 Q-30 -284 -42 -272 Q-54 -270 -59 -256 Q-64 -248 -70 -236" fill="none" ${o}/>`;
+    case 'parted': // clean side parting: a notch in the hairline on screen-left, hair combed across to the right
+      return `<path d="M-66 -236 Q-72 -304 -22 -309 Q66 -312 67 -240 Q60 -268 38 -280 Q12 -290 -12 -290 L-22 -298 L-30 -287 Q-52 -280 -61 -252 Q-63 -244 -66 -236 Z" fill="${color}" ${o}/>
+        <path d="M-22 -298 L-21 -307 M-12 -298 Q22 -302 52 -284" stroke="${P.ink}" stroke-width="2.2" fill="none" opacity=".5" stroke-linecap="round"/>`;
     default:
       return '';
   }
+}
+
+// Hair that sits BEHIND the head (drawn before it). Only the afro has a back mass for now.
+function hairBack(kind, color) {
+  if (kind !== 'afro') return '';
+  const cx = 0, cy = -256, rx = 100, ry = 90, N = 18;
+  const p = (a, k = 1) => [cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k];
+  let d = '';
+  for (let i = 0; i < N; i++) {
+    const a0 = (i / N) * 2 * Math.PI, a1 = ((i + 1) / N) * 2 * Math.PI;
+    const [x0, y0] = p(a0), [x1, y1] = p(a1), [qx, qy] = p((a0 + a1) / 2, 1.1);
+    d += `${i ? '' : `M${n(x0)} ${n(y0)}`} Q${n(qx)} ${n(qy)} ${n(x1)} ${n(y1)}`;
+  }
+  return `<path d="${d} Z" fill="${color}" stroke="${P.ink}" stroke-width="3.5" stroke-linejoin="round"/>`;
+}
+
+// All the hair for a spec on head G: { back, front }. Handles the face-shape mapping, spec.templeColor (grey temples:
+// the lower sides of the hair take that colour) and spec.hairVolume (0.8-1.3: the mass outside the skull grows or
+// shrinks; the hairline over the forehead stays put).
+function hairLayers(spec, G, color) {
+  const kind = spec.hair;
+  if (!kind || kind === 'none') return { back: '', front: '' };
+  let fill = color, defs = '';
+  if (spec.templeColor) {
+    const tc = col(spec.templeColor);
+    const id = `temple-${String(color).replace(/[^0-9a-z]/gi, '')}-${String(tc).replace(/[^0-9a-z]/gi, '')}`;
+    // radial from above the head: the crown keeps the hair colour, the sides (temples, over the ears) go grey
+    const k = 0.5;
+    defs = `<defs><radialGradient id="${id}-${kind}" gradientUnits="userSpaceOnUse" cx="0" cy="-330" r="140">
+      <stop offset="0" stop-color="${color}"/><stop offset="${k}" stop-color="${color}"/><stop offset="${k}" stop-color="${tc}"/><stop offset="1" stop-color="${tc}"/></radialGradient></defs>`;
+    fill = `url(#${id}-${kind})`;
+  }
+  const v = spec.hairVolume && spec.hairVolume !== 1 ? Math.max(0.6, Math.min(1.5, spec.hairVolume)) : 1;
+  const mapped = (inner) => (inner && G.map ? `<g ${G.map}>${inner}</g>` : inner);
+  // the mass grows mostly upward (taller crown, fuller upper sides); barely sideways, so the side ends stay on the head
+  const scaled = (inner, py, kx = 0.2) => (v === 1 || !inner ? inner
+    : `<g transform="translate(0 ${py}) scale(${n(1 + (v - 1) * kx)} ${n(v)}) translate(0 ${-py})">${inner}</g>`);
+  const back = mapped(scaled(hairBack(kind, color), -256, 1)); // (an afro's grey temples show on its front edge only)
+  const raw = hair(kind, fill);
+  let front = mapped(raw);
+  if (v !== 1 && raw && kind !== 'afro') {
+    // grown/shrunk copy, then the original trimmed to the skull on top (keeps the hairline and covers the scalp)
+    front = `<defs><clipPath id="${G.clipId}">${G.plain ? `<circle cx="0" cy="${HEAD_Y}" r="${HEAD_R}"/>` : `<path d="${G.d}"/>`}</clipPath></defs>`
+      + mapped(scaled(raw, -240)) + `<g clip-path="url(#${G.clipId})">${mapped(raw)}</g>`;
+  }
+  return { back: defs + back, front };
 }
 
 // Default colours for hats that have an obvious one (used when the spec gives no hatColor / hatBand).
 const HAT_COLOR = { service: P.olive, police: P.policeNavy, hardhat: P.gold, helmet: P.redDark, pilotHelmet: P.greyLight,
   ushanka: P.furDark, stahlhelm: P.greyDark, peaked: P.olive, mortarboard: P.navy };
 const HAT_BAND = { service: P.oliveDark, police: P.policeNavy, pilotHelmet: P.red, ushanka: P.fur, peaked: P.redDark, mortarboard: P.gold };
+// A hat (or anything worn on the crown) moved onto head G: same height, sits on the new crown, as wide as the head.
+const hatOn = (G, svg) => (svg && G.hatMap ? `<g ${G.hatMap}>${svg}</g>` : svg);
 function hat(kind, color = P.charcoal, band = P.redDark, back = false) {
   const o = `stroke="${P.ink}" stroke-width="3.5" stroke-linejoin="round"`;
   switch (kind) {
@@ -518,8 +717,10 @@ function character(spec = {}, st = {}) {
   // The not-yet-revealed person: every fill goes dark and the face is left blank (and has no data-qa).
   if (spec.silhouette) {
     const S = typeof spec.silhouette === 'string' ? spec.silhouette : P.silhouette;
+    const SG = headGeom(spec);
+    const SH = hairLayers({ ...spec, templeColor: null }, SG, S);
     spec = { ...spec, suit: S, shirt: S, tie: spec.tie === undefined ? null : S, skin: S, hairColor: S, hatColor: S, hatBand: S, print: null,
-      drawHead: () => `<circle cx="0" cy="${HEAD_Y}" r="${HEAD_R}" fill="${S}" stroke="${P.ink}" stroke-width="${OUT}"/>${hair(spec.hair, S)}${hat(spec.hat, S, S)}` };
+      drawHead: () => `${SH.back}${ears(SG, spec.earSize, S)}${SG.plain ? `<circle cx="0" cy="${HEAD_Y}" r="${HEAD_R}"` : `<path d="${SG.d}"`} fill="${S}" stroke="${P.ink}" stroke-width="${OUT}"/>${SH.front}${hatOn(SG, hat(spec.hat, S, S))}` };
   }
   const eyesKind = st.blink ? 'closed' : st.eyes || 'dot';
   const mouthKind = st.talk ? (st.talkMouth || 'open') : st.mouth || 'neutral';
@@ -536,18 +737,24 @@ function character(spec = {}, st = {}) {
   const T = Math.max(-1, Math.min(1, st.turn || 0));
   if (st.back) return backView(spec, st, skin);
   // Hero characters (e.g. the finance host, lib/host.js) bring their own detailed head via spec.drawHead.
-  const head = spec.drawHead ? spec.drawHead(st, spec) : `<circle data-qa="face" cx="0" cy="${HEAD_Y}" r="${HEAD_R}" fill="${skin}" stroke="${P.ink}" stroke-width="${OUT}"/>
-    ${hair(spec.hair, spec.hairColor || '#4a4038')}
-    ${spec.earrings ? `<circle cx="-64" cy="-212" r="5" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/><circle cx="64" cy="-212" r="5" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/>` : ''}
+  // Likeness (face shape, jowls, ears, brows, glasses shape, age lines): see headGeom and SHOTS.md "Likeness".
+  const G = headGeom(spec);
+  const H = spec.drawHead ? null : hairLayers(spec, G, col(spec.hairColor) || '#4a4038');
+  const ex = G.plain ? 64 : n(G.hw(-212) - 2); // earrings sit on the head edge
+  const bx = G.plain ? 38 : n(38 * Math.min(1.12, Math.max(0.9, G.hw(-210) / 59.2))); // blush follows the cheek width
+  const head = spec.drawHead ? spec.drawHead(st, spec) : `${H.back}${ears(G, spec.earSize, skin)}${G.plain
+    ? `<circle data-qa="face" cx="0" cy="${HEAD_Y}" r="${HEAD_R}"` : `<path data-qa="face" d="${G.d}"`} fill="${skin}" stroke="${P.ink}" stroke-width="${OUT}"/>
+    ${H.front}
+    ${spec.earrings ? `<circle cx="-${ex}" cy="-212" r="5" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/><circle cx="${ex}" cy="-212" r="5" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/>` : ''}
     <g transform="translate(${n(T * 17)} 0)">
-    ${T > 0.3 ? '' : `<ellipse cx="-38" cy="-210" rx="12" ry="7" fill="${spec.blushColor || autoBlush(skin)}" opacity=".75"/>`}
-    ${T < -0.3 ? '' : `<ellipse cx="38" cy="-210" rx="12" ry="7" fill="${spec.blushColor || autoBlush(skin)}" opacity=".75"/>`}
-    ${beard(spec.beard, spec.beardColor || spec.hairColor || '#4a4038')}
-    ${eyes(eyesKind, st.look ?? T)}${glasses(spec.glasses)}${brows(st.brows || 'flat')}
+    ${T > 0.3 ? '' : `<ellipse cx="-${bx}" cy="-210" rx="12" ry="7" fill="${spec.blushColor || autoBlush(skin)}" opacity=".75"/>`}
+    ${T < -0.3 ? '' : `<ellipse cx="${bx}" cy="-210" rx="12" ry="7" fill="${spec.blushColor || autoBlush(skin)}" opacity=".75"/>`}
+    ${beard(spec.beard, spec.beardColor || spec.hairColor || '#4a4038', G)}${ageLines(spec.lines)}
+    ${eyes(eyesKind, st.look ?? T)}${glasses(spec.glasses || spec.glassesShape, spec.glassesShape, G)}${brows(st.brows || 'flat', spec.brows)}
     ${moustache(spec.moustache, spec.moustacheColor)}${mouth(mouthKind)}
     ${spec.cigar ? `<rect x="10" y="-206" width="34" height="9" rx="3" fill="#8a5a3c" stroke="${P.ink}" stroke-width="2.5"/>` : ''}
-    ${headset(spec.headset)}</g>${veilFront(spec.veil)}
-    ${hat(spec.hat, spec.hatColor || HAT_COLOR[spec.hat], spec.hatBand || HAT_BAND[spec.hat])}`;
+    ${headset(spec.headset, G)}</g>${hatOn(G, veilFront(spec.veil))}
+    ${hatOn(G, hat(spec.hat, spec.hatColor || HAT_COLOR[spec.hat], spec.hatBand || HAT_BAND[spec.hat]))}`;
   const headTilt = st.tilt ? `transform="rotate(${n(st.tilt)} 0 ${SHOULDER_Y - 20})"` : '';
   const held = st.holding && !carry ? heldProp(st.holding, handPosition(1, armR)) : '';
   // re-draw the hand on top of held items so fingers overlap the prop
@@ -587,7 +794,11 @@ function seatedLegs() {
 
 // Seen from behind (over-the-shoulder foregrounds): back of the head (hair), ears, the jacket's back, arms.
 function backView(spec, st, skin) {
-  const hc = ['bald', 'none'].includes(spec.hair) ? skin : spec.hairColor || '#4a4038';
+  const hc = ['bald', 'none'].includes(spec.hair) ? skin : col(spec.hairColor) || '#4a4038';
+  const G = headGeom(spec);
+  const es = spec.earSize ? Math.max(0.6, Math.min(1.5, spec.earSize)) : 1, ex = G.plain ? 64 : n(G.hw(-226) - 2);
+  const backHair = spec.hair === 'afro' ? hairBack('afro', hc)
+    : `<path d="M-64 -214 A66 66 0 1 1 64 -214 Q0 -190 -64 -214 Z" fill="${hc}" stroke="${P.ink}" stroke-width="3.5"/>`;
   const backBody = body({ ...spec, back: true, tie: null, shirt: spec.outfit === 'shirt' || spec.outfit === 'tshirt' || spec.outfit === 'hoodie' ? spec.shirt : spec.suit || spec.shirt, print: null });
   const o = `stroke="${P.ink}" stroke-width="${OUT}"`;
   const armL = st.armL || [10, -6], armR = st.armR || [10, -6];
@@ -595,10 +806,10 @@ function backView(spec, st, skin) {
   return `<g ${spec.size && spec.size !== 1 ? `transform="scale(${n(spec.size)})"` : ''}>${st.sit ? chairBack(spec.chairColor) : ''}
     ${st.legs === false ? '' : st.sit ? seatedLegs() : legs(null)}
     <g transform="translate(0 ${sitY})">${backBody}${arm(-1, armL, skin)}${arm(1, armR, skin)}
-    <circle cx="-64" cy="-226" r="11" fill="${skin}" stroke="${P.ink}" stroke-width="3.5"/><circle cx="64" cy="-226" r="11" fill="${skin}" stroke="${P.ink}" stroke-width="3.5"/>
-    <circle cx="0" cy="${HEAD_Y}" r="${HEAD_R}" fill="${skin}" ${o}/>
-    ${hc !== skin ? `<path d="M-64 -214 A66 66 0 1 1 64 -214 Q0 -190 -64 -214 Z" fill="${hc}" stroke="${P.ink}" stroke-width="3.5"/>` : ''}
-    ${hat(spec.hat, spec.hatColor || HAT_COLOR[spec.hat], spec.hatBand || HAT_BAND[spec.hat], true)}</g></g>`;
+    <circle cx="-${ex}" cy="-226" r="${n(11 * es)}" fill="${skin}" stroke="${P.ink}" stroke-width="3.5"/><circle cx="${ex}" cy="-226" r="${n(11 * es)}" fill="${skin}" stroke="${P.ink}" stroke-width="3.5"/>
+    ${G.plain ? `<circle cx="0" cy="${HEAD_Y}" r="${HEAD_R}"` : `<path d="${G.d}"`} fill="${skin}" ${o}/>
+    ${hc !== skin ? (G.map ? `<g ${G.map}>${backHair}</g>` : backHair) : ''}
+    ${hatOn(G, hat(spec.hat, spec.hatColor || HAT_COLOR[spec.hat], spec.hatBand || HAT_BAND[spec.hat], true))}</g></g>`;
 }
 
 // Where a hand ends up for a pose (useful for attaching props or aiming bubbles).
@@ -699,18 +910,27 @@ function crowd(seed, rows, cols, x, y, w, h, scale = 0.3) {
 }
 
 
-// Every valid cast feature, for the validator (lib/validate.js). When you add a hair style, outfit, hat, moustache or
-// beard above, add its name here too so shots.json / storyboard casts can use it.
+// Every valid cast feature, for the validator (lib/validate.js). When you add a hair style, outfit, hat, moustache,
+// beard, face shape, brow or glasses shape above, add its name here too so shots.json / storyboard casts can use it.
+// A new list-valued key also goes in `enums`; a new number with limits goes in `ranges`.
 const FEATURES = {
-  hair: ['slick', 'side', 'bald', 'bob', 'curly', 'long', 'spiky', 'ponytail', 'bun', 'none'],
+  hair: ['slick', 'side', 'bald', 'bob', 'curly', 'long', 'spiky', 'ponytail', 'bun', 'none',
+    'receding', 'buzz', 'wavy', 'combover', 'afro', 'parted'],
+  // likeness (SHOTS.md "Likeness"): head outline, the person's brows (the mood still sets their angle), glasses frames
+  face: ['round', 'long', 'wide', 'square'],
+  brows: ['thin', 'thick', 'bushy', 'arched'],
+  glassesShape: ['round', 'square', 'half'],
   outfit: ['suit', 'shirt', 'dress', 'coat', 'hoodie', 'turtleneck', 'vest', 'robe', 'overalls', 'blazer',
     'uniform', 'police', 'firefighter', 'flightsuit', 'labcoat', 'tuxedo', 'weddingDress', 'tshirt', 'greatcoat', 'tunic', 'gown'],
   hat: ['tophat', 'fedora', 'cap', 'service', 'police', 'hardhat', 'helmet', 'pilotHelmet', 'ushanka', 'stahlhelm', 'peaked', 'mortarboard'],
   moustache: ['brush', 'walrus', 'thin'],
   beard: ['short', 'full'],
-  colors: ['suit', 'shirt', 'tie', 'hairColor', 'skin', 'hatColor', 'hatBand', 'moustacheColor', 'blushColor', 'beardColor', 'necklace', 'printColor'],
-  flags: ['glasses', 'cigar', 'pin', 'badge', 'lanyard', 'earrings', 'necklace', 'headset', 'veil', 'silhouette'],
-  numbers: ['size'],
+  colors: ['suit', 'shirt', 'tie', 'hairColor', 'skin', 'hatColor', 'hatBand', 'moustacheColor', 'blushColor', 'beardColor', 'necklace', 'printColor',
+    'templeColor'],
+  flags: ['glasses', 'cigar', 'pin', 'badge', 'lanyard', 'earrings', 'necklace', 'headset', 'veil', 'silhouette', 'lines', 'jowls'],
+  numbers: ['size', 'hairVolume', 'earSize'],
+  ranges: { hairVolume: [0.8, 1.3], earSize: [0.8, 1.3] }, // numbers with a sensible range (--plan warns outside it)
+  enums: ['hair', 'outfit', 'hat', 'moustache', 'beard', 'face', 'brows', 'glassesShape'], // keys whose value must be in the list above
   strings: ['print'], // free text: tshirt chest print (1-3 characters)
   holding: ['phone', 'paper', 'money', 'mic', 'briefcase', 'sign', 'glass', 'camera', 'laptop', 'book'], // state.holding values
 };
