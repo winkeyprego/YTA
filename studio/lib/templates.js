@@ -301,8 +301,14 @@ function talk(shot, ctx) {
       out += g(tr(left ? 170 : 1110, 1040, 2.05), character(resolveCast(overChar.who, ctx), st));
     }
 
+    const walkX = (ch, x) => (ch.walk ? M.tween(t, ch.walkAt ?? 0, ch.walkDur ?? ctx.dur, x + (ch.walk === 'in' ? -420 : 0), x + (ch.walk === 'out' ? 420 : 0), M.ease.linear) : x);
     const headOf = (ch) => {
-      const [x, y, s] = spotOf(ch);
+      if (ch === overChar) { // drawn from behind in the foreground, outside the camera
+        const left = spotOf(overChar)[0] < spotOf(focusChar)[0];
+        return { hx: left ? 170 : 1110, hy: 1040 - 236 * 2.05, hr: 66 * 2.05 };
+      }
+      const [x0, y, s] = spotOf(ch);
+      const x = walkX(ch, x0);
       const [hx, hy] = toScreen(x, y - (ch.sit ? 196 : 236) * s, c);
       return { hx, hy, hr: 66 * s * c.zoom };
     };
@@ -345,7 +351,8 @@ function talk(shot, ctx) {
     }
     if (shot.nameArrow) {
       const na = shot.nameArrow;
-      const who = byWho(na.who) || focusChar;
+      let who = byWho(na.who) || focusChar;
+      if (who === overChar) who = focusChar; // never label the back of a head
       if (who) {
         const { hx, hy, hr } = headOf(who);
         const nx = hx < 640 ? Math.min(1100, hx + hr + 190) : Math.max(180, hx - hr - 190);

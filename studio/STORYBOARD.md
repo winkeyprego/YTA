@@ -23,7 +23,7 @@ It's about 3× less writing than shots.json, and cue words can't mismatch the na
 | `say` | the first character says a line (floating line or bubble per preset) | `"say":"We're fine.@fine"` |
 | `talk` | a conversation; use with `"f":"r"` to cut to each speaker | `"talk":["ceo\|How bad?@bad","sbf\|Worse.@worse"]` |
 | `st` | stickers on words; optional colour after a colon. Use the object form to place one: `{"text":"GENIUS","on":"genius","x":900,"y":160}` | `"st":["GENIUS@genius","$32 BILLION@billion:gold"]` |
-| `arrow` | handwritten name + arrow on the first character | `"arrow":"Sam Bankman-Fried@sam"` |
+| `arrow` | handwritten name + arrow. It points at the person whose cast key is in the name, else the speaker/focus; force it with `>who` | `"arrow":"Sam Bankman-Fried@sam>sbf"` |
 | `f` | framing: `w` wide (people at medium size), `F` full set (shows signs, boards, screens), `c` close, `r` conversation cuts, `o` over the shoulder (with `"over":"who"`) | `"f":"c"` |
 | `cam` | camera: `locked`, `creep`, `punch@word`, `push@word`, `steps` | `"cam":"punch@collapse"` |
 

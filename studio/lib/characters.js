@@ -544,7 +544,6 @@ function character(spec = {}, st = {}) {
     ${T < -0.3 ? '' : `<ellipse cx="38" cy="-210" rx="12" ry="7" fill="${spec.blushColor || autoBlush(skin)}" opacity=".75"/>`}
     ${beard(spec.beard, spec.beardColor || spec.hairColor || '#4a4038')}
     ${eyes(eyesKind, st.look ?? T)}${glasses(spec.glasses)}${brows(st.brows || 'flat')}
-    ${Math.abs(T) > 0.25 ? `<path d="M${n(T * 30)} -226 q${n(T * 12)} 8 0 14" stroke="${P.ink}" stroke-width="3.5" fill="none" stroke-linecap="round"/>` : ''}
     ${moustache(spec.moustache, spec.moustacheColor)}${mouth(mouthKind)}
     ${spec.cigar ? `<rect x="10" y="-206" width="34" height="9" rx="3" fill="#8a5a3c" stroke="${P.ink}" stroke-width="2.5"/>` : ''}
     ${headset(spec.headset)}</g>${veilFront(spec.veil)}

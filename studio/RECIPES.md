@@ -122,7 +122,9 @@ When a metaphor needs a prop that doesn't exist yet, add the prop to `lib/props.
 ---
 
 ## Q. A clip of someone else talking (interview audio, a TV clip, an archive quote)
-The narration sometimes cuts to another voice: a trader, a reporter, a politician.
+The narration sometimes cuts to another voice: a trader, a reporter, a politician. **Default: the TV/news look** (the owner
+likes it for clips and interviews; it tells the viewer "someone else is speaking now"). Don't stage a quoted voice as an
+ordinary scene; save staging for the narrator's story.
 1. **TV clip:** `{ "t":"screen","k":"newsLive","channel":"MN","headline":"...","anchor":"reporter" }`. The anchor's mouth moves.
 2. **Interview on a set:** `talk` with `"speaking": true` on the speaker, plus a `plate` (name + role) or `arrow` on first appearance,
    and the tag `"ARCHIVE"` or a date.

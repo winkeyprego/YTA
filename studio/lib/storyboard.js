@@ -118,8 +118,19 @@ function expand(line, beats, lineNo) {
     delete s.st;
   }
   if (s.arrow) {
-    const [text, on] = cueSplit(s.arrow);
-    out.nameArrow = { who: (out.chars || s.chars || [{}])[0].who, text, ...(on ? { on } : {}) };
+    // "Name@word" or "Name@word>who". Without ">who" the arrow points at the person whose cast key appears in the name
+    // ("Tyler Cowen" -> cowen), then the focus/speaker, then the first person.
+    let raw = String(s.arrow), target = null;
+    const gt = raw.lastIndexOf('>');
+    if (gt > raw.lastIndexOf('@')) { target = raw.slice(gt + 1).trim(); raw = raw.slice(0, gt); }
+    const [text, on] = cueSplit(raw);
+    const people = out.chars || s.chars || [];
+    const words = text.toLowerCase().split(/[^a-z]+/).filter(Boolean);
+    const k = (c) => c.who.toLowerCase();
+    const named = people.find((c) => c.who && words.some((w) => w.length > 2 && (k(c).startsWith(w) || w.startsWith(k(c)))))
+      || people.find((c) => c.who && words.some((w) => w.length > 3 && k(c).length > 2 && w.slice(0, 3) === k(c).slice(0, 3))); // "Leopold" -> leoKid
+    const who = target || (named && named.who) || s.focus || s.speaker || (people[0] || {}).who;
+    out.nameArrow = { who, text, ...(on ? { on } : {}) };
     delete s.arrow;
   }
   if (s.f) { out.frame = { w: 'wide', c: 'close', r: 'reverse', F: 'full', o: 'ots' }[s.f] || s.f; delete s.f; }
