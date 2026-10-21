@@ -1004,7 +1004,7 @@ function fieldGun(o, t) {
   const last = shots.filter((f) => t >= f).pop();
   const since = last == null ? 99 : t - last;
   const recoil = since < 0.5 ? (since < 0.06 ? since / 0.06 : 1 - ease.inOut(clamp((since - 0.06) / 0.44))) * 26 : 0;
-  const flash = since < 0.14 ? 1 - since / 0.14 : 0;
+  const flash = since < 0.22 ? 1 - since / 0.22 : 0;
   const puff = since < 1.4 ? since / 1.4 : 1;
   const BX = 300; // muzzle x in the barrel's frame
   const barrel = `<g transform="translate(-10 -118) rotate(${n(-el)})">
@@ -1047,26 +1047,26 @@ function warplane(o, t) {
   const bob = Math.sin(t * 2.2 + (o.seed ?? 0)) * 3;
   const L = attack ? 230 : 210;
   const body = attack
-    ? `M${L} -6 Q${L - 6} -30 ${L - 40} -32 L-60 -30 L-190 -14 L-200 -2 L-190 8 L-40 20 L${L - 40} 22 Q${L - 6} 18 ${L} -6 Z`
-    : `M${L} -4 Q${L - 6} -24 ${L - 46} -26 L-40 -22 L-190 -8 L-198 0 L-190 6 L-40 16 L${L - 46} 18 Q${L - 6} 14 ${L} -4 Z`;
+    ? `M${L} -4 Q${L - 4} -40 ${L - 44} -42 L-60 -40 L-190 -16 L-202 -2 L-190 10 L-40 30 L${L - 40} 32 Q${L - 4} 28 ${L} -4 Z`
+    : `M${L} -4 Q${L - 4} -36 ${L - 50} -38 L-40 -32 L-190 -10 L-200 0 L-190 8 L-40 26 L${L - 50} 28 Q${L - 4} 24 ${L} -4 Z`;
   const canopy = attack
-    ? `<path d="M40 -30 Q60 -58 110 -56 L130 -30 Z" fill="${P.windowDark}" ${ol(2.5)}/><path d="M-6 -30 Q4 -50 36 -50 L40 -30 Z" fill="${P.windowDark}" ${ol(2.5)}/><path d="M60 -48 L64 -30 M88 -54 L92 -30" stroke="${P.greyLight}" stroke-width="2.5"/>`
-    : `<path d="M40 -24 Q56 -54 96 -52 L124 -24 Z" fill="${P.windowDark}" ${ol(2.5)}/><path d="M66 -48 L70 -24" stroke="${P.greyLight}" stroke-width="2.5"/><path d="M54 -38 L64 -46" stroke="${P.grey}" stroke-width="4" stroke-linecap="round" opacity=".6"/>`;
+    ? `<path d="M40 -40 Q60 -72 110 -70 L130 -40 Z" fill="${P.windowDark}" ${ol(2.5)}/><path d="M-10 -38 Q0 -62 36 -62 L40 -40 Z" fill="${P.windowDark}" ${ol(2.5)}/><path d="M64 -62 L68 -40 M90 -68 L94 -40" stroke="${P.greyLight}" stroke-width="2.5"/>`
+    : `<path d="M36 -34 Q54 -70 96 -68 L126 -34 Z" fill="${P.windowDark}" ${ol(2.5)}/><path d="M66 -64 L70 -34" stroke="${P.greyLight}" stroke-width="2.5"/><path d="M52 -48 L62 -58" stroke="${P.grey}" stroke-width="4" stroke-linecap="round" opacity=".6"/>`;
   const star = o.star === false ? '' : o.star === 'white'
-    ? `<circle cx="-110" cy="-2" r="15" fill="${P.navy}" ${ol(2)}/><path d="${starPath(-110, -2, 12)}" fill="${P.bubble}"/>`
-    : `<path d="${starPath(-110, -3, 15)}" fill="${P.red}" stroke="${P.ink}" stroke-width="1.8" stroke-linejoin="round"/>`;
+    ? `<circle cx="-100" cy="-2" r="19" fill="${P.navy}" ${ol(2)}/><path d="${starPath(-100, -2, 16)}" fill="${P.bubble}"/>`
+    : `<path d="${starPath(-100, -3, 19)}" fill="${P.red}" stroke="${P.ink}" stroke-width="1.8" stroke-linejoin="round"/>`;
   const spin = Math.abs(Math.sin(t * 40));
   return `<g transform="translate(${n((o.x ?? 640) + dx * dir)} ${n((o.y ?? 300) + bob)}) scale(${n((o.s ?? 1) * dir)} ${n(o.s ?? 1)})">
-    <path d="M-170 -8 L-208 -60 L-182 -62 L-140 -10 Z" fill="${c}" ${ol(3)}/>
+    <path d="M-166 -10 L-212 -82 L-180 -84 L-130 -14 Z" fill="${c}" ${ol(3)}/>
     <path d="${body}" fill="${c}" ${ol(3.5)}/>
-    <path d="M-180 6 L${L - 40} 16" stroke="${P.paperDim}" stroke-width="5" opacity=".5"/>
+    <path d="M-180 8 L${L - 46} 22" stroke="${P.paperDim}" stroke-width="5" opacity=".5"/>
     ${canopy}${star}
-    <path d="M-10 4 L120 4 L136 16 L-6 18 Z" fill="${P.oliveDark}" ${ol(3)}/>
+    <path d="M-16 8 L124 8 L146 24 L-10 26 Z" fill="${P.oliveDark}" ${ol(3)}/>
     <path d="M-176 0 L-120 2 L-120 10 L-182 8 Z" fill="${P.oliveDark}" ${ol(2.5)}/>
     ${attack ? `<path d="M-40 -32 L-74 -40" stroke="${P.ink}" stroke-width="4" stroke-linecap="round"/>` : ''}
-    <path d="M${L} -16 Q${L + 18} -6 ${L} 6 Z" fill="${P.charcoal}" ${ol(2.5)}/>
-    <ellipse cx="${L + 8}" cy="-5" rx="5" ry="${n(46 * (0.25 + 0.75 * spin))}" fill="${P.ink}" opacity=".55"/>
-    <ellipse cx="${L + 8}" cy="-5" rx="7" ry="50" fill="${P.paperShade}" opacity=".18"/>
+    <path d="M${L - 2} -22 Q${L + 26} -6 ${L - 2} 12 Z" fill="${P.charcoal}" ${ol(2.5)}/>
+    <ellipse cx="${L + 10}" cy="-5" rx="5" ry="${n(60 * (0.25 + 0.75 * spin))}" fill="${P.ink}" opacity=".55"/>
+    <ellipse cx="${L + 10}" cy="-5" rx="8" ry="64" fill="${P.paperShade}" opacity=".22"/>
   </g>`;
 }
 
@@ -1078,8 +1078,8 @@ function fog(o, t) {
   return Array.from({ length: 9 }, (_, i) => {
     const y = y0 - h / 2 + r() * h, w = 500 + r() * 500, sp = 6 + r() * 14;
     const x = ((r() * 1800 + t * sp * (i % 2 ? 1 : -1)) % 1800 + 1800) % 1800 - 260;
-    return `<ellipse cx="${n(x)}" cy="${n(y)}" rx="${n(w / 2)}" ry="${n(30 + r() * 50)}" fill="${P.bubble}" opacity="${n(dens * (0.18 + r() * 0.18))}" filter="url(#glow)"/>`;
-  }).join('') + `<rect x="-200" y="${n(y0 - h / 2)}" width="1680" height="${n(h)}" fill="${P.paperDim}" opacity="${n(dens * 0.22)}"/>`;
+    return `<ellipse cx="${n(x)}" cy="${n(y)}" rx="${n(w / 2)}" ry="${n(40 + r() * 60)}" fill="${P.greyLight}" opacity="${n(dens * (0.35 + r() * 0.3))}"/>`;
+  }).join('') + `<rect x="-200" y="${n(y0 - h / 2)}" width="1680" height="${n(h)}" fill="${P.greyLight}" opacity="${n(dens * 0.35)}"/>`;
 }
 
 // ---------- tin can ----------

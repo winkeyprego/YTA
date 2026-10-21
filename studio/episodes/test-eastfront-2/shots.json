@@ -1,0 +1,256 @@
+{
+ "title": "Test: Eastern Front pieces 2 (tankPlant, trench, fieldGun, warplane, fog, tinCan, breadLoaf, pipes open/widen/off/feeds)",
+ "style": "war",
+ "cast": {
+  "ivan": {
+   "outfit": "greatcoat",
+   "hat": "ushanka"
+  },
+  "petro": {
+   "outfit": "greatcoat",
+   "hat": "ushanka",
+   "beard": "short",
+   "beardColor": "#6b5a4a",
+   "skin": "skin3"
+  },
+  "welder": {
+   "outfit": "overalls",
+   "suit": "oliveDark",
+   "hair": "bun",
+   "hairColor": "#4a3020",
+   "skin": "skin2"
+  }
+ },
+ "shots": [
+  {
+   "template": "talk",
+   "set": "tankPlant",
+   "dur": 3,
+   "tag": "SET \u00b7 tankPlant",
+   "chars": [
+    {
+     "who": "welder",
+     "spot": "left",
+     "turn": 0.6
+    },
+    {
+     "who": "worker",
+     "spot": "right",
+     "pose": "explain"
+    }
+   ],
+   "frame": "full"
+  },
+  {
+   "template": "talk",
+   "set": "tankPlant",
+   "setOpts": {
+    "gate": true,
+    "name": "NIZHNY TAGIL",
+    "night": false
+   },
+   "dur": 3,
+   "tag": "SET \u00b7 tankPlant gate",
+   "chars": [
+    {
+     "who": "officer",
+     "spot": "farLeft"
+    }
+   ]
+  },
+  {
+   "template": "talk",
+   "set": "trench",
+   "dur": 3,
+   "tag": "SET \u00b7 trench",
+   "chars": [
+    {
+     "who": "ivan",
+     "spot": "left",
+     "turn": 0.7,
+     "pose": "explain"
+    },
+    {
+     "who": "petro",
+     "spot": "right",
+     "turn": -0.7
+    }
+   ]
+  },
+  {
+   "template": "talk",
+   "set": "trench",
+   "setOpts": {
+    "dusk": true,
+    "crate": "bread"
+   },
+   "dur": 3,
+   "tag": "SET \u00b7 trench dusk bread",
+   "chars": [
+    {
+     "who": "petro",
+     "spot": "left",
+     "turn": 0.6
+    }
+   ]
+  },
+  {
+   "template": "compose",
+   "bg": "frontRoad",
+   "setOpts": {
+    "season": "winter"
+   },
+   "dur": 4,
+   "tag": "fieldGun fire + fog",
+   "items": [
+    {
+     "prop": "fieldGun",
+     "x": 420,
+     "y": 640,
+     "s": 0.8,
+     "fire": [
+      0.5,
+      2.2
+     ]
+    },
+    {
+     "prop": "fieldGun",
+     "x": 980,
+     "y": 600,
+     "s": 0.55,
+     "fire": [
+      1.2,
+      3.0
+     ]
+    },
+    {
+     "prop": "fog",
+     "y": 560,
+     "density": 0.7
+    }
+   ]
+  },
+  {
+   "template": "compose",
+   "bg": "board",
+   "dur": 3,
+   "tag": "warplane fighter red / attack / white",
+   "items": [
+    {
+     "prop": "warplane",
+     "x": 360,
+     "y": 200,
+     "s": 0.8,
+     "fly": 60
+    },
+    {
+     "prop": "warplane",
+     "kind": "attack",
+     "x": 700,
+     "y": 400,
+     "s": 0.8
+    },
+    {
+     "prop": "warplane",
+     "star": "white",
+     "x": 960,
+     "y": 600,
+     "s": 0.6,
+     "dir": -1
+    }
+   ]
+  },
+  {
+   "template": "compose",
+   "bg": "desk",
+   "dur": 2.5,
+   "tag": "tinCan / tinCan open / breadLoaf",
+   "items": [
+    {
+     "prop": "tinCan",
+     "x": 260,
+     "y": 560
+    },
+    {
+     "prop": "tinCan",
+     "open": true,
+     "x": 560,
+     "y": 560
+    },
+    {
+     "prop": "breadLoaf",
+     "x": 930,
+     "y": 560,
+     "cut": 2,
+     "knife": true
+    }
+   ]
+  },
+  {
+   "template": "pipes",
+   "dur": 4,
+   "heading": "ONE FRONT, ONE PIPE",
+   "a": {
+    "label": "SOVIET PIPE",
+    "sub": "one product",
+    "at": -5
+   },
+   "b": {
+    "off": true
+   }
+  },
+  {
+   "template": "pipes",
+   "dur": 5,
+   "a": {
+    "label": "SOVIET PIPE",
+    "at": -5
+   },
+   "b": {
+    "label": "ALLIED PIPE",
+    "sub": "from across the ocean",
+    "at": 0.3,
+    "open": 0.2,
+    "widen": {
+     "to": 0.9,
+     "at": 3
+    }
+   }
+  },
+  {
+   "template": "pipes",
+   "dur": 7,
+   "heading": "WHAT THE VALVE FED",
+   "a": {
+    "label": "SOVIET PIPE",
+    "at": -5
+   },
+   "b": {
+    "label": "ALLIED PIPE",
+    "at": -5,
+    "open": 0.7
+   },
+   "ground": {
+    "label": "what a trench can see",
+    "at": 0.3
+   },
+   "feeds": [
+    {
+     "label": "ALUMINIUM",
+     "sub": "in an engine block",
+     "at": 1.5
+    },
+    {
+     "label": "HIGH OCTANE",
+     "sub": "in a fighter's tank",
+     "at": 3
+    },
+    {
+     "label": "MACHINE TOOLS",
+     "sub": "the next gun barrel",
+     "at": 4.5
+    }
+   ]
+  }
+ ]
+}

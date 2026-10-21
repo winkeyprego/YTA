@@ -208,7 +208,7 @@ function validate(spec) {
     if ((shot.stickers || []).length > 3) warnings.push(`${at}: ${shot.stickers.length} stickers. More than 3 crowds the frame`);
     if (tpl === 'compose') {
       const PROPS = (lazy('./propkit').PROPS) || {};
-      const bgs = ['board', 'paper', 'wall', 'desk', 'night', ...Object.keys(SETS)];
+      const bgs = ['board', 'paper', 'wall', 'desk', 'night', 'sky', ...Object.keys(SETS)];
       if (shot.bg && !bgs.includes(shot.bg)) errors.push(`${at}: unknown bg "${shot.bg}"${suggest(shot.bg, bgs)}`);
       (shot.items || []).forEach((it, k) => {
         if (it.prop && !PROPS[it.prop]) errors.push(`${at} items[${k}]: unknown prop "${it.prop}"${suggest(it.prop, Object.keys(PROPS))}`);

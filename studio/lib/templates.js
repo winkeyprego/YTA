@@ -762,7 +762,7 @@ function kitTemplate(which) {
 }
 
 // ---------- compose: free placement of props, people, text and stickers (metaphors, one-off scenes) ----------
-// { template: 'compose', bg: 'board'|'paper'|'wall'|'desk'|'night'|<set name>, setOpts, front: true, light: [x, y],
+// { template: 'compose', bg: 'board'|'paper'|'wall'|'desk'|'night'|'sky'|<set name>, setOpts, front: true, light: [x, y],
 //   items: [ { prop: 'cashStack', x, y, s, on, ...prop options },          // lib/propkit.js
 //            { who: 'leo', x, y, s, mood, pose, poseOn, mood2, mood2On },   // a character standing at (x, y)
 //            { text: 'Words', x, y, size, font, color, on },                 // plain text
@@ -773,6 +773,15 @@ const COMPOSE_BG = {
   paper: () => `<rect x="-200" y="-200" width="${W + 400}" height="${H + 400}" fill="${P.paper}"/>` + Array.from({ length: 30 }, (_, i) => `<path d="M-200 ${i * 40 - 180} H${W + 200}" stroke="${P.paperShade}" stroke-width="1" opacity=".5"/>`).join(''),
   wall: () => props.office(),
   desk: () => props.deskTop(4),
+  // open winter sky over a low snowy horizon (planes, birds, anything in the air; no buildings)
+  sky: (t = 0) => `<defs><linearGradient id="cmpSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P.grey}"/><stop offset="1" stop-color="${P.paperDim}"/></linearGradient></defs>`
+    + `<rect x="-200" y="-200" width="${W + 400}" height="${H + 400}" fill="url(#cmpSky)"/>`
+    + [[180, 120, 1], [560, 210, 0.8], [930, 90, 1.2], [1180, 260, 0.7], [380, 330, 0.6]].map(([x, y, k], i) => {
+      const cx = ((x + t * (6 + i * 2)) % (W + 300)) - 150;
+      return `<g transform="translate(${n(cx)} ${y}) scale(${k})" opacity=".8"><ellipse rx="90" ry="26" fill="${P.bubble}"/><ellipse cx="-40" cy="-16" rx="44" ry="26" fill="${P.bubble}"/><ellipse cx="34" cy="-20" rx="50" ry="30" fill="${P.bubble}"/></g>`;
+    }).join('')
+    + `<path d="M-200 652 Q300 640 640 648 T${W + 200} 646 V${H + 200} H-200 Z" fill="${P.paper}"/>`
+    + Array.from({ length: 40 }, (_, i) => `<ellipse cx="${(i * 37) % (W + 40)}" cy="650" rx="${16 + (i % 3) * 6}" ry="${8 + (i % 4) * 3}" fill="${P.greyDark}" opacity=".7"/>`).join(''),
   night: () => props.nightSky(3) + props.skyline(11, 650, { color: '#253247', minH: 140, maxH: 330, lit: 0.06 }) + `<rect y="650" width="${W}" height="70" fill="#1a222e"/>`,
 };
 function compose(shot, ctx) {
@@ -782,7 +791,7 @@ function compose(shot, ctx) {
   leadFirst(items);
   return (t) => {
     const set = sets()[shot.bg];
-    const bg = set ? set.draw(t, shot.setOpts || {}) : (COMPOSE_BG[shot.bg || 'paper'] || COMPOSE_BG.paper)();
+    const bg = set ? set.draw(t, shot.setOpts || {}) : (COMPOSE_BG[shot.bg || 'paper'] || COMPOSE_BG.paper)(t);
     const body = items.map((it, i) => {
       if (t < it.at) return '';
       const x = it.x ?? 640, y = it.y ?? 600;

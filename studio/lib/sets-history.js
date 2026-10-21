@@ -40,6 +40,14 @@
 //                along the road from the horizon (left) toward the right edge, behind the people.
 //   arcticPort   Arkhangelsk docks in winter: icy water with floes, far shore, two dock cranes (hooks sway), crates,
 //                wooden quay. setOpts: ship (true) = moored cargo ship with funnel smoke; snow (true).
+//   tankPlant    a Ural tank works hall at night (Tankograd style): tall snowy windows, brick and steel, an overhead
+//                crane lowering a turret, T-34 hulls on the line, welding sparks, hanging lamps.
+//                setOpts: night (true) = dark windows with snow; false = grey winter daylight; sparks (true);
+//                gate (false) = a big open gate at the right onto the snowy yard, name ('') = the sign over it.
+//   trench       inside a winter trench on the steppe: log-and-plank revetment, sandbag parapet with snow, a dugout
+//                door with a stove pipe, a lantern, duckboards. A crate in the front centre (front()) holds
+//                setOpts.crate 'tin' (default, an American meat tin) | 'tinOpen' | 'bread' (rye loaf + knife) | 'empty' | false.
+//                setOpts.dusk (false) = dusk sky and a lit lantern.
 //
 // Exported helper: manhattan(t, opts) draws the Lower Manhattan silhouette with its base at y = 0 (wrap it in a
 // translate/scale) for other sets or screens.
@@ -79,6 +87,8 @@ const T = {
   slush: '#9a8e80', birch: '#efebe0', leaf: '#9fb178', leafDark: '#80975f', canvas: '#9b9672', canvasDark: '#827d5d',
   sea: '#8b9b9d', seaLine: '#a9b6b6', ice: '#e4e8e4', hull: '#3d4045', plank: '#8f7e6a', plankDark: '#716253',
   crane: '#a9804e', craneDark: '#86643c', smoke: '#b9bcb8', shore: '#5e6a66', shoreDark: '#4b5653',
+  hall: '#2e3540', hallDark: '#242a33', girder: '#4a5058', concrete: '#7f817b', concreteDark: '#6b6d68', windowNight: '#33415a',
+  log: '#7a6248', logDark: '#5f4b37', earth: '#6e5a45',
 };
 
 // ---------- small local helpers (sets.js requires this file, so nothing is imported from it) ----------
@@ -1396,6 +1406,137 @@ Object.assign(SETS, {
     front: (t, { snow = true } = {}) => (snow ? snowfall(t, 442, { count: 12, size: 1.7, speed: 1.6 }) : ''),
     spots: { farLeft: [150, 708, 0.62], left: [390, 704, 0.62], center: [640, 706, 0.62], right: [890, 704, 0.62], farRight: [1130, 708, 0.62] },
     close: { fx: 640, fy: 560, zoom: 1.6 },
+  },
+
+  // ------------------------------------------------------------------ a Ural tank works hall at night
+  tankPlant: {
+    mood: 'night',
+    draw(t, { night = true, sparks = true, gate = false, name = '' } = {}) {
+      const FL = 470; // floor line
+      let s = `<rect width="${W}" height="${H}" fill="${T.hall}"/>`;
+      // tall windows in the upper wall: night blue (or grey day) with snow falling past the glazing bars
+      const wins = [70, 330, 590, 850].filter((x) => !(gate && x > 800));
+      wins.forEach((x, i) => {
+        s += `<rect x="${x}" y="70" width="190" height="220" fill="${night ? T.windowNight : T.snowSky}" ${o(4)}/>`;
+        s += `<defs><clipPath id="tpW${i}"><rect x="${x}" y="70" width="190" height="220"/></clipPath></defs><g clip-path="url(#tpW${i})">${snowfall(t, 610 + i, { count: 14, size: 0.8, speed: 0.8 })}</g>`;
+        s += `<path d="M${x + 63} 70 V290 M${x + 127} 70 V290 M${x} 143 H${x + 190} M${x} 216 H${x + 190}" stroke="${P.ink}" stroke-width="5"/>`;
+      });
+      // roof trusses
+      for (let x = -40; x < W + 40; x += 160) s += `<path d="M${x} 0 L${x + 80} 46 L${x + 160} 0 M${x} 46 H${x + 160}" stroke="${T.girder}" stroke-width="7" fill="none"/>`;
+      // brick lower wall with a dark base
+      s += `<rect y="300" width="${W}" height="${FL - 300}" fill="${T.brickDark}"/>`;
+      for (let y = 312; y < FL; y += 18) { const off = ((y - 312) / 18) % 2 ? 24 : 0; s += `<path d="M0 ${y} H${W}" stroke="${T.brick}" stroke-width="2" opacity=".55"/>`; for (let x = off; x < W; x += 48) s += `<path d="M${x} ${y - 18} V${y}" stroke="${T.brick}" stroke-width="2" opacity=".4"/>`; }
+      s += `<path d="M0 300 H${W}" stroke="${P.ink}" stroke-width="4"/>`;
+      // a red banner (no text) between the windows
+      s += `<path d="M290 96 H316 V230 L303 216 L290 230 Z" fill="${P.red}" ${o(3)}/><path d="M550 96 H576 V230 L563 216 L550 230 Z" fill="${P.red}" ${o(3)}/>`;
+      if (gate) {
+        s += `<rect x="960" y="150" width="290" height="${FL - 150}" fill="${night ? T.windowNight : T.snowSky}" ${o(5)}/>`
+          + `<defs><clipPath id="tpGate"><rect x="960" y="150" width="290" height="${FL - 150}"/></clipPath></defs><g clip-path="url(#tpGate)">`
+          + `<rect x="960" y="400" width="290" height="80" fill="${T.snow}"/><path d="M960 400 H1250" stroke="${T.snowShade}" stroke-width="4"/>`
+          + snowfall(t, 620, { count: 30 }) + `</g>`
+          + `<rect x="1200" y="150" width="60" height="${FL - 150}" fill="${T.girder}" ${o(4)}/>`
+          + Array.from({ length: 6 }, (_, i) => `<path d="M1200 ${170 + i * 50} H1260" stroke="${P.ink}" stroke-width="2.5"/>`).join('');
+        if (name) {
+          const ns = Math.min(30, 250 / Math.max(1, textWidth(String(name).toUpperCase(), 1, 'display')));
+          s += `<rect data-qa="text" data-qn="tankPlant sign" x="975" y="160" width="260" height="40" rx="3" fill="${P.paper}" ${o(3)}/><g>${text(String(name).toUpperCase(), 1105, n(180 + ns * 0.36), { size: n(ns), font: 'display', anchor: 'middle', fill: P.ink })}</g>`;
+        }
+      }
+      // overhead crane: girder, trolley, chain, a turret hanging and swaying a little
+      const sw = Math.sin(t * 1.1) * 0.04, tx = 760 + Math.sin(t * 0.3) * 12;
+      s += `<rect x="-20" y="112" width="${W + 40}" height="26" fill="${T.crane}" ${o(4)}/>`
+        + Array.from({ length: 22 }, (_, i) => `<path d="M${i * 62 - 10} 114 L${i * 62 + 21} 136" stroke="${T.craneDark}" stroke-width="3"/>`).join('')
+        + `<rect x="${n(tx - 40)}" y="136" width="80" height="26" fill="${T.craneDark}" ${o(3)}/>`;
+      const hx = tx + Math.sin(sw) * 170, hy = 162 + Math.cos(sw) * 170;
+      s += `<path d="M${n(tx)} 162 L${n(hx)} ${n(hy)}" stroke="${P.ink}" stroke-width="4" stroke-dasharray="7 3"/>`
+        + `<g transform="translate(${n(hx)} ${n(hy)}) rotate(${n((-sw * 180) / Math.PI)})">
+            <path d="M0 0 L-46 30 M0 0 L46 30" stroke="${P.ink}" stroke-width="3"/>
+            <path d="M-70 76 L-56 30 L52 26 L84 64 L80 76 Z" fill="${T.tank}" ${o(3.5)}/><path d="M80 52 H170" stroke="${P.ink}" stroke-width="12"/><path d="M82 52 H168" stroke="${T.tank}" stroke-width="6"/>
+            <path d="M-66 64 L80 64" stroke="${T.tankDark}" stroke-width="3"/></g>`;
+      // floor: concrete with rails, a painted safety line
+      s += `<rect y="${FL}" width="${W}" height="${H - FL}" fill="${T.concrete}"/><path d="M0 ${FL} H${W}" stroke="${P.ink}" stroke-width="4"/>`
+        + `<path d="M0 ${FL + 60} H${W} M0 ${FL + 74} H${W}" stroke="${T.concreteDark}" stroke-width="5"/>`
+        + `<path d="M0 ${FL + 150} H${W}" stroke="${P.gold}" stroke-width="6" stroke-dasharray="34 22" opacity=".55"/>`;
+      for (let k = 1; k < 6; k++) s += `<path d="M0 ${FL + 20 + k * k * 8} H${W}" stroke="${T.concreteDark}" stroke-width="1.5" opacity=".5"/>`;
+      // T-34 hulls on the line (no turrets yet): one far right-of-centre, one big at the left
+      const hull = (x, base, sc) => `<g transform="translate(${x} ${base}) scale(${sc})">
+          <rect x="-210" y="-86" width="420" height="86" rx="43" fill="${T.track}" ${o(5)}/>
+          ${[-150, -75, 0, 75, 150].map((wx) => `<circle cx="${wx}" cy="-40" r="30" fill="${T.tankDark}" ${o(4)}/><circle cx="${wx}" cy="-40" r="9" fill="${P.ink}" opacity=".5"/>`).join('')}
+          <path d="M-232 -84 L-214 -136 L120 -140 L236 -96 L240 -84 Z" fill="${T.tank}" ${o(5)}/>
+          <ellipse cx="-20" cy="-138" rx="72" ry="10" fill="${P.ink}" opacity=".6"/>
+          <path d="M-226 -100 H236" stroke="${T.tankDark}" stroke-width="5"/></g>`;
+      s += hull(gate ? 760 : 960, FL + 34, 0.62) + hull(330, FL + 88, 0.9);
+      // trestles / stands under the near hull's ends
+      // hanging lamps with glow
+      (gate ? [180, 520, 860] : [180, 520, 860, 1140]).forEach((x) => { s += `<path d="M${x} 138 V196" stroke="${P.ink}" stroke-width="3"/><path d="M${x - 26} 214 L${x - 12} 196 H${x + 12} L${x + 26} 214 Z" fill="${P.greenDark}" ${o(3)}/>` + pool(x, 300, 120, 170, night ? 0.14 : 0.06); });
+      // welding at the near hull: a white-hot point, sparks spraying down, a flickering glow
+      if (sparks) {
+        const fr = Math.floor(t * 12), r = rng(900 + fr), on = r() > 0.18;
+        const wx = 470, wy = FL - 30;
+        if (on) {
+          s += pool(wx, wy, 90, 70, 0.3, P.gold) + `<circle cx="${wx}" cy="${wy}" r="${n(6 + r() * 5)}" fill="${P.bubble}"/>`;
+          for (let i = 0; i < 9; i++) { const a = ((20 + r() * 140) * Math.PI) / 180, L = 20 + r() * 60; s += `<path d="M${wx} ${wy} L${n(wx + Math.cos(a) * L)} ${n(wy + Math.sin(a) * L)}" stroke="${P.gold}" stroke-width="2.5" stroke-linecap="round"/>`; }
+        }
+      }
+      return s;
+    },
+    front: () => '',
+    spots: { farLeft: [150, 708, 0.66], left: [400, 704, 0.66], center: [640, 706, 0.66], right: [880, 704, 0.66], farRight: [1130, 708, 0.66] },
+    close: { fx: 640, fy: 540, zoom: 1.6 },
+  },
+
+  // ------------------------------------------------------------------ inside a winter trench on the steppe
+  trench: {
+    mood: 'day',
+    draw(t, { dusk = false } = {}) {
+      const PT = 292, FLR = 646; // parapet foot, duckboard top
+      let s = dusk ? duskSky('trSkyK', 980, 230) : snowSky('trSky');
+      // far steppe edge just visible over the parapet, then the parapet: sandbags under a snow cap
+      s += `<path d="M0 230 Q400 222 800 228 T${W} 226 V${PT} H0 Z" fill="${T.snowShade}"/>`;
+      const r = rng(77);
+      for (let row = 0; row < 2; row++) for (let x = -30 + row * 34; x < W + 40; x += 68) {
+        const y = PT - 22 - row * 26 + r() * 4;
+        s += `<ellipse cx="${n(x)}" cy="${n(y)}" rx="38" ry="16" fill="${T.canvas}" ${o(3)}/><path d="M${n(x - 20)} ${n(y - 4)} Q${n(x)} ${n(y + 4)} ${n(x + 20)} ${n(y - 4)}" stroke="${T.canvasDark}" stroke-width="2.5" fill="none"/>`;
+      }
+      s += `<path d="M-10 238 Q120 222 260 232 Q420 220 560 230 Q720 218 880 230 Q1040 220 1180 230 Q1250 226 1300 232 V246 Q1150 240 1000 246 Q800 238 600 246 Q400 238 200 246 Q80 240 -10 246 Z" fill="${T.snow}" ${o(3)}/>`;
+      // revetment: vertical logs, horizontal planks, earth between
+      s += `<rect y="${PT}" width="${W}" height="${FLR - PT}" fill="${T.earth}"/>`;
+      for (let x = 10; x < W; x += 54) s += `<rect x="${x}" y="${PT - 6}" width="20" height="${FLR - PT + 6}" rx="8" fill="${T.log}" ${o(3)}/><path d="M${x + 7} ${PT + 30} V${FLR - 20}" stroke="${T.logDark}" stroke-width="2" opacity=".6"/>`;
+      [PT + 70, PT + 190, PT + 300].forEach((y, i) => { s += `<rect x="-10" y="${y}" width="${W + 20}" height="26" fill="${T.plank}" ${o(3)}/><path d="M0 ${y + 13} H${W}" stroke="${T.plankDark}" stroke-width="2" opacity=".5"/>`; });
+      // the dugout door at the left: log lintel, dark doorway, a canvas flap pinned half open, a stove pipe through the parapet
+      s += `<rect x="96" y="${PT + 40}" width="210" height="${FLR - PT - 40}" fill="${P.nightDeep}" ${o(4)}/>`
+        + pool(200, FLR - 60, 70, 50, dusk ? 0.35 : 0.15, P.windowLit)
+        + `<path d="M96 ${PT + 40} H306 V${PT + 70} Q240 ${PT + 190} 190 ${FLR} H96 Z" fill="${T.canvasDark}" ${o(3.5)}/>`
+        + `<path d="M120 ${PT + 70} Q170 ${PT + 200} 160 ${FLR - 6}" stroke="${T.canvas}" stroke-width="4" fill="none"/>`
+        + `<rect x="78" y="${PT + 14}" width="246" height="32" rx="12" fill="${T.log}" ${o(3.5)}/>`
+        + `<rect x="270" y="150" width="20" height="${PT - 130}" fill="${P.charcoal}" ${o(3)}/><rect x="264" y="144" width="32" height="12" fill="${P.charcoal}" ${o(2.5)}/>`
+        + smoke(280, 140, t, { count: 5, period: 6, rise: 110, drift: 70, r0: 5, r1: 18, op: 0.45 });
+      // a lantern on a peg and a shelf with two mess tins and a cup, right of centre (clear of the speakers' heads)
+      const lx = 1010;
+      s += `<path d="M${lx} ${PT + 96} V${PT + 112}" stroke="${P.ink}" stroke-width="3"/><rect x="${lx - 16}" y="${PT + 112}" width="32" height="44" rx="4" fill="${P.windowLit}" opacity="${dusk ? 1 : 0.7}" ${o(3)}/><path d="M${lx - 20} ${PT + 112} H${lx + 20} M${lx - 20} ${PT + 156} H${lx + 20}" stroke="${P.ink}" stroke-width="5"/>`
+        + (dusk ? pool(lx, PT + 134, 110, 90, 0.35) : '');
+      s += `<rect x="1080" y="${PT + 150}" width="170" height="12" fill="${T.plankDark}" ${o(2.5)}/>`
+        + `<rect x="1096" y="${PT + 122}" width="50" height="28" rx="6" fill="${P.oliveDark}" ${o(2.5)}/><rect x="1156" y="${PT + 126}" width="44" height="24" rx="6" fill="${P.olive}" ${o(2.5)}/><rect x="1210" y="${PT + 128}" width="22" height="22" rx="3" fill="${P.greyDark}" ${o(2)}/>`;
+      // snow drifted at the foot of the wall, duckboards on the floor
+      s += `<path d="M0 ${FLR - 18} Q160 ${FLR - 34} 320 ${FLR - 14} Q640 ${FLR - 26} 900 ${FLR - 12} Q1100 ${FLR - 30} ${W} ${FLR - 16} V${FLR} H0 Z" fill="${T.snow}" ${o(2.5)}/>`
+        + `<rect y="${FLR}" width="${W}" height="${H - FLR}" fill="${T.dirtDark}"/>`;
+      for (let x = -20; x < W; x += 46) s += `<path d="M${x} ${FLR + 6} L${x + 30} ${H}" stroke="${T.plank}" stroke-width="16"/><path d="M${x} ${FLR + 6} L${x + 30} ${H}" stroke="${P.ink}" stroke-width="2" opacity=".4"/>`;
+      s += snowfall(t, 651, { count: 40, size: 0.9, y1: PT });
+      return s;
+    },
+    // the crate in the front centre, with what is on it
+    front(t, { crate = 'tin' } = {}) {
+      if (crate === false) return '';
+      const X = require('./props-extra');
+      const cx = 640, base = 716;
+      let s = `<rect x="${cx - 120}" y="${base - 96}" width="240" height="96" fill="${P.wood}" ${o(3.5)}/>`
+        + `<path d="M${cx - 120} ${base - 48} H${cx + 120}" stroke="${P.woodDeep}" stroke-width="3"/><rect x="${cx - 120}" y="${base - 96}" width="240" height="14" fill="${P.woodMid}" ${o(2.5)}/>`
+        + `<path d="M${cx - 108} ${base - 76} L${cx - 92} ${base - 6} M${cx + 108} ${base - 76} L${cx + 92} ${base - 6}" stroke="${P.woodDeep}" stroke-width="3"/>`;
+      if (crate === 'tin' || crate === 'tinOpen') s += X.tinCan({ x: cx, y: base - 94, s: 0.62, open: crate === 'tinOpen', label: 'PORK' });
+      if (crate === 'bread') s += X.breadLoaf({ x: cx - 10, y: base - 94, s: 0.7, cut: 1, knife: true });
+      return s + snowfall(t, 652, { count: 10, size: 1.6, speed: 1.5 });
+    },
+    spots: { farLeft: [170, 712, 0.68], left: [410, 708, 0.68], center: [640, 712, 0.68], right: [870, 708, 0.68], farRight: [1110, 712, 0.68] },
+    close: { fx: 640, fy: 540, zoom: 1.6 },
   },
 });
 

@@ -416,9 +416,9 @@ function pipeLine(key, p, tm, t) {
     const rot = key === 'a' ? -2 : 2;
     top += `<g opacity="${n(clamp(k * 3))}" transform="translate(${tx} ${py}) rotate(${n(rot * (1 + 2 * damp(t - tm.draw - 0.4)))}) scale(${n(0.5 + 0.5 * ease.outBack(k))}) translate(${-tx} ${-py})">
       <path d="M${tx} ${py} V${ty + 10}" stroke="${P.paperDim}" stroke-width="2.5"/>
-      <g filter="url(#shadow)"><rect x="${n(tx - w / 2)}" y="${ty}" width="${n(w)}" height="${h}" rx="4" fill="${P.paper}" stroke="${P.ink}" stroke-width="3"/></g>
+      <g filter="url(#shadow)"><rect data-qa="text" data-qn="pipe ${key} tag" x="${n(tx - w / 2)}" y="${ty}" width="${n(w)}" height="${h}" rx="4" fill="${P.paper}" stroke="${P.ink}" stroke-width="3"/></g>
       <circle cx="${tx}" cy="${ty + 10}" r="4" fill="${P.board}" stroke="${P.ink}" stroke-width="1.5"/>
-      <g data-qa="text" data-qn="pipe ${key} tag">${text(label, tx, ty + 46, { size: n(ls), font: 'display', fill: G.dark, anchor: 'middle' })}
+      <g>${text(label, tx, ty + 46, { size: n(ls), font: 'display', fill: G.dark, anchor: 'middle' })}
       ${sub ? text(sub, tx, ty + 74, { size: n(ss), font: 'hand', fill: P.inkSoft, anchor: 'middle' }) : ''}</g></g>`;
   }
   // the shut stamp lands on the pipe just downstream of the valve (clear of the tag)
@@ -488,9 +488,9 @@ function pipes({ heading, sub, a = {}, b = {}, front = {}, shut = [], level, gro
       ${text('SUPPLY', cx, gy + 40, { size: 14, anchor: 'middle', fill: P.inkSoft })}
       <g transform="translate(${cx} ${gy}) rotate(${n(ang)})"><path d="M0 8 V-40" stroke="${P.ink}" stroke-width="7" stroke-linecap="round"/><path d="M0 6 V-38" stroke="${P.red}" stroke-width="3.5" stroke-linecap="round"/></g>
       <circle cx="${cx}" cy="${gy}" r="7" fill="${P.ink}"/>
-      <g filter="url(#shadow)"><rect x="${n(cx - pw / 2)}" y="${py}" width="${n(pw)}" height="${ph}" rx="4" fill="${P.paper}" stroke="${P.ink}" stroke-width="3"/></g>
+      <g filter="url(#shadow)"><rect data-qa="text" data-qn="pipes front plate" x="${n(cx - pw / 2)}" y="${py}" width="${n(pw)}" height="${ph}" rx="4" fill="${P.paper}" stroke="${P.ink}" stroke-width="3"/></g>
       <circle cx="${n(cx - pw / 2 + 12)}" cy="${py + 12}" r="3.5" fill="${P.greyDark}"/><circle cx="${n(cx + pw / 2 - 12)}" cy="${py + 12}" r="3.5" fill="${P.greyDark}"/>
-      <g data-qa="text" data-qn="pipes front plate">${text(label, cx, py + 42, { size: n(ls), font: 'display', anchor: 'middle' })}
+      <g>${text(label, cx, py + 42, { size: n(ls), font: 'display', anchor: 'middle' })}
       ${front.sub ? text(front.sub, cx, py + 68, { size: 22, font: 'hand', anchor: 'middle', fill: P.inkSoft }) : ''}</g>
     </g>`;
   }
@@ -557,8 +557,8 @@ function pipesUnder({ heading, sub, a, b, front, shut, level, ground = {}, feeds
     const drip = lit > 0 ? `<circle cx="${x}" cy="${n(MY + 26 + ((t * 40) % 8))}" r="5" fill="${P.gold}" opacity="${n(lit)}"/>` : '';
     out += `<g transform="translate(${x} ${MY}) scale(${n(pk)}) translate(${-x} ${-MY})">
       <rect x="${x - 12}" y="${MY}" width="24" height="26" fill="${P.navy}" stroke="${P.ink}" stroke-width="3"/>${drip}
-      <g filter="url(#shadow)"><rect x="${n(x - w / 2)}" y="${ty}" width="${n(w)}" height="${h}" rx="5" fill="${lit > 0.5 ? P.gold : P.paper}" stroke="${P.ink}" stroke-width="3"/></g>
-      <g data-qa="text" data-qn="pipes feed ${i + 1}">${text(label, x, ty + 40, { size: n(ls), font: 'display', anchor: 'middle', fill: P.ink })}
+      <g filter="url(#shadow)"><rect data-qa="text" data-qn="pipes feed ${i + 1}" x="${n(x - w / 2)}" y="${ty}" width="${n(w)}" height="${h}" rx="5" fill="${lit > 0.5 ? P.gold : P.paper}" stroke="${P.ink}" stroke-width="3"/></g>
+      <g>${text(label, x, ty + 40, { size: n(ls), font: 'display', anchor: 'middle', fill: P.ink })}
       ${sub2 ? text(sub2, x, ty + 68, { size: n(ss), font: 'hand', anchor: 'middle', fill: P.inkSoft }) : ''}</g></g>`;
   });
   return out;
