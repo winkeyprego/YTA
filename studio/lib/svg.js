@@ -22,7 +22,7 @@ function text(str, x, y, { font = 'hand', size = 24, fill = P.ink, anchor = 'sta
 }
 
 // Approximate rendered width of a string, for sizing labels around text.
-const FONT_EM = { display: 0.56, hand: 0.47, type: 0.6, serif: 0.62, script: 0.42 };
+const FONT_EM = { display: 0.56, hand: 0.47, type: 0.535, serif: 0.62, script: 0.42 };
 const textWidth = (str, size, font = 'hand') => String(str).length * size * (FONT_EM[font] || 0.5);
 
 // Camera: zoom around a focus point plus a pan offset. Wrap the "world" layer of a shot in this;

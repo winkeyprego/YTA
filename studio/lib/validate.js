@@ -3,17 +3,17 @@
 // labels too long to fit; repetitive shots. Run automatically by lib/episode.js (errors stop the render),
 // and printed by `node render.js episodes/<ep> --plan`.
 
-const { tokens } = require('./timing');
+const { tokens, matchAt } = require('./timing');
 const { CAST } = require('./characters');
 const { MOODS, POSES } = require('./templates');
 
 const lazy = (m) => { try { return require(m); } catch (e) { return {}; } };
 
-const COMMON = ['template', 'vo', 'dur', 'minDur', 'tail', 'id', 'vignette', 'fill', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
+const COMMON = ['template', 'vo', 'dur', 'minDur', 'tail', 'id', 'vignette', 'fill', 'stamp', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
 const FIELDS = {
   talk: ['set', 'setOpts', 'chars', 'frame', 'focus', 'focusXY', 'zoom', 'speaker', 'line', 'lineOn', 'lineAt', 'lineWidth', 'cps', 'speaking', 'lines', 'bubble', 'dialogue', 'light', 'nameArrow'],
   versus: ['left', 'right', 'title'],
-  document: ['lines', 'highlight', 'highlightOn', 'pencil', 'pencilOn', 'stamp'],
+  document: ['lines', 'highlight', 'highlightOn', 'pencil', 'pencilOn', 'stamp', 'redact', 'unredactOn', 'classified'],
   chart: ['title', 'data', 'turn', 'turnLabel', 'riseOn', 'fallOn', 'change', 'xLabels', 'color', 'rising', 'drawDur'],
   stat: ['value', 'prefix', 'suffix', 'caption', 'on', 'at', 'set', 'setOpts', 'size', 'countDur'],
   fuse: ['heading', 'sub', 'stops', 'end', 'tallyLabel'],
@@ -21,7 +21,7 @@ const FIELDS = {
   money: ['items', 'set', 'setOpts'],
   title: ['text', 'set', 'setOpts', 'size'],
   chapter: ['label', 'sub', 'style'],
-  card: ['text', 'lines', 'stack', 'size'],
+  card: ['text', 'lines', 'stack', 'size', 'by'],
   compose: ['bg', 'setOpts', 'items', 'front', 'light'],
   screen: null, data: null, diagram: null, // kit templates: fields depend on `kind` (see the kit file's header)
 };
@@ -102,7 +102,7 @@ function validate(spec) {
     const checkCue = (where, cue) => {
       if (cue == null || typeof cue === 'number') return;
       const target = tokens(String(cue).split('#')[0]);
-      const found = target.length && voToks.some((_, k) => target.every((w, m) => voToks[k + m] && (voToks[k + m] === w || voToks[k + m].startsWith(w) || w.startsWith(voToks[k + m]))));
+      const found = target.length && matchAt(voToks, target) >= 0;
       if (!found) errors.push(`${at}: ${where} cue "${cue}" is not in this shot's vo`);
     };
     const walkCues = (o, path) => {

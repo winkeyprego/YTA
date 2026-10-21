@@ -7,7 +7,7 @@ this work should read it first, then `CLAUDE.md`, then do the "Next steps" in or
 _Last updated: 2026-10-21 (cloud session): one interchangeable style with two presets; recipes, validator and skills are ready._
 
 ## The goal (in the owner's words, summarised)
-Build a faceless YouTube channel about **money, companies, scams and crashes** (the topics of
+Build faceless YouTube documentaries about **money, companies, scams and crashes, and history/war** (the topics of
 [@Crayon_Capital](https://www.youtube.com/@Crayon_Capital)), animated in the **style** of
 [@TwoSidesOfWar](https://www.youtube.com/@TwoSidesOfWar) and [@WarUnspun](https://www.youtube.com/@WarUnspun),
 and **automate as much as possible with Claude**: script in → finished video out.
@@ -68,7 +68,7 @@ Use the **make-video** skill. In short: style → script → (voice → `words.j
 5. Move derived colours (`T` in sets.js, `C` in maps.js and diagrams.js, `SCREEN_COLORS`, `DATAKIT_COLORS`) into palette.js.
 
 ## Open questions for the owner
-- Which voice for real episodes? (see step 6)
+- Voice: the owner will use ElevenLabs or another AI voice (decided). Music: Epidemic Sound or a local generator, later.
 - First real episode topic and script? (Claude offered to write "Why the 2008 Crash Was COMPLETELY Avoidable".)
 
 ## How to resume

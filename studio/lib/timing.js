@@ -106,6 +106,24 @@ function schedule(shots, words) {
   return { shots: out, gaps, total: clock };
 }
 
+// Find where `target` (normalised tokens) starts in `toks` (array of normalised strings). Matches word by word
+// (prefix-tolerant), or, when the transcript splits a token oddly ("9 -11" -> "9","11"; "$4 .5"; "U .S."), by joining
+// up to 4 consecutive transcript tokens and comparing with the cue written as one word ("9-11" -> "911").
+function matchAt(toks, target, nth = 0) {
+  let count = 0;
+  const joined = target.join('');
+  for (let i = 0; i < toks.length; i++) {
+    let ok = true;
+    for (let k = 0; k < target.length; k++) if (!toks[i + k] || !same(toks[i + k], target[k])) { ok = false; break; }
+    if (!ok) {
+      let acc = '';
+      for (let k = 0; k < 4 && toks[i + k]; k++) { acc += toks[i + k]; if (acc === joined || (joined.length > 3 && acc.startsWith(joined))) { ok = true; break; } if (acc.length >= joined.length) break; }
+    }
+    if (ok && count++ === nth) return i;
+  }
+  return -1;
+}
+
 // Cue lookup inside one shot: a word (first match at or after an optional occurrence index),
 // or a number (seconds). Returns local seconds, or `fallback`.
 function cueFinder(words) {
@@ -115,14 +133,9 @@ function cueFinder(words) {
     const [word, nth] = String(cue).split('#');
     const target = tokens(word);
     if (!target.length) return fallback;
-    let count = 0;
-    for (let i = 0; i < words.length; i++) {
-      let ok = true;
-      for (let k = 0; k < target.length; k++) if (!words[i + k] || !same(words[i + k].w, target[k])) { ok = false; break; }
-      if (ok && count++ === Number(nth || 0)) return Math.max(0, words[i].s);
-    }
-    return fallback;
+    const i = matchAt(words.map((w) => w.w), target, Number(nth || 0));
+    return i < 0 ? fallback : Math.max(0, words[i].s);
   };
 }
 
-module.exports = { schedule, cueFinder, tokens, norm, WPM };
+module.exports = { schedule, cueFinder, matchAt, tokens, norm, WPM };

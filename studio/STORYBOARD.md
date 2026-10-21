@@ -32,6 +32,42 @@ Everything else is a normal `shots.json` field (see SHOTS.md) and passes straigh
 
 **Cue words** (`@word`, `"on"`) must be words from that shot's beats. The validator stops you if not, and names the storyboard line.
 
+## Part files (several writers at once)
+A long episode can be written in parallel: `storyboard.txt` holds the **header** (and optionally the first shots), and part
+files `storyboard.01.txt`, `storyboard.02.txt`, … hold **shots only**. They're read in name order after `storyboard.txt`.
+A line without `"t"` in a part file is an error, so a part can never overwrite the cast. Messages name `file:line`.
+The director validates the header alone with `--plan` ("header OK: no shots yet").
+
+## PAUSE beats, chapter cards and the title
+`beats.txt` marks long silences in the narration (music, title stings, act breaks) as `PAUSE` beats.
+- A shot on a pause beat (`"b": 24`) **uses the existing silence**: nothing is added, and it runs until the next voiced beat.
+  It has no words, so time things with `"at"` (seconds), not `@word`.
+- **Several shots can share one pause.** Give every one except the last a `"dur"`. Example for a 9s pause at a chapter break:
+  `{"b":218,"t":"chapter","label":"The Films","dur":2}` then `{"b":218,"t":"talk","set":"cinema",...}` (the rest of the pause).
+- **Convention:** put the chapter card ON the pause beat at its chapter break (first, with `"dur": 2`), then an establishing
+  shot or montage for the rest. Only use a beat-less chapter card (`{"t":"chapter","dur":2}`, which adds 2s of silence)
+  where there's no pause.
+- **The episode title** usually sits on the first long pause (the intro music): a `title` or a `diagram:montage` ending on a
+  `title` frame. Don't hold one static title card for more than ~5s; split the pause (montage first, title last).
+
+## People
+- **Recurring people** (2+ appearances) go in the header `cast`. Every feature is checked (`--plan` names typos and
+  suggests fixes). Colours may be palette names (`"navy"`, `"skin4"`) or hex.
+- **One-off named people** don't get a face. Show their name (a `portraits` card with `emblem`/initials, a `plate`, an
+  `arrow` on a generic or silhouette figure, a document or screen with the name), so a generic face never reads as a likeness.
+- A person who stays **unrevealed** until later: the `unknown` silhouette cast.
+- The `who` shorthand takes extra fields after `=`: `"leo:center:sad:idle:holding=phone,walk=out"`. For anything else,
+  use the long `"chars":[{...}]` form (the two can't be mixed in one line).
+
+## Cue words and the transcript
+- Cue on the words **as they appear in beats.txt** (that's the transcript). Matching ignores case and punctuation,
+  tolerates endings (`huang` matches `Huang's`), and copes with odd splits: `"9-11"` matches `9 -11`, `"$4.5"` matches `$4 .5`.
+- The transcript often **misspells names**. Show the **correct spelling on screen** (stickers, arrows, plates) but cue on
+  the transcript's token. Better still, transcribe with `--names "Aschenbrenner, Tyler Cowen"` to get them right.
+- A beat with dropped words is still fine: cue on a word that is there.
+- Montage frames: give **all** frames a time (`at`/`on`) or **none** (then they're spread evenly). A mix is a warning.
+- Episode folders can live anywhere: `node render.js /any/path/to/episode` works.
+
 ## Automatic variety
 Talk shots that don't set `f` or `cam` vary by themselves: consecutive shots on the same set alternate wide and close,
 and wide shots rotate between a slow creep, locked-off, and a punch-in. Set `f`/`cam` yourself whenever a beat needs something specific.

@@ -15,6 +15,8 @@ const props = require('./props');
 const ui = require('./ui');
 const dev = require('./devices');
 
+// Special Elite (documents) is monospaced: measured ~0.535em per character.
+const TYPE_EM = 0.535;
 const lazy = (name) => { try { return require(name); } catch (e) { return null; } };
 const sets = () => (lazy('./sets') || {}).SETS || {};
 
@@ -110,6 +112,11 @@ function overlays(shot, t, ctx, { side = 'left', skipStickers = false, obstacles
   }
   if (shot.plate) out += ui.namePlate(shot.plate.name, shot.plate.role || '', t, ctx.cue(shot.plate.on, shot.plate.at ?? 0.5));
   if (shot.source) out += text(shot.source, 1250, 702, { size: 17, anchor: 'end', fill: P.paper, opacity: 0.75 });
+  // a verdict stamp on any shot: { text, on, color: red|ink|blue|green, x, y, rot, size } (documents draw their own)
+  if (shot.stamp && shot.template !== 'document') {
+    const st = typeof shot.stamp === 'string' ? { text: shot.stamp } : shot.stamp;
+    out += ui.stamp(st.text, st.x ?? 640, st.y ?? 380, t, ctx.cue(st.on, st.at ?? ctx.dur * 0.5), { rot: st.rot ?? -8, size: st.size || 52, color: STICKER_COLORS[st.color] || st.color || P.red });
+  }
   return out;
 }
 
@@ -351,7 +358,9 @@ function versus(shot, ctx) {
 
 // ---------- document: typed paper on a desk, highlight + stamp ----------
 // { template: 'document', lines: ['LINE', { text, size }], highlight: 'text in a line', highlightOn,
-//   stamp: { text, on }, pencil: 'text to circle', pencilOn }
+//   stamp: { text, on }, pencil: 'text to circle', pencilOn,
+//   redact: ['phrase', ...] (black bars over those phrases), unredactOn (bars lift on that word),
+//   classified: 'TOP SECRET' | 'DECLASSIFIED' (a red band across the top) }
 function documentShot(shot, ctx) {
   const lines = (shot.lines || []).map((l) => (typeof l === 'string' ? { text: l } : l));
   const base = lines.length > 10 ? 24 : 28;
@@ -366,13 +375,28 @@ function documentShot(shot, ctx) {
     const hl = shot.highlight != null ? rows.find((r) => r.text && r.text.includes(shot.highlight)) : null;
     const pc = shot.pencil != null ? rows.find((r) => r.text && r.text.includes(shot.pencil)) : null;
     const stampAt = shot.stamp ? ctx.cue(shot.stamp.on, shot.stamp.at ?? ctx.dur * 0.45) : null;
+    const liftAt = shot.unredactOn != null ? ctx.cue(shot.unredactOn, 1e9) : 1e9;
+    // Redaction: the phrase is drawn with a thick ink outline that covers exactly its glyphs (the browser lays it out,
+    // so it's exact for any font), and the outline fades when the bars lift.
+    const docLine = (r, tt) => {
+      const phrases = (shot.redact || []).filter((ph) => r.text.includes(ph));
+      if (!phrases.length) return text(r.text, 400, r.y, { size: r.size, font: 'type' });
+      const k = M.ease.inOut(M.prog(tt, liftAt, 0.5));
+      const re = new RegExp(`(${phrases.map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`);
+      const spans = r.text.split(re).map((part) => (phrases.includes(part)
+        ? `<tspan stroke="${P.ink}" stroke-width="${n(r.size * 0.95)}" stroke-linejoin="round" stroke-opacity="${n(1 - k)}" paint-order="stroke">${ui.esc(part)}</tspan>`
+        : ui.esc(part))).join('');
+      return `<text x="400" y="${n(r.y)}" class="t-type" font-size="${r.size}" fill="${P.ink}" xml:space="preserve">${spans}</text>`;
+    };
     const world = props.deskTop(4)
       + `<g filter="url(#softShadow)"><rect x="360" y="70" width="600" height="700" fill="${P.paper}" transform="rotate(-1.5 660 420)"/></g>`
       + `<g transform="rotate(-1.5 660 420)">`
-      + (hl ? ui.highlight(396, hl.y - 4, Math.min(520, hl.text.length * hl.size * 0.6), t, ctx.cue(shot.highlightOn, 0.6), { h: hl.size + 6 }) : '')
-      + rows.map((r) => (r.text ? text(r.text, 400, r.y, { size: r.size, font: 'type' }) : '')).join('')
-      + (pc ? ui.pencilCircle(400 + pc.text.indexOf(shot.pencil) * pc.size * 0.6 + shot.pencil.length * pc.size * 0.3, pc.y - pc.size * 0.35, shot.pencil.length * pc.size * 0.34 + 18, pc.size * 0.75, t, ctx.cue(shot.pencilOn, 1.2)) : '')
-      + `<path d="M400 112 H900" stroke="${P.ink}" stroke-width="2"/></g>`
+      + (hl ? ui.highlight(396, hl.y - 4, Math.min(520, hl.text.length * hl.size * TYPE_EM), t, ctx.cue(shot.highlightOn, 0.6), { h: hl.size + 6 }) : '')
+      + rows.map((r) => (r.text ? docLine(r, t) : '')).join('')
+      + (pc ? ui.pencilCircle(400 + pc.text.indexOf(shot.pencil) * pc.size * TYPE_EM + shot.pencil.length * pc.size * 0.3, pc.y - pc.size * 0.35, shot.pencil.length * pc.size * 0.34 + 18, pc.size * 0.75, t, ctx.cue(shot.pencilOn, 1.2)) : '')
+      + `<path d="M400 112 H900" stroke="${P.ink}" stroke-width="2"/>`
+      + (shot.classified ? `<rect x="360" y="70" width="600" height="34" fill="${P.red}" opacity=".9"/>${text(shot.classified, 660, 95, { size: 24, font: 'display', fill: P.paper, anchor: 'middle', spacing: 4 })}` : '')
+      + `</g>`
       + `<g transform="translate(1040 520) rotate(-35)"><rect width="230" height="16" fill="${P.red}" stroke="${P.ink}" stroke-width="3"/><path d="M230 0 L262 8 L230 16 Z" fill="${P.paperDim}" stroke="${P.ink}" stroke-width="3"/></g>`
       + `<circle cx="190" cy="180" r="70" fill="none" stroke="#5a3a26" stroke-width="9" opacity=".5"/>`
       + (shot.stamp ? ui.stamp(shot.stamp.text, 650, Math.min(640, y + 50), t, stampAt, { rot: -7, size: shot.stamp.size || 46 }) : '');
@@ -557,7 +581,11 @@ const chapter = (shot, ctx) => (t) => ((shot.style || ctx.style.chapter) === 'sc
 // Each line types in (~28 cps); a later line replaces the previous one unless stack: true.
 function card(shot, ctx) {
   const lines = (shot.lines || [{ text: shot.text }]).map((l, i) => ({ text: l.text, at: ctx.cue(l.on, l.at ?? 0.35 + i * 1.6) }));
-  return (t) => ui.blackCard(lines, t, { stack: !!shot.stack, size: shot.size || 58 });
+  // "by": attribution under a quote ("— David Faber, CNBC"), fades in after the last line
+  const lastAt = lines.length ? lines[lines.length - 1].at : 0.3;
+  return (t) => ui.blackCard(lines, t, { stack: !!shot.stack, size: shot.size || 58 })
+    + (shot.by && t > lastAt + 0.6 ? text(shot.by, 640, 470, { size: 30, font: 'hand', fill: '#a9a49a', anchor: 'middle', opacity: M.clamp((t - lastAt - 0.6) * 3) }) : '')
+    + (shot.stamp ? overlays({ stamp: shot.stamp, template: 'card' }, t, ctx) : '');
 }
 
 // ---------- kit templates: screen (lib/screens.js), data (lib/datakit.js), diagram (lib/diagrams.js) ----------
@@ -583,7 +611,7 @@ const KIT_KINDS = {
   data: ['stockChart', 'rankingBoard', 'winnersLosers', 'calendarFlip', 'cheque', 'countUp', 'tickerChip'],
   diagram: ['equation', 'loop', 'funnel', 'orgTree', 'portraits', 'steps', 'split', 'montage'],
 };
-const KIT_SKIP = ['template', 'kind', 'vo', 'dur', 'minDur', 'tail', 'id', 'vignette', 'fill', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
+const KIT_SKIP = ['template', 'kind', 'vo', 'dur', 'minDur', 'tail', 'id', 'vignette', 'fill', 'stamp', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
 
 // split panels / montage frames may carry a whole sub-shot: { shot: { template: 'talk', ... }, at }.
 // The sub-shot renders with its own clock starting at the panel's `at`.

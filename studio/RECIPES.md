@@ -121,8 +121,28 @@ When a metaphor needs a prop that doesn't exist yet, add the prop to `lib/props.
 
 ---
 
-## The host (finance)
-The host (`"who": "host"`) is an **occasional** recurring character, not a presenter on every shot.
+## Q. A clip of someone else talking (interview audio, a TV clip, an archive quote)
+The narration sometimes cuts to another voice: a trader, a reporter, a politician.
+1. **TV clip:** `{ "t":"screen","k":"newsLive","channel":"MN","headline":"...","anchor":"reporter" }`. The anchor's mouth moves.
+2. **Interview on a set:** `talk` with `"speaking": true` on the speaker, plus a `plate` (name + role) or `arrow` on first appearance,
+   and the tag `"ARCHIVE"` or a date.
+3. **Podcast:** the `podcast` set with two people and `"speaking": true`.
+Show the speaker's real words only (the clip is the narration). Keep it to the clip's own beats.
+
+## R. Disputed accounts (two parties tell it differently)
+1. **Versus:** `{ "t":"versus","left":{ "who":"leo","label":"HIS VERSION" },"right":{ "label":"THEIR VERSION","who":"ceo" } }`
+2. **Document vs document:** a `diagram:split` with two `document` shots and labels.
+3. **Stamps:** `"stamp": { "text": "DISPUTED", "color": "ink" }` on the shot. Never pick a side the narration doesn't.
+
+## People: who gets a face
+- **Recurring people** (2+ appearances): a header `cast` entry with 1–2 signature features.
+- **One-off named people:** no face. Use a name card (`portraits` with `emblem`/initials), a `plate`, or their name on a document or screen.
+- **Not yet revealed:** the `unknown` silhouette.
+- **Perpetrators of atrocities** (terrorists, mass killers): names on documents only. No cartoon faces.
+
+## The host
+The host (`"who": "host"`) works in **any** preset. She is an **occasional** recurring character, not a presenter on every shot
+(a handful of appearances per episode, e.g. on the narrator's "we"/"let's" lines).
 She appears now and then: as an aside (M3), introducing a breakdown ("Let's break it down"), or as one of the people
 in an explanation (for example, a portrait in a `portraits` row, or a character in a `talk` scene). Most beats use the regular cast.
 
@@ -135,7 +155,25 @@ close-up with a single sticker. Simple is not empty: it's one clear idea, big, w
 - After a busy build (diagram, map, montage), the next beat is usually simple. After 2–3 simple beats, open up again.
 - `--plan` prints the rhythm (simple / medium / busy) and warns when the balance is off.
 
-## Rotation rules
+## Rotation rules (any preset)
+- **Black cards** suit both presets: about 1 per 10–12 shots (finance) or 1 per 12–15 (history), on pivot lines.
+- **House formats are a default, not a rule.** "Why X Was COMPLETELY Avoidable" and the fuse fit "avoidable disaster" stories.
+  For a biography, a mystery or a debate, use the story's own shape (its own title format, a different device:
+  `caseBoard`, a ledger, a scale).
+
+## Kit limits (so nothing gets cut off)
+| Kit | Limit |
+|---|---|
+| `fuse` | stops: 5 max |
+| `diagram:steps` | notes: up to 8 (2 rows); book: 4 |
+| `diagram:portraits` | 5 people |
+| `diagram:orgTree` | 2 levels, 6 leaves |
+| `diagram:loop` | 3–5 nodes |
+| `diagram:split` | 3 panels |
+| `talk` | up to 5 people (spots) |
+| stickers | 3 per shot, ~22 characters each |
+Over a limit? Split the beat into two shots.
+
 - Never three beats of the same recipe in a row. Change the set at least every three beats.
 - Finance: a black card about every 10–12 shots, a metaphor every 1–2 minutes, the host at most every ~2 minutes.
 - War: date tags on every place or time change, the fuse as the spine, chapter cards every 4–5 minutes.
@@ -148,5 +186,11 @@ close-up with a single sticker. Simple is not empty: it's one clear idea, big, w
 - **Claims and theories** (conspiracies, accusations, rumours): frame them as claims, not facts. Use stickers like
   "THE CLAIM", "WHAT PEOPLE SAY", "THE THEORY", "THE EVIDENCE", or a `versus` of claim vs record. Social posts are illustrative.
   Mark them with a source line.
+- **Hateful claims** (antisemitic, racist or religious conspiracy myths): name them as claims in plain text, debunked by
+  the narration. Never use ethnic or religious symbols, stereotyped features or "evidence" visuals that make them look credible,
+  and never give them a realistic broadcast look.
+- **Maps on tragedy topics:** no arrows tracing the attackers' routes into targets. Use pins and neutral labels.
+- **The fuse on tragedies:** its default end is a lit bomb, so don't use it. Use the `caseBoard` device, or the fuse with a
+  card end and thread (`"endStyle":"card","rope":"thread"`).
 - **Real people:** caricature only through the cast's signature features. Never show them doing something the narration
   doesn't say they did, and never put invented quotes in their mouths. Quotes on screen must be the narration's own words.
