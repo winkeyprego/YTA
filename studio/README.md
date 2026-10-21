@@ -49,7 +49,7 @@ studio/
     sample-2008-cold-open/
       episode.js       six shots, ~37s
       SCRIPT.md        narration + shot list + facts to verify
-  renders/             output (git-ignored except the sample)
+  renders/             output (git-ignored; regenerate with render.js)
 ```
 
 ## How an episode works

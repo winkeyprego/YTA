@@ -1,0 +1,442 @@
+{
+ "sources": {
+  "v1": "Two Sides of War \u2014 Why Operation Barbarossa Was COMPLETELY Avoidable",
+  "v2": "War Unspun \u2014 What If America Had Nuked Germany Instead of Japan?",
+  "v3": "Two Sides of War \u2014 What Was The REAL Turning Point of WW2?"
+ },
+ "pacing": {
+  "v1": {
+   "detected_changes": 292,
+   "est_true_cut_share": 0.85,
+   "shot_len_s": {
+    "median": 3.88,
+    "mean": 5.48,
+    "p10": 2.0,
+    "p90": 9.88
+   },
+   "changes_per_min_first60": 8,
+   "changes_per_min_rest": 11.0
+  },
+  "v2": {
+   "detected_changes": 348,
+   "est_true_cut_share": 0.85,
+   "shot_len_s": {
+    "median": 4.06,
+    "mean": 5.66,
+    "p10": 1.43,
+    "p90": 11.61
+   },
+   "changes_per_min_first60": 21,
+   "changes_per_min_rest": 10.3
+  },
+  "v3": {
+   "detected_changes": 711,
+   "est_true_cut_share": 0.7,
+   "shot_len_s": {
+    "median": 2.83,
+    "mean": 3.42,
+    "p10": 1.45,
+    "p90": 5.91
+   },
+   "changes_per_min_first60": 37,
+   "changes_per_min_rest": 17.0
+  }
+ },
+ "visual_events": {
+  "v1": {
+   "events_per_min": 104.0,
+   "median_gap_s": 0.33,
+   "p90_gap_s": 1.17,
+   "max_gap_s": 4.3,
+   "sig_0.015": {
+    "per_min": 55.8,
+    "median_gap": 0.42,
+    "p90": 2.75
+   },
+   "sig_0.03": {
+    "per_min": 39.6,
+    "median_gap": 0.67,
+    "p90": 3.53
+   }
+  },
+  "v2": {
+   "events_per_min": 123.0,
+   "median_gap_s": 0.33,
+   "p90_gap_s": 0.75,
+   "max_gap_s": 4.8,
+   "sig_0.015": {
+    "per_min": 77.8,
+    "median_gap": 0.42,
+    "p90": 1.42
+   },
+   "sig_0.03": {
+    "per_min": 61.6,
+    "median_gap": 0.42,
+    "p90": 2.03
+   }
+  },
+  "v3": {
+   "events_per_min": 98.8,
+   "median_gap_s": 0.33,
+   "p90_gap_s": 1.32,
+   "max_gap_s": 3.7,
+   "sig_0.015": {
+    "per_min": 59.0,
+    "median_gap": 0.75,
+    "p90": 1.97
+   },
+   "sig_0.03": {
+    "per_min": 41.4,
+    "median_gap": 1.25,
+    "p90": 2.71
+   }
+  }
+ },
+ "chapter_cards": {
+  "v1": {
+   "kind": "black, serif small-caps time/place card",
+   "hold_s": 2.0,
+   "count_per_min": 0.93,
+   "in_transition": "fade to black ~0.4s (some hard cuts)",
+   "out_transition": "hard cut"
+  },
+  "v2": {
+   "kind": "dark warm card, tiny spaced caps + italic serif phrase, pencil underline draws, 5-box progress row",
+   "hold_s": 6.0,
+   "in_transition": "fade ~1.0s",
+   "out_transition": "fade ~1.0s",
+   "aligned_with_youtube_chapters": true
+  },
+  "v3": {
+   "kind": "black, numbered serif small-caps card (\"1. The Scale, 1939\")",
+   "hold_s": 1.3,
+   "in_transition": "hard cut",
+   "out_transition": "hard cut"
+  }
+ },
+ "camera": {
+  "v1": {
+   "n": 30,
+   "static_pct": 60,
+   "kinds": {
+    "push-in +pan": 4,
+    "pull-out +pan": 2,
+    "push-in": 3,
+    "static": 18,
+    "pan +pan": 1,
+    "pull-out": 2
+   },
+   "pushin_rate_median": 0.855,
+   "pushin_total_median": 1.0665,
+   "pan_px_s_median": 30.9
+  },
+  "v2": {
+   "n": 30,
+   "static_pct": 7,
+   "kinds": {
+    "pull-out +pan": 5,
+    "push-in +pan": 12,
+    "static": 2,
+    "pull-out": 4,
+    "push-in": 7
+   },
+   "pushin_rate_median": 3.29,
+   "pushin_total_median": 1.131,
+   "pan_px_s_median": 19.3
+  },
+  "v3": {
+   "n": 30,
+   "static_pct": 73,
+   "kinds": {
+    "push-in": 5,
+    "static": 22,
+    "push-in +pan": 2,
+    "pull-out +pan": 1
+   },
+   "pushin_rate_median": 2.28,
+   "pushin_total_median": 1.08,
+   "pan_px_s_median": 48.2
+  }
+ },
+ "camera_profiles": {
+  "two_sides": "mostly locked-off (60-73% static); moves are either a slow linear creep (~0.9%/s, total ~1.07 over the shot) or a mid-shot punch-in that starts on a narration beat (~4-5%/s for ~2s, total 1.08-1.10)",
+  "war_unspun": "almost always moving (94%): stepped ease-out push-ins (~1.09 over 1.0-1.25s, hold 0.5-2s, step again), drifting pans ~20 px/s; total zoom per shot median 1.13"
+ },
+ "text_reveal": {
+  "speech_bubble_cps": {
+   "v3_churchill": 16,
+   "v1_zhukov": 20
+  },
+  "date_tag_cps": 29,
+  "date_tag_entry": "slides/wipes in over ~2 frames (0.08s), then types",
+  "reveal_unit": "character",
+  "bubble_hold_after_typing": "until the cut (bubbles stay)",
+  "sticker_text": "appears with sticker (not typed)"
+ },
+ "pop_in": {
+  "frames_at_24fps_to_full": 2,
+  "frames_to_settle": 4,
+  "start_scale": 0.5,
+  "overshoot": true,
+  "approx_duration_s": 0.18
+ },
+ "character_animation": {
+  "mouth": "flaps between 2-3 small shapes (dot / small o / line) ~4-8 changes per second while that character speaks",
+  "blink": "rare; eyes are usually expression shapes (squint lines, dots, arcs); shape changes act as blinks",
+  "gestures": "one arm gesture per line or every ~1.5-2s (pointing, pipe to mouth, arms up); otherwise holds",
+  "walking": "rare (small figures crossing exteriors)",
+  "head": "no head turns; side characters hold"
+ },
+ "colour": {
+  "interior": [
+   [
+    "#c9c2ac",
+    21.5
+   ],
+   [
+    "#2d221c",
+    18.2
+   ],
+   [
+    "#513929",
+    12.6
+   ],
+   [
+    "#efe8d7",
+    10.5
+   ],
+   [
+    "#7c7a6b",
+    10.4
+   ],
+   [
+    "#45584e",
+    9.5
+   ],
+   [
+    "#9ba092",
+    9.1
+   ],
+   [
+    "#755139",
+    8.1
+   ]
+  ],
+  "night_exterior": [
+   [
+    "#222f3f",
+    24.6
+   ],
+   [
+    "#152031",
+    19.6
+   ],
+   [
+    "#2e2627",
+    17.4
+   ],
+   [
+    "#30404c",
+    14.5
+   ],
+   [
+    "#0f141c",
+    10.0
+   ],
+   [
+    "#473435",
+    7.0
+   ],
+   [
+    "#d6cdc2",
+    3.9
+   ],
+   [
+    "#6c6e69",
+    3.0
+   ]
+  ],
+  "map": [
+   [
+    "#8bafc3",
+    31.3
+   ],
+   [
+    "#e5dcc3",
+    20.3
+   ],
+   [
+    "#98be60",
+    14.2
+   ],
+   [
+    "#7d9b4f",
+    9.5
+   ],
+   [
+    "#2c2725",
+    7.1
+   ],
+   [
+    "#bfb8a2",
+    6.9
+   ],
+   [
+    "#7e9199",
+    6.6
+   ],
+   [
+    "#654c3f",
+    4.1
+   ]
+  ],
+  "document": [
+   [
+    "#e4ddcc",
+    26.2
+   ],
+   [
+    "#171114",
+    17.7
+   ],
+   [
+    "#efe7ca",
+    14.5
+   ],
+   [
+    "#61151c",
+    11.2
+   ],
+   [
+    "#6d4f39",
+    10.2
+   ],
+   [
+    "#ebe5d7",
+    8.5
+   ],
+   [
+    "#cdc1a2",
+    8.2
+   ],
+   [
+    "#ab8b7a",
+    3.5
+   ]
+  ],
+  "dark_device_board": [
+   [
+    "#221d1e",
+    30.0
+   ],
+   [
+    "#302726",
+    26.4
+   ],
+   [
+    "#181416",
+    20.2
+   ],
+   [
+    "#4a342f",
+    10.9
+   ],
+   [
+    "#2a180f",
+    4.4
+   ],
+   [
+    "#635a51",
+    3.3
+   ],
+   [
+    "#e6e3de",
+    2.7
+   ],
+   [
+    "#8f8884",
+    2.2
+   ]
+  ],
+  "big_number_overlay": [
+   [
+    "#a1a399",
+    15.2
+   ],
+   [
+    "#201a16",
+    15.1
+   ],
+   [
+    "#817f70",
+    14.9
+   ],
+   [
+    "#d0c9b7",
+    13.8
+   ],
+   [
+    "#322d26",
+    13.1
+   ],
+   [
+    "#645f56",
+    11.8
+   ],
+   [
+    "#443d34",
+    10.4
+   ],
+   [
+    "#fbf9f7",
+    5.6
+   ]
+  ],
+  "v1_sv": {
+   "sat_mean": 0.274,
+   "sat_p90": 0.608,
+   "val_mean": 0.551,
+   "pct_sat_gt_0_6": 10.44
+  },
+  "v2_sv": {
+   "sat_mean": 0.273,
+   "sat_p90": 0.569,
+   "val_mean": 0.583,
+   "pct_sat_gt_0_6": 6.19
+  },
+  "v3_sv": {
+   "sat_mean": 0.273,
+   "sat_p90": 0.584,
+   "val_mean": 0.406,
+   "pct_sat_gt_0_6": 8.6
+  }
+ },
+ "vignette_corner_to_centre_luminance": {
+  "v1": 0.64,
+  "v2": 0.68,
+  "v3": 0.56
+ },
+ "grain": "no measurable fine grain (std <0.2 8-bit levels in flat areas); texture comes from soft light falloff, light pools, faint paper stains/cracks on walls",
+ "audio": {
+  "integrated_loudness_lufs": {
+   "v1": -14.1,
+   "v3": -14.2
+  },
+  "loudness_range_lu": {
+   "v1": 5.0,
+   "v3": 4.2
+  },
+  "speech_median_dbfs": {
+   "v1": -19.5,
+   "v3": -20.2
+  },
+  "pause_floor_dbfs": -37.3,
+  "bed_below_voice_db": 17,
+  "wpm": {
+   "v1": 169,
+   "v2_transcript": 155,
+   "v3": 163
+  },
+  "sfx": "sparse/subtle: v1 shows +3.7 dB median high-frequency rise at cuts vs random times; v3 none measurable"
+ }
+}
