@@ -118,6 +118,13 @@ Package managers (npm, PyPI) are allowed by default.
 - Crayon Capital: topic and direction reference (top videos: Wolf of Wall Street, Great Depression, 2008 crisis).
 
 ## Session log
+- **2026-10-21 (cloud), the method that works:** the 37-min finance test showed the real failure: after ~10 minutes it
+  recycled ~80 looks (2-6 new looks per 4 minutes). Fixed in the system, then proven on two 3-minute samples (Soviets/WW2
+  and the finance story): every beat planned as its own scene, a few story-specific pieces built per video (sets, props,
+  costumes and one house device per story: the pipes, the extrapolated trend line), people staged (turns, sitting,
+  over-the-shoulder, handing things over), text big and clear. `--plan` now enforces freshness (~6 new looks per 3 min),
+  graphic and set repetition caps, the sticker share, and staging; `--qa` flags small or busy-background text, empty
+  openings and unparseable frames. Cost stays low: one lean builder for the story's pieces plus one writer.
 - **2026-10-21 (cloud), stress test:** two full-length private test VOs (a 37-min finance story, a 41-min 9/11-theories
   story) were run through the whole pipeline to find what's missing. Fresh "director" agents wrote PLAN.md + NEEDS.md from the
   docs alone; five library workers then built what they asked for (22 sets, uniforms and jobs, beards, skin tones, the
