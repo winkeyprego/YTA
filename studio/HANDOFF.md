@@ -4,7 +4,53 @@ This file is the memory of the project. Any Claude session (cloud or desktop, an
 this work should read it first, then `CLAUDE.md`, then do the "Next steps" in order.
 **Update this file at the end of every working session.**
 
-_Last updated: 2026-10-21 (cloud session): one interchangeable style with two presets; recipes, validator and skills are ready._
+_Last updated: 2026-10-21 (cloud session): the per-story method is proven on two 3-minute samples; a blind test of the
+written procedure is running. Read "Where we are" first._
+
+## Where we are (read this first)
+**What the owner wants:** a SYSTEM, not videos. Topic + script + voiceover in → a full documentary out, in the style of
+Two Sides of War / War Unspun, that is clear, smooth, never empty, and above all **not templated**: every scene intentional,
+something new to look at all the way through. Low usage and time per video. Finance (Crayon Capital topics) and
+history/war, one interchangeable style.
+
+**What we learned the hard way (don't repeat it):**
+1. A library + recipes alone produce a video that looks fine for 10 minutes and then **recycles the same ~80 looks** for
+   the next 27 (measured: 32 new looks in the first 60 shots, then 2-6 per 60 shots). The owner called it "the same shit
+   for 27 minutes". Checks for errors and timing don't catch that.
+2. What fixed it (two samples the owner liked, "a lot better", "pretty decently planned with novelty"):
+   - a **director pass** that writes a scene plan per beat before any storyboard line;
+   - a **story device** built for this story that returns and builds (the pipes; the extrapolated trend line);
+   - **story-specific pieces** built per video (places, objects, costumes): one lean builder agent;
+   - **staged people** (turns, sitting, over-the-shoulder, handing things over), not people standing front-on;
+   - **clips/quotes of other people in the news look**, big clear text, few stickers;
+   - checks that enforce it: `--plan` freshness (~6 new looks per 3 min), repetition caps, sticker share, staging share;
+     `--qa` empty openings, small/busy-background text, faces covered.
+   All of this is in `.claude/skills/make-video/SKILL.md` (steps 4, 5, 8), `RECIPES.md` ("Staging", "Keep it fresh"),
+   and the checks. **Follow the skill exactly.**
+3. Eight parallel writers for one video was far too expensive (~300k tokens each). Use: you (director + writer) + ONE
+   builder agent for the story's pieces. Render cost is negligible (CPU time only).
+
+**The owner's latest feedback on the samples (to act on):**
+- Keep the news-live look for clips and interviews (done: RECIPES Q default).
+- Name labels pointed at the air or the wrong person (fixed: `arrow` targets the named person; `>who` forces it).
+- The added nose looked unnatural (removed).
+- Still lacking (owner agreed): (a) characters need bigger, readable ACTIONS (slam a desk, run, collapse in a chair,
+  handshake, pointing at each other); (b) placeholder data ("FUND B") reads fake; use real numbers or another picture;
+  (c) pacing ~4.2s/shot vs ~3.3 target; (d) "simple" shots need one extra touch (a hand stamping, a push on the key line);
+  (e) transitions are all hard cuts (try a pan/zoom carried across a cut at chapter turns). Sound is for later.
+- Real people: **draw a likeness, don't paste photos** (rights, style, YouTube reuse). Likeness features now exist
+  (face shapes, brows, hair styles, age lines, glasses shapes); procedure in SHOTS.md "Likeness".
+
+**Open test (finish it first):** a blind test. A fresh agent with only the repo makes 3 minutes from a middle stretch of
+the private Soviets voiceover (owner's local copy; not in the repo) by following the skill. Compare it with the samples;
+everything it gets wrong is something missing from the docs: fix the docs/skill, then repeat on another random stretch.
+Its notes and output were in the cloud session's scratchpad (`episodes/blind-soviets/`), which may be gone; if so, rerun:
+cut any 3 minutes of a voiceover, give a fresh agent the one-paragraph brief "make a video from this voiceover with the
+studio; follow the make-video skill", and compare.
+
+**Private test material (never commit, never publish):** the owner's MP3s (Ozempic, "24-Year-Old Genius", "9/11 Inside
+Job", "Soviets Alone") and every storyboard/render made from them. The owner has the MP3s and a zip of the storyboards.
+
 
 ## The goal (in the owner's words, summarised)
 Build faceless YouTube documentaries about **money, companies, scams and crashes, and history/war** (the topics of
@@ -62,12 +108,16 @@ The owner is not a developer. Explain things step by step in plain words, and sh
 Use the **make-video** skill. In short: style → script → (voice → `words.json`) → `shots.json` from `RECIPES.md`
 → `node render.js episodes/<ep> --plan` (fix everything) → `--sheet 1 --scale 1` (look) → `node render.js episodes/<ep>`.
 
-## Next steps (improvements, not blockers)
-1. **Sound kit:** a music bed ~17 dB under the voice (war) and a light bed (finance), sparse pops/whooshes, a −14 LUFS master.
-2. **A first real episode** with the owner's voice, then tune anything that looks off at full length.
-3. **More metaphor props** (RECIPES O) as scripts need them: gold-rush tools, sinking ship.
-4. **More sets:** a lab or hospital, casino, port, demolition site, bookshop.
-5. Move derived colours (`T` in sets.js, `C` in maps.js and diagrams.js, `SCREEN_COLORS`, `DATAKIT_COLORS`) into palette.js.
+## Next steps (in order)
+1. **Finish the blind test** (above) and fold its lessons into the skill/docs. Repeat once on another random stretch.
+2. **Character actions** (the biggest visual gap): a small set of big readable actions with motion over time (stand up from
+   a chair, slam a fist on a desk, run in/out, collapse into a chair, handshake, two people pointing at each other,
+   throw papers), usable from `talk`/`compose` with a cue word. Test with a before/after clip.
+3. **Validator: flag placeholder data** (labels like "FUND B", "COMPANY X") and push writers toward real numbers.
+4. **Pacing:** aim ~3.3s (finance) / ~3.8s (war); split long beats on pauses (beats.js) and cue a second event in long shots.
+5. **Transitions:** a camera move that carries across a cut (pan into the next room, zoom into a map) for chapter turns.
+6. **Sound kit** when the owner picks a music source: a bed ~17 dB under the voice, sparse pops/whooshes, -14 LUFS.
+7. Small bugs: see "Known issues" below.
 
 ## Known issues from the stress test (fix these next; each is small)
 Eight writers storyboarded two full documentaries from the docs alone. Fixed already: kit field checks, empty-frame QA,
