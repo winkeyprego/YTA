@@ -99,11 +99,14 @@ async function insertGaps(audio, gaps, tmp) {
 const EMPTY_OK = new Set(['chapter', 'card', 'title']);
 const EMPTY_EDGES = Number(process.env.QA_EMPTY || 0.02);
 
-async function runQA(browser, tl, fps, name, outDir) {
+async function runQA(browser, tl, fps, name, outDir, from = 0, to = Infinity) {
   const page = await openStage(browser, 1);
   const issues = [];
+  let checked = 0;
   for (let i = 0; i < tl.length; i++) {
     const s = tl[i];
+    if (s.start + s.dur <= from || s.start >= to) continue; // --qa --from/--to checks only that stretch
+    checked++;
     const times = s.dur > 1.2 ? [0.45, 0.72, 0.97].map((k) => s.dur * k) : [s.dur * 0.8];
     const seen = new Set();
     for (const lt of times) {
@@ -161,8 +164,9 @@ async function runQA(browser, tl, fps, name, outDir) {
   }
   const fmt = (x) => `${Math.floor(x / 60)}:${(x % 60).toFixed(1).padStart(4, '0')}`;
   const lines = issues.map((x) => `shot ${x.shot} (${x.name}) at ${fmt(x.t)} [--still ${x.t.toFixed(1)}]: ${x.msg}`);
-  fs.writeFileSync(path.join(outDir, `${name}-qa.txt`), lines.join('\n') + '\n');
-  console.log(lines.length ? `layout QA: ${lines.length} issue(s)\n- ${lines.slice(0, 60).join('\n- ')}${lines.length > 60 ? `\n... (${lines.length - 60} more in renders/${name}-qa.txt)` : ''}` : `layout QA: OK (${tl.length} shots checked)`);
+  const qaFile = `${name}-qa${from ? `-${Math.round(from)}` : ''}.txt`;
+  fs.writeFileSync(path.join(outDir, qaFile), lines.join('\n') + '\n');
+  console.log(lines.length ? `layout QA: ${lines.length} issue(s)\n- ${lines.slice(0, 60).join('\n- ')}${lines.length > 60 ? `\n... (${lines.length - 60} more in renders/${qaFile})` : ''}` : `layout QA: OK (${checked} shots checked)`);
 }
 
 function run(cmd, a) {
@@ -217,7 +221,7 @@ async function main() {
   const browser = await chromium.launch();
 
   if (o.qa != null) {
-    await runQA(browser, tl, fps, name, outDir);
+    await runQA(browser, tl, fps, name, outDir, Number(o.from || 0), o.to != null ? Number(o.to) : Infinity);
     await browser.close();
     return;
   }
