@@ -446,10 +446,12 @@ function stat(shot, ctx) {
   return (t) => {
     const set = sets()[shot.set];
     const bg = set ? set.draw(t, shot.setOpts || {}) + (set.front ? set.front(t, shot.setOpts || {}) : '') : boardBg();
-    const at = ctx.cue(shot.on, 0.3);
+    // the number is on screen at the cut; a count runs from the cut and lands on its cue word
+    const cue = ctx.cue(shot.on, 0.3);
+    const at = Math.min(cue, -0.1);
     let value = shot.value;
     if (typeof value === 'number') {
-      const k = M.ease.out(M.prog(t, at, shot.countDur || 1.1));
+      const k = M.ease.out(M.prog(t, at, Math.max(shot.countDur || 1.1, cue - at)));
       const v = value * k;
       value = (shot.prefix || '') + (value >= 100 ? Math.round(v).toLocaleString('en-US') : v.toFixed(value % 1 ? 1 : 0)) + (shot.suffix || '');
     }
@@ -732,7 +734,7 @@ function compose(shot, ctx) {
       }
       if (it.text) {
         const k = M.clamp((t - it.at) * 5);
-        return `<g opacity="${n(k)}" data-qa="text" data-qn="text '${String(it.text).slice(0, 20)}'">${text(it.text, x, y, { size: it.size || 40, font: it.font || 'hand', fill: STICKER_COLORS[it.color] || it.color || P.ink, anchor: it.anchor || 'middle' })}</g>`;
+        return `<g opacity="${n(k)}" data-qa="text" data-qn="text '${String(it.text).slice(0, 20)}'">${text(it.text, x, y, { size: it.size || 40, font: it.font || 'hand', fill: STICKER_COLORS[it.color] || it.color || (['board', 'night'].includes(shot.bg || 'board') ? P.paper : P.ink), anchor: it.anchor || 'middle' })}</g>`;
       }
       if (it.sticker) return ui.sticker(it.sticker, x, y, t, it.at, { size: it.size || 34, rot: it.rot ?? (i % 2 ? 2 : -3), color: STICKER_COLORS[it.color] || P.red });
       return '';

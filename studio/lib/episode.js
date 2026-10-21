@@ -157,6 +157,8 @@ function variety(spec, plan) {
   if (n >= 12 && dc.simple / n < 0.18) notes.push(`only ${pct(dc.simple)} simple shots: give key numbers/phrases a simple shot (countUp, stat, card, clean close-up) so they land`);
   if (n >= 12 && dc.simple / n > 0.45) notes.push(`${pct(dc.simple)} simple shots: add richer scenes (talk with set, diagrams, maps, montage)`);
   if (bWorst >= 5) notes.push(`${bWorst} busy shots in a row from shot ${bAt}: put a simple beat in between`);
+  const aim = (spec.style || 'war') === 'finance' ? 3.3 : 3.8; // measured reference averages (docs/*ANALYSIS.md), with slack
+  if (n >= 12 && total / n > aim * 1.2) notes.push(`average shot is ${(total / n).toFixed(1)}s (aim ~${aim}s): cover fewer beats per shot (one beat per shot is the norm; ranges only for quick lists)`);
   if (sWorst >= 4) notes.push(`${sWorst} simple shots in a row from shot ${sAt}: the pace will sag, add a richer scene`);
   return [
     `shots ${n}, ${(total / 60).toFixed(1)} min, avg ${(total / n).toFixed(1)}s/shot`,

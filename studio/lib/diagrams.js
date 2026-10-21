@@ -10,7 +10,7 @@
 //       3-5 nodes on a circle; arrows draw on one by one at arrowsAt (default: after the last node), then keep flowing.
 //   D.funnel({ title, stages: [{ label, value, prefix, suffix, at }] }, t)
 //       stacked bands narrowing downward; numeric values count up.
-//   D.orgTree({ title, root: { label, sub, who, at }, children: [{ label, sub, who, at, children: [...] }] }, t)
+//   D.orgTree({ title, root: { label, sub, who, emblem, icon, at }, children: [{ label, sub, who, emblem, icon, at, children: [...] }] }, t)
 //       circle portraits joined by lines that draw on; up to 2 levels, up to 6 leaves.
 //   D.portraits({ title, people: [{ who | emblem: 'SC' | silhouette: true, color, label, sub, at }] }, t)
 //       a row of 1-5 circle portraits with name cards ("FOUNDERS OF ..." / "former CEO"). People we don't draw get

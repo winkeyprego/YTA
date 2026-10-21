@@ -59,7 +59,7 @@ function kitFields(tpl) {
   return (kitCache[tpl] = out);
 }
 const REQUIRED = {
-  talk: ['chars'], versus: ['left', 'right'], document: ['lines'], chart: ['data'], stat: ['value'],
+  versus: ['left', 'right'], document: ['lines'], chart: ['data'], stat: ['value'],
   fuse: ['stops'], case: ['cards'], map: [], money: ['items'], title: ['text'], chapter: ['label'], compose: ['items'],
 };
 const CHAR_FIELDS = ['who', 'spot', 'mood', 'mood2', 'mood2On', 'mood2At', 'pose', 'poseOn', 'poseAt', 'pose2', 'pose2On', 'pose2At',
