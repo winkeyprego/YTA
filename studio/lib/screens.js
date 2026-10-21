@@ -504,7 +504,7 @@ function videoPage(spec, t) {
   const playing = t >= at + 0.6;
   const zoom = 1 + 0.03 * clamp((t - at) / 6);
   const thumb = `<defs><clipPath id="vpClip"><rect x="${vx}" y="${vy}" width="${vw}" height="${vh}" rx="12"/></clipPath></defs>
-    <g clip-path="url(#vpClip)"><g transform="translate(${vx + vw / 2} ${vy + vh / 2}) scale(${n(zoom)}) translate(${-vx - vw / 2} ${-vy - vh / 2})">
+    <g clip-path="url(#vpClip)"><g transform="translate(${vx + vw / 2} ${vy + vh / 2}) scale(${Math.round(zoom * 1e5) / 1e5}) translate(${-vx - vw / 2} ${-vy - vh / 2})">
       <rect x="${vx}" y="${vy}" width="${vw}" height="${vh}" fill="${C.tvBlue}"/>
       <circle cx="${vx + 560}" cy="${vy + 170}" r="250" fill="#2b3d59"/>
       <path d="M${vx + 40} ${vy + 120} L${vx + 200} ${vy + 160} L${vx + 300} ${vy + 140} L${vx + 420} ${vy + 260} L${vx + 500} ${vy + 240} L${vx + 600} ${vy + 307}" stroke="${P.red}" stroke-width="14" fill="none" stroke-linejoin="round" stroke-linecap="round"/>

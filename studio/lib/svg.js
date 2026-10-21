@@ -27,8 +27,11 @@ const textWidth = (str, size, font = 'hand') => String(str).length * size * (FON
 
 // Camera: zoom around a focus point plus a pan offset. Wrap the "world" layer of a shot in this;
 // overlays (date tags, name plates, captions) stay outside so they don't move.
+// Camera values keep 5 decimals: slow creeps change the zoom by ~0.0005 a frame, and rounding to 0.01 made the frame
+// hold still and then jump ~10px at the edges about once a second.
+const fine = (v) => Math.round(v * 1e5) / 1e5;
 function camera(content, { zoom = 1, fx = W / 2, fy = H / 2, x = 0, y = 0, rot = 0 } = {}) {
-  return `<g transform="translate(${n(fx + x)} ${n(fy + y)}) rotate(${n(rot)}) scale(${n(zoom)}) translate(${n(-fx)} ${n(-fy)})">${content}</g>`;
+  return `<g transform="translate(${fine(fx + x)} ${fine(fy + y)}) rotate(${fine(rot)}) scale(${fine(zoom)}) translate(${fine(-fx)} ${fine(-fy)})">${content}</g>`;
 }
 
 const DEFS = (seed) => `
