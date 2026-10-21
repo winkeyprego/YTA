@@ -42,6 +42,10 @@ GOOD = {
 }
 # Comments to leave out of a sales page: money results read as promises, and private details.
 RESULTS = r'(\bpa(y|id|ying)\b[^.]{0,25}\boff\b|debt[- ]free|net worth|\$\s?\d|\b\d+\s?k\b|401\s?k|made \$|saved \$|retire(d)? early|millionaire|\bfire\b)'
+# Book-promotion bots, contact-me scams and other channels farming engagement with polished replies.
+SPAM = r"(book called|rise beyond riches|underrated|started trading|how to trade|my (own )?(financial education )?channel|new creator|\\[\\d{1,2}:\\d{2}\\]|they bury|forbidden|manuscript|bleeds with it|sleepless nights|shadow behind the gate|power behind locked door|other side of order|sealed doors|manifestation book|what elites hide|silent power|telegram|whatsapp|crypto|bitcoin|forex|my (financial )?(advisor|coach|mentor) (named|called)|\\+\\d{7,})"
+PROMO_HANDLE = r'(invest|money|wealth|financ|capital|trading|trader|portfolio|allocat|stocks|mindset|crypto|prepper|music|cliphd|official)'
+AI_STYLE = r'(game[- ]changer|masterclass|hit(s)? (hard|home)|compound(s|ing)?\b|curious how many|\u2014)'
 PRIVATE = r'\b(depress\w*|stroke|cancer|divorc\w*|died|passed away|diagnos\w*|abuse\w*|funeral|bankrupt\w*|lawsuit)\b'
 
 
@@ -80,7 +84,7 @@ def channel(key, handle, channel_id):
     return item['id'], item['snippet']['title'], item['contentDetails']['relatedPlaylists']['uploads']
 
 
-def score(text, likes):
+def score(text, likes, handle=''):
     lowered = text.lower()
     hits = sorted(name for name, pattern in GOOD.items() if re.search(pattern, lowered))
     flags = []
@@ -88,6 +92,12 @@ def score(text, likes):
         flags.append('money result')
     if re.search(PRIVATE, lowered):
         flags.append('personal')
+    if re.search(SPAM, lowered):
+        flags.append('spam')
+    if re.search(PROMO_HANDLE, handle.lower()):
+        flags.append('channel or promo account')
+    if re.search(AI_STYLE, text, re.I):
+        flags.append('reads machine-written')
     if len(text) < 40:
         flags.append('very short')
     if len(text) > 900:
@@ -103,8 +113,18 @@ def main():
     parser.add_argument('--max-videos', type=int, default=500, help='most recent uploads to read (default 500)')
     parser.add_argument('--pages-per-video', type=int, default=5, help='100 comments per page (default 5)')
     parser.add_argument('--shortlist', type=int, default=40, help='how many candidates to keep (default 40)')
+    parser.add_argument('--rescore', action='store_true', help='re-score all-comments.csv from a previous run without calling YouTube')
     parser.add_argument('--out', default=str(Path(__file__).resolve().parent.parent / 'comments-export'))
     args = parser.parse_args()
+    if args.rescore:
+        with (Path(args.out) / 'all-comments.csv').open(encoding='utf-8-sig') as handle:
+            rows = list(csv.DictReader(handle))
+        for row in rows:
+            row['likes'] = int(row['likes'])
+            row['score'], hits, flags = score(row['text'], row['likes'], row['handle'])
+            row['themes'], row['flags'] = ' '.join(hits), ' '.join(flags)
+        write(rows, Path(args.out), args.shortlist)
+        return
     key = os.environ.get('YOUTUBE_API_KEY', '').strip()
     if not key:
         print('No YOUTUBE_API_KEY set: relying on an X-goog-api-key header added by the environment.')
@@ -130,18 +150,40 @@ def main():
                 continue
             text = s.get('textOriginal', '').strip()
             likes = int(s.get('likeCount', 0))
-            value, hits, flags = score(text, likes)
+            value, hits, flags = score(text, likes, s.get('authorDisplayName', ''))
             rows.append({'handle': s.get('authorDisplayName', ''), 'text': text, 'likes': likes, 'replies': thread['snippet'].get('totalReplyCount', 0),
                          'published': s.get('publishedAt', '')[:10], 'video': video_title, 'score': value, 'themes': ' '.join(hits), 'flags': ' '.join(flags),
                          'url': f'https://www.youtube.com/watch?v={video_id}&lc={top["id"]}'})
         if number % 10 == 0:
             print(f'  {number}/{len(videos)} videos, {len(rows)} comments so far')
 
-    out = Path(args.out)
+    write(rows, Path(args.out), args.shortlist)
+
+
+def mark_repeats(rows):
+    """Flag text posted more than once, and accounts posting long comments on many videos."""
+    seen = {}
+    for row in rows:
+        seen.setdefault(re.sub(r'\W+', ' ', row['text'].lower()).strip()[:160], []).append(row)
+    posts = {}
+    for row in rows:
+        posts.setdefault(row['handle'], []).append(row)
+    for group in seen.values():
+        if len(group) > 1 and len(group[0]['text']) > 60:
+            for row in group:
+                row['flags'] = (row['flags'] + ' repeated text').strip()
+    for group in posts.values():
+        if len({row['video'] for row in group}) >= 5 and sum(len(row['text']) for row in group) / len(group) > 220:
+            for row in group:
+                row['flags'] = (row['flags'] + ' frequent poster').strip()
+
+
+def write(rows, out, shortlist):
+    mark_repeats(rows)
     out.mkdir(parents=True, exist_ok=True)
     fields = ['score', 'likes', 'handle', 'text', 'video', 'themes', 'flags', 'replies', 'published', 'url']
     rows.sort(key=lambda row: row['score'], reverse=True)
-    best = [row for row in rows if not row['flags'] and row['themes']][:args.shortlist]
+    best = [row for row in rows if not row['flags'] and row['themes']][:shortlist]
     for name, data in (('all-comments.csv', rows), ('shortlist.csv', best)):
         with (out / name).open('w', newline='', encoding='utf-8-sig') as handle:
             writer = csv.DictWriter(handle, fieldnames=fields, extrasaction='ignore')

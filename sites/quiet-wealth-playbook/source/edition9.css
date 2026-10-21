@@ -360,7 +360,7 @@ details[open]>summary .icon{transform:rotate(45deg)}
 .tone-1{background:#9c7744}
 .tone-2{background:var(--sage-deep)}
 .comment-handle{font:600 15px/1.3 var(--sans)}
-.comment-video{font-size:13px;line-height:1.4;color:var(--muted)}
+.comment-video{font-size:13px;line-height:1.4;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .comment-video a{color:var(--gold)}
 .comment-text{margin-top:14px;font-size:17px;line-height:1.65;white-space:pre-line}
 .comment-likes{display:flex;align-items:center;gap:7px;margin-top:14px;font-size:13px;color:var(--muted)}
