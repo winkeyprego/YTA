@@ -18,6 +18,7 @@ const FIELDS = {
   stat: ['value', 'prefix', 'suffix', 'caption', 'on', 'at', 'set', 'setOpts', 'size', 'countDur'],
   fuse: ['heading', 'sub', 'stops', 'end', 'tallyLabel', 'endStyle', 'rope'],
   case: ['heading', 'sub', 'cards'],
+  pipes: ['heading', 'sub', 'a', 'b', 'front', 'shut', 'level'],
   map: ['view', 'legend', 'legendOn', 'focus', 'fx', 'fy', 'city'],
   money: ['items', 'set', 'setOpts'],
   title: ['text', 'set', 'setOpts', 'size'],
@@ -60,7 +61,7 @@ function kitFields(tpl) {
 }
 const REQUIRED = {
   versus: ['left', 'right'], document: ['lines'], chart: ['data'], stat: ['value'],
-  fuse: ['stops'], case: ['cards'], map: [], money: ['items'], title: ['text'], chapter: ['label'], compose: ['items'],
+  fuse: ['stops'], case: ['cards'], pipes: ['a', 'b'], map: [], money: ['items'], title: ['text'], chapter: ['label'], compose: ['items'],
 };
 const CHAR_FIELDS = ['who', 'spot', 'mood', 'mood2', 'mood2On', 'mood2At', 'pose', 'poseOn', 'poseAt', 'pose2', 'pose2On', 'pose2At',
   'holding', 'carry', 'walk', 'walkAt', 'walkDur', 'look', 'tilt', 'seed', 'turn', 'turn2', 'turnOn', 'turnAt', 'sit', 'back'];
@@ -217,6 +218,22 @@ function validate(spec) {
     if (tpl === 'fuse' && shot.endStyle && !['bomb', 'card', 'flag'].includes(shot.endStyle)) errors.push(`${at}: endStyle must be bomb, card or flag`);
     if (tpl === 'fuse' && shot.rope && !['fuse', 'thread'].includes(shot.rope)) errors.push(`${at}: rope must be fuse or thread`);
     if (tpl === 'fuse' && (shot.stops || []).length > 5) errors.push(`${at}: the fuse fits at most 5 stops`);
+    if (tpl === 'pipes') {
+      const PIPE_SUB = { a: ['label', 'sub', 'on', 'at', 'share'], b: ['label', 'sub', 'on', 'at', 'share'], front: ['label', 'sub', 'on', 'at'] };
+      Object.entries(PIPE_SUB).forEach(([key, okSub]) => {
+        const v = shot[key];
+        if (v == null) return;
+        if (typeof v !== 'object' || Array.isArray(v)) { errors.push(`${at}: "${key}" must be an object like { "label": "...", "sub": "...", "on": "word" }`); return; }
+        Object.keys(v).forEach((k) => { if (!okSub.includes(k)) warnings.push(`${at}: ${key} has no field "${k}"${suggest(k, okSub)} (${key} takes ${okSub.join(', ')}). It will be ignored`); });
+        if (v.share != null && !(v.share >= 0 && v.share <= 1)) errors.push(`${at}: ${key}.share must be between 0 and 1`);
+      });
+      if (shot.shut != null && !Array.isArray(shot.shut)) errors.push(`${at}: "shut" must be a list like [{ "pipe": "b", "on": "word" }]`);
+      (Array.isArray(shot.shut) ? shot.shut : []).forEach((s, k) => {
+        if (!s || !['a', 'b'].includes(s.pipe)) errors.push(`${at} shut[${k}]: "pipe" must be "a" or "b"`);
+        Object.keys(s || {}).forEach((f) => { if (!['pipe', 'on', 'at', 'label'].includes(f)) warnings.push(`${at} shut[${k}]: unknown field "${f}"${suggest(f, ['pipe', 'on', 'at', 'label'])}. It will be ignored`); });
+      });
+      if (shot.level != null && !(shot.level >= 0 && shot.level <= 1)) errors.push(`${at}: "level" must be between 0 and 1`);
+    }
     if (tpl === 'chart' && (!Array.isArray(shot.data) || shot.data.length < 2)) errors.push(`${at}: chart needs at least 2 data points`);
     if (tpl === 'money') (shot.items || []).forEach((it, k) => { if (!money[it.kind]) errors.push(`${at} items[${k}]: unknown money kind "${it.kind}"${suggest(it.kind, Object.keys(money))}`); });
   });

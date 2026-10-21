@@ -672,7 +672,258 @@ function rocket(o, t) {
     </g>`);
 }
 
+// ---------- WW2 vehicles & objects (Eastern Front kit) ----------
+// No swastikas or Nazi symbols anywhere. Soviet vehicles may carry a small red star, American ones a small white star.
+const col = (c, d) => (c && (P[c] || c)) || d;
+const starPath = (cx, cy, r) => {
+  let d = '';
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? r * 0.42 : r;
+    d += `${i ? 'L' : 'M'}${n(cx + Math.cos(a) * rr)} ${n(cy + Math.sin(a) * rr)} `;
+  }
+  return d + 'Z';
+};
+const driveDx = (o, t) => (o.drive ? Math.max(0, t - AT(o)) * o.drive : 0);
+// dust kicked up behind a vehicle that drives (local coords: behind = -x); fades in as it starts
+function dust(x, y, t, o, seed = 0) {
+  if (!o.drive || t <= AT(o)) return '';
+  const f = clamp((t - AT(o)) * 2);
+  return Array.from({ length: 5 }, (_, i) => {
+    const k = (t * 1.2 + i / 5 + seed * 0.13) % 1;
+    return `<circle cx="${n(x - k * 110)}" cy="${n(y - 8 - k * 36)}" r="${n(9 + k * 22)}" fill="${P.paperShade}" opacity="${n((1 - k) * 0.5 * f)}"/>`;
+  }).join('');
+}
+// road wheel that turns with the distance driven
+function roadWheel(x, y, r, c, dx) {
+  const spin = (dx / r) * 57.3;
+  return `<g transform="translate(${x} ${y})"><circle r="${r}" fill="${P.charcoal}" ${ol(3)}/><circle r="${n(r * 0.72)}" fill="${c}" ${ol(2.5)}/>
+    <g transform="rotate(${n(spin)})">${[0, 90, 180, 270].map((a) => `<circle cx="${n(Math.cos(rad(a)) * r * 0.42)}" cy="${n(Math.sin(rad(a)) * r * 0.42)}" r="${n(r * 0.1)}" fill="${P.ink}" opacity=".55"/>`).join('')}</g>
+    <circle r="${n(r * 0.2)}" fill="${P.greyDark}" ${ol(2)}/></g>`;
+}
+
+// ---------- tank ----------
+// Boxy T-34-style tank, side view, gun to the right (o.dir -1 = left). o.drive px/s from `at` (tracks run, wheels turn,
+// dust), o.star (default true: small red star on the turret), o.color (default olive). About 580 x 215 at s = 1.
+function tank(o, t) {
+  const dir = o.dir ?? 1, dx = driveDx(o, t), seed = o.seed ?? 0;
+  const c = col(o.color, P.olive);
+  const moving = o.drive && t > AT(o);
+  const bob = moving ? Math.sin(t * 15 + seed * 1.7) * 1.3 : 0;
+  // track loop: a stadium between the end-wheel centres, clockwise from the top-left
+  const R = 42, X0 = -196, X1 = 196, CY = -44, S = X1 - X0, Pm = 2 * S + 2 * Math.PI * R;
+  const loopAt = (s) => {
+    s = ((s % Pm) + Pm) % Pm;
+    if (s < S) return [X0 + s, CY - R, 0, -1];
+    s -= S;
+    if (s < Math.PI * R) { const a = -Math.PI / 2 + s / R; return [X1 + R * Math.cos(a), CY + R * Math.sin(a), Math.cos(a), Math.sin(a)]; }
+    s -= Math.PI * R;
+    if (s < S) return [X1 - s, CY + R, 0, 1];
+    s -= S;
+    const a = Math.PI / 2 + s / R;
+    return [X0 + R * Math.cos(a), CY + R * Math.sin(a), Math.cos(a), Math.sin(a)];
+  };
+  const count = 46, sp = Pm / count;
+  const treads = Array.from({ length: count }, (_, i) => {
+    const [x, y, nx, ny] = loopAt(i * sp + dx);
+    return `M${n(x - nx * 7)} ${n(y - ny * 7)} L${n(x + nx * 7)} ${n(y + ny * 7)}`;
+  }).join(' ');
+  const loop = `M${X0} ${CY - R} H${X1} A${R} ${R} 0 0 1 ${X1} ${CY + R} H${X0} A${R} ${R} 0 0 1 ${X0} ${CY - R} Z`;
+  const wheels = [-150, -75, 0, 75, 150].map((x) => roadWheel(x, -35, 26, c, dx)).join('') + roadWheel(X0, CY, 22, c, dx) + roadWheel(X1, CY, 22, c, dx);
+  const shade = `fill="${P.ink}" opacity=".16"`;
+  return place({ ...o, x: (o.x ?? 640) + dx * dir }, `<g transform="scale(${dir} 1)">
+    <ellipse cx="0" cy="-2" rx="250" ry="8" fill="${P.ink}" opacity=".18"/>
+    ${dust(-236, 0, t, o, seed)}
+    <path d="${loop}" fill="${P.greyDark}" stroke="${P.ink}" stroke-width="18"/>
+    <path d="${loop}" fill="none" stroke="${P.charcoal}" stroke-width="11"/>
+    <path d="${treads}" stroke="${P.ink}" stroke-width="3"/>
+    ${wheels}
+    <g transform="translate(0 ${n(bob)})">
+      <path d="M-232 -86 L-222 -136 L118 -140 L236 -100 L240 -86 Z" fill="${c}" ${ol(3.5)}/>
+      <path d="M-230 -96 L238 -96 L240 -86 L-232 -86 Z" ${shade}/>
+      <path d="M-240 -88 H246" stroke="${P.ink}" stroke-width="9" stroke-linecap="round"/><path d="M-238 -88 H244" stroke="${c}" stroke-width="4" stroke-linecap="round"/>
+      <rect x="-214" y="-130" width="44" height="28" rx="8" fill="${c}" ${ol(2.5)}/><path d="M-214 -110 H-170" stroke="${P.ink}" stroke-width="2" opacity=".4"/>
+      <rect x="-244" y="-126" width="14" height="12" rx="3" fill="${P.charcoal}" ${ol(2)}/>
+      <path d="M-130 -118 H70" stroke="${P.ink}" stroke-width="2.5" opacity=".45"/>
+      <circle cx="204" cy="-112" r="7" fill="${c}" ${ol(2)}/><path d="M210 -114 L222 -116" stroke="${P.ink}" stroke-width="4" stroke-linecap="round"/>
+      <path d="M108 -166 H340" stroke="${P.ink}" stroke-width="12" stroke-linecap="butt"/><path d="M110 -166 H338" stroke="${c}" stroke-width="6"/>
+      <rect x="328" y="-172" width="16" height="12" rx="2" fill="${c}" ${ol(2.5)}/>
+      <path d="M-92 -138 L-80 -196 L40 -202 L98 -156 L94 -138 Z" fill="${c}" ${ol(3.5)}/>
+      <path d="M-90 -148 L96 -150 L94 -138 L-92 -138 Z" ${shade}/>
+      <rect x="88" y="-178" width="26" height="30" rx="8" fill="${c}" ${ol(3)}/>
+      <path d="M-46 -198 Q-44 -216 -24 -216 Q-6 -216 -4 -199 Z" fill="${c}" ${ol(3)}/>
+      <path d="M-62 -182 H8" stroke="${P.ink}" stroke-width="2.5" opacity=".5" stroke-linecap="round"/>
+      ${o.star === false ? '' : `<path d="${starPath(-22, -166, 13)}" fill="${P.red}" stroke="${P.ink}" stroke-width="1.8" stroke-linejoin="round"/>`}
+    </g>
+  </g>`);
+}
+
+// ---------- tank column ----------
+// o.count (3-6, default 4) tanks in a line driving across from `at`: (x, y) = the lead tank, the rest follow behind it.
+// o.speed px/s (default 80), o.dir, o.gap px between tanks (default 300), o.s (default 0.45), o.star, o.color.
+function tankColumn(o, t) {
+  const count = clamp(Math.round(o.count ?? 4), 3, 6), dir = o.dir ?? 1, gap = o.gap ?? 300, s = o.s ?? 0.45;
+  return Array.from({ length: count }, (_, i) => tank({ ...o, x: (o.x ?? 640) - i * gap * dir, y: o.y ?? 600, s, dir, drive: o.speed ?? 80, seed: i }, t)).reverse().join('');
+}
+
+// ---------- truck ----------
+// WW2 Studebaker-style 6x6 cargo truck, side view, cab to the right (o.dir -1 = left). o.drive px/s from `at`.
+// o.cargo 'canvas' (default, covered bed) | 'crates' | 'rockets' (Katyusha rail launcher) | 'bread' (sacks and loaves);
+// o.star (default false; true = small white star on the door), o.color (default olive). About 470 x 210 at s = 1.
+function truckCargo(kind, c) {
+  if (kind === 'crates') {
+    const crate = (x, y, w, h) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${P.wood}" ${ol(2.5)}/><path d="M${x + 6} ${y + 6} L${x + w - 6} ${y + h - 6} M${x + w - 6} ${y + 6} L${x + 6} ${y + h - 6}" stroke="${P.woodDeep}" stroke-width="3"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="${P.woodDeep}" stroke-width="5" opacity=".5"/>`;
+    return [-232, -172, -112, -52].map((x) => crate(x, -138, 58, 70)).join('') + [-206, -146, -86].map((x) => crate(x, -192, 56, 54)).join('');
+  }
+  if (kind === 'bread') {
+    const sack = (x, w, h, yb) => `<path d="M${x - w / 2} ${yb} Q${x - w / 2 - 6} ${yb - h} ${x - 10} ${yb - h} L${x - 4} ${yb - h - 10} L${x + 6} ${yb - h - 10} L${x + 10} ${yb - h} Q${x + w / 2 + 6} ${yb - h} ${x + w / 2} ${yb} Z" fill="${P.paperDim}" ${ol(2.5)}/><path d="M${x - 8} ${yb - h + 2} H${x + 8}" stroke="${P.leather}" stroke-width="3"/>`;
+    const loaf = (x, y, rot) => `<g transform="translate(${x} ${y}) rotate(${rot})"><ellipse rx="26" ry="13" fill="${P.goldDark}" ${ol(2.5)}/><path d="M-12 -9 l-6 12 M0 -11 l-6 14 M12 -9 l-6 12" stroke="${P.woodMid}" stroke-width="2.5" stroke-linecap="round"/></g>`;
+    return [-200, -140, -80, -20].map((x) => sack(x, 58, 64, -70)).join('') + [-170, -110].map((x) => sack(x, 54, 50, -128)).join('')
+      + loaf(-56, -134, -6) + loaf(-20, -128, 8) + loaf(-38, -150, -2);
+  }
+  if (kind === 'rockets') {
+    // Katyusha: rails on a frame pivoting at the rear of the bed, raised toward the cab; rockets lie on the rails
+    const rails = [0, 13, 26].map((y) => `<rect x="0" y="${y - 3}" width="330" height="6" fill="${P.charcoal}" ${ol(1.5)}/>`).join('');
+    const rocketBody = (x, y) => `<rect x="${x}" y="${y - 12}" width="128" height="11" rx="2" fill="${P.greyDark}" ${ol(2)}/><path d="M${x + 128} ${y - 12} L${x + 146} ${y - 6.5} L${x + 128} ${y - 1} Z" fill="${P.charcoal}" ${ol(2)}/><path d="M${x} ${y - 14} L${x - 8} ${y - 18} V${y + 1} L${x} ${y - 3}" fill="${P.greyDark}" ${ol(1.5)}/>`;
+    return `<path d="M-40 -70 L-40 -112 L40 -150" stroke="${P.ink}" stroke-width="9" fill="none" stroke-linejoin="round"/><path d="M-40 -70 L-40 -112 L40 -150" stroke="${c}" stroke-width="4" fill="none" stroke-linejoin="round"/>
+      <rect x="-234" y="-136" width="74" height="70" fill="${c}" ${ol(3)}/>
+      <g transform="translate(-206 -132) rotate(-14)">${rails}${rocketBody(40, 0)}${rocketBody(186, 0)}${rocketBody(110, 13)}${rocketBody(110, 26)}
+        <rect x="-8" y="-6" width="348" height="40" fill="none" stroke="${P.ink}" stroke-width="2.5" opacity=".6"/></g>
+      <circle cx="-206" cy="-132" r="9" fill="${P.greyDark}" ${ol(2.5)}/>`;
+  }
+  // canvas tilt over bows
+  return `<path d="M-238 -110 V-184 Q-238 -206 -214 -206 H-4 Q20 -206 20 -184 V-110 Z" fill="${P.oliveLight}" ${ol(3.5)}/>
+    <path d="M-186 -204 V-112 M-130 -205 V-112 M-74 -205 V-112 M-20 -204 V-112" stroke="${P.ink}" stroke-width="2" opacity=".3"/>
+    <path d="M-236 -196 Q-212 -186 -186 -196 Q-158 -186 -130 -196 Q-102 -186 -74 -196 Q-46 -186 -20 -196 Q0 -188 18 -194" stroke="${P.ink}" stroke-width="2" fill="none" opacity=".3"/>
+    ${[-214, -158, -102, -46, 2].map((x) => `<path d="M${x} -118 v-12" stroke="${P.leather}" stroke-width="3.5" stroke-linecap="round"/>`).join('')}`;
+}
+function truck(o, t) {
+  const dir = o.dir ?? 1, dx = driveDx(o, t);
+  const c = col(o.color, P.olive);
+  const moving = o.drive && t > AT(o);
+  const bob = moving ? Math.sin(t * 13) * 1.2 : 0;
+  const wheel = (x) => `<g transform="translate(${x} -31)"><circle r="31" fill="${P.ink}"/><circle r="16" fill="${c}" ${ol(2.5)}/>
+    <g transform="rotate(${n((dx / 31) * 57.3)})">${[0, 72, 144, 216, 288].map((a) => `<circle cx="${n(Math.cos(rad(a)) * 10)}" cy="${n(Math.sin(rad(a)) * 10)}" r="2.6" fill="${P.ink}"/>`).join('')}</g>
+    <circle r="5" fill="${P.greyDark}" ${ol(1.5)}/></g>`;
+  const cargo = o.cargo || 'canvas';
+  const behind = cargo === 'canvas' || cargo === 'rockets' ? '' : truckCargo(cargo, c);
+  const over = cargo === 'canvas' || cargo === 'rockets' ? truckCargo(cargo, c) : '';
+  return place({ ...o, x: (o.x ?? 640) + dx * dir }, `<g transform="scale(${dir} 1)">
+    <ellipse cx="0" cy="-2" rx="236" ry="8" fill="${P.ink}" opacity=".18"/>
+    ${dust(-240, 0, t, o, 3)}
+    ${wheel(-165)}${wheel(-97)}${wheel(152)}
+    <g transform="translate(0 ${n(bob)})">
+      <rect x="-234" y="-68" width="452" height="14" fill="${P.charcoal}" ${ol(2.5)}/>
+      ${behind}
+      <rect x="-238" y="-114" width="258" height="48" fill="${c}" ${ol(3.5)}/>
+      <path d="M-238 -98 H20 M-238 -82 H20" stroke="${P.ink}" stroke-width="2" opacity=".4"/>
+      <path d="M-200 -114 V-66 M-120 -114 V-66 M-40 -114 V-66" stroke="${P.ink}" stroke-width="2.5" opacity=".45"/>
+      ${over}
+      <path d="M108 -132 L206 -128 Q222 -126 222 -112 L224 -62 L108 -62 Z" fill="${c}" ${ol(3.5)}/>
+      <path d="M150 -120 V-102 M162 -120 V-102 M174 -120 V-102" stroke="${P.ink}" stroke-width="2.5" opacity=".5" stroke-linecap="round"/>
+      <rect x="218" y="-124" width="12" height="60" rx="2" fill="${P.oliveDark}" ${ol(2)}/>
+      <path d="M220 -112 H228 M220 -100 H228 M220 -88 H228 M220 -76 H228" stroke="${P.ink}" stroke-width="1.5"/>
+      <path d="M108 -54 Q112 -98 152 -98 Q192 -98 200 -60 L228 -60" stroke="${P.ink}" stroke-width="17" fill="none" stroke-linejoin="round"/>
+      <path d="M108 -54 Q112 -98 152 -98 Q192 -98 200 -60 L228 -60" stroke="${c}" stroke-width="10" fill="none" stroke-linejoin="round"/>
+      <circle cx="206" cy="-104" r="9" fill="${P.greyLight}" ${ol(2.5)}/>
+      <rect x="224" y="-78" width="16" height="16" rx="2" fill="${P.charcoal}" ${ol(2)}/>
+      <path d="M24 -60 V-178 Q24 -188 34 -188 H90 Q98 -188 100 -180 L112 -128 V-60 Z" fill="${c}" ${ol(3.5)}/>
+      <path d="M36 -176 H84 Q90 -176 92 -170 L100 -136 H36 Z" fill="${P.windowDark}" ${ol(2.5)}/>
+      <path d="M44 -168 L60 -144" stroke="${P.grey}" stroke-width="4" opacity=".45" stroke-linecap="round"/>
+      <path d="M30 -128 V-66 M106 -128 V-66" stroke="${P.ink}" stroke-width="2" opacity=".5"/>
+      <rect x="38" y="-124" width="14" height="5" rx="2" fill="${P.greyDark}"/>
+      <rect x="18" y="-66" width="94" height="8" fill="${c}" ${ol(2)}/>
+      ${o.star ? `<path d="${starPath(72, -100, 13)}" fill="${P.bubble}" stroke="${P.ink}" stroke-width="1.6" stroke-linejoin="round"/>` : ''}
+    </g>
+  </g>`);
+}
+
+// ---------- cargo ship ----------
+// WW2 Liberty-style cargo ship, side view, bow to the right (o.dir -1 = left), on a strip of water that spans the frame
+// (o.water false = no water). Crates on deck, smoke from the funnel, gentle bob and roll. o.sail px/s from `at`
+// (bow wave and wake). About 810 x 400 at s = 1: use s ~0.7 for a full-width shot.
+function cargoShip(o, t) {
+  const dir = o.dir ?? 1, s = o.s ?? 1, x = o.x ?? 640;
+  const el = Math.max(0, t - AT(o)), dx = (o.sail || 0) * el;
+  const sailing = o.sail && t > AT(o);
+  const bob = Math.sin(t * 1.7) * 3, roll = Math.sin(t * 1.1 + 0.6) * 0.7;
+  const L = -x / s - 80, Rr = (1280 - x) / s + 80;
+  const crate = (cx, y, w, h, f = P.wood) => `<rect x="${cx - w / 2}" y="${y - h}" width="${w}" height="${h}" fill="${f}" ${ol(2.5)}/><path d="M${cx - w / 2 + 5} ${y - h / 2} H${cx + w / 2 - 5}" stroke="${P.woodDeep}" stroke-width="2.5"/>`;
+  const smoke = Array.from({ length: 6 }, (_, i) => {
+    const k = (t * 0.45 + i / 6) % 1;
+    return `<circle cx="${n(-36 - k * 170)}" cy="${n(-312 - k * 70)}" r="${n(12 + k * 26)}" fill="${P.greyLight}" opacity="${n((1 - k) * 0.6)}"/>`;
+  }).join('');
+  const ship = `
+    <path d="M220 -360 L410 -196 M-230 -350 L-392 -178 M220 -360 L-30 -300 M-230 -350 L-30 -300" stroke="${P.ink}" stroke-width="1.6" opacity=".5"/>
+    ${smoke}
+    <path d="M220 -166 V-362 M-230 -166 V-352" stroke="${P.ink}" stroke-width="7" stroke-linecap="round"/>
+    <path d="M220 -210 L300 -280 M220 -210 L140 -280 M-230 -210 L-150 -280 M-230 -210 L-310 -280" stroke="${P.ink}" stroke-width="4" stroke-linecap="round"/>
+    <path d="M-392 -176 L-300 -166 L300 -166 L414 -196 L352 -30 L-370 -30 Q-398 -100 -392 -176 Z" fill="${P.greyDark}" ${ol(4)}/>
+    <path d="M-383 -68 L365 -68 L359 -46 L-379 -46 Z" fill="${P.charcoal}"/>
+    <path d="M-392 -176 L-300 -166 L300 -166 L414 -196 L352 -30 L-370 -30 Q-398 -100 -392 -176 Z" fill="none" ${ol(4)}/>
+    <path d="M-386 -160 L-300 -152 L300 -152 L404 -180" stroke="${P.ink}" stroke-width="2" fill="none" opacity=".45"/>
+    ${[-40, -10, 20, 50, 80].map((px) => `<circle cx="${px}" cy="-128" r="5" fill="${P.windowDark}" ${ol(1.5)}/>`).join('')}
+    <rect x="-382" y="-202" width="72" height="36" fill="${P.grey}" ${ol(3)}/>${[-370, -350, -330].map((px) => `<rect x="${px}" y="-192" width="10" height="9" fill="${P.windowDark}"/>`).join('')}
+    ${crate(-285, -166, 50, 40)}${crate(-235, -166, 50, 40, P.woodMid)}${crate(-185, -166, 50, 40)}${crate(-260, -206, 50, 38, P.woodMid)}${crate(-210, -206, 50, 38)}
+    <path d="M-160 -166 V-196 Q-160 -212 -140 -212 H-110 Q-96 -212 -96 -196 V-166 Z" fill="${P.oliveLight}" ${ol(2.5)}/>
+    ${crate(150, -166, 50, 40)}${crate(200, -166, 50, 40, P.woodMid)}${crate(250, -166, 50, 40)}${crate(300, -166, 50, 40, P.woodMid)}${crate(175, -206, 50, 38, P.woodMid)}${crate(225, -206, 50, 38)}
+    <rect x="-80" y="-214" width="190" height="50" fill="${P.grey}" ${ol(3.5)}/>
+    ${[-62, -38, -14, 10, 34, 58, 82].map((px) => `<rect x="${px}" y="-202" width="12" height="11" fill="${P.windowDark}"/>`).join('')}
+    <path d="M-50 -214 L-44 -302 H-8 L-12 -214 Z" fill="${P.charcoal}" ${ol(3.5)}/><path d="M-45 -290 H-8" stroke="${P.greyDark}" stroke-width="6"/>
+    <rect x="10" y="-252" width="92" height="38" fill="${P.grey}" ${ol(3.5)}/>
+    ${[22, 44, 66, 86].map((px) => `<rect x="${px}" y="-242" width="13" height="12" fill="${P.windowDark}"/>`).join('')}
+    <path d="M4 -252 H108" stroke="${P.ink}" stroke-width="5" stroke-linecap="round"/>`;
+  const wave = (y0, amp, ph) => {
+    let d = `M${n(L)} 2 L${n(L)} ${n(y0)}`;
+    for (let xx = L; xx <= Rr + 20; xx += 24) d += ` L${n(xx)} ${n(y0 + Math.sin(xx / 34 + ph) * amp)}`;
+    return d + ` L${n(Rr + 20)} 2 Z`;
+  };
+  const foam = sailing ? `<path d="M354 -50 Q380 -64 410 -50" stroke="${P.bubble}" stroke-width="5" fill="none" stroke-linecap="round" opacity=".85"/>
+    ${[0, 1, 2].map((i) => { const k = (t * 0.9 + i / 3) % 1; return `<path d="M${n(-380 - k * 220)} ${n(-48 + i * 4)} h${n(-50 + k * 30)}" stroke="${P.bubble}" stroke-width="4" stroke-linecap="round" opacity="${n((1 - k) * 0.8)}"/>`; }).join('')}` : '';
+  const ripples = [0, 1, 2, 3].map((i) => `<path d="M${n(L + ((t * 30 + i * 260) % (Rr - L)))} ${-26 + (i % 2) * 12} q22 -7 44 0" stroke="${P.paper}" stroke-width="2.5" fill="none" opacity=".35"/>`).join('');
+  const water = o.water === false ? '' : true;
+  return place(o, `
+    ${water ? `<rect x="${n(L)}" y="-74" width="${n(Rr - L)}" height="76" fill="${P.waterDark}"/><path d="M${n(L)} -74 H${n(Rr)}" stroke="${P.ink}" stroke-width="2" opacity=".35"/>` : ''}
+    <g transform="translate(${n(dx * dir)} ${n(bob)}) rotate(${n(roll)} 0 -60) scale(${dir} 1)">${ship}</g>
+    ${water ? `<path d="${wave(-52, 2.5, t * 1.4)}" fill="${P.water}"/>${ripples}` : ''}
+    <g transform="translate(${n(dx * dir)} 0) scale(${dir} 1)">${foam}</g>`);
+}
+
+// ---------- book ----------
+// A closed hardback standing slightly tilted (o.tilt degrees, default -5) with o.title on the cover (o.color, default
+// redDark), or o.open true: lying open showing two pages of lines. About 140 x 180 closed, 340 x 140 open.
+function book(o) {
+  const c = col(o.color, P.redDark);
+  if (o.open) {
+    const lines = (sd) => Array.from({ length: 7 }, (_, j) => `<path d="M${sd * 136} ${-108 + j * 12} Q${sd * 72} ${-121 + j * 12} ${sd * 16} ${-102 + j * 12}" stroke="${j === 0 ? P.inkSoft : P.paperShade}" stroke-width="${j === 0 ? 3 : 2.5}" fill="none"/>`).join('');
+    const page = (sd) => `<path d="M${sd * 158} -18 L${sd * 148} -126 Q${sd * 74} -140 0 -118 V-10 Q${sd * 76} -32 ${sd * 158} -18 Z" fill="${P.paper}" ${ol(2.5)}/>`;
+    return place(o, `<ellipse cx="0" cy="-2" rx="170" ry="7" fill="${P.ink}" opacity=".15"/>
+      <path d="M-172 -8 L-160 -124 Q-80 -138 0 -112 Q80 -138 160 -124 L172 -8 Q80 -22 0 -2 Q-80 -22 -172 -8 Z" fill="${c}" ${ol(3)}/>
+      <path d="M-164 -12 Q-78 -26 0 -5 Q78 -26 164 -12" stroke="${P.paperShade}" stroke-width="4" fill="none"/>
+      ${page(-1)}${page(1)}${lines(-1)}${lines(1)}
+      <path d="M0 -118 V-10" stroke="${P.ink}" stroke-width="2.5"/>`);
+  }
+  const W = 124, H = 172, x0 = -W / 2;
+  const words = String(o.title ?? 'HISTORY').toUpperCase().split(/\s+/);
+  const rows = [];
+  words.forEach((w) => { const l = rows[rows.length - 1]; if (l && (l + ' ' + w).length <= 9) rows[rows.length - 1] = l + ' ' + w; else rows.push(w); });
+  const shown = rows.slice(0, 3);
+  const size = Math.min(26, ...shown.map((r) => (W - 34) / Math.max(1, textWidth(r, 1, 'display'))));
+  const ty = -H / 2 - ((shown.length - 1) * size * 1.05) / 2 + size * 0.35;
+  return place(o, `<ellipse cx="6" cy="-2" rx="80" ry="6" fill="${P.ink}" opacity=".15"/>
+    <g transform="rotate(${n(o.tilt ?? -5)} ${x0} 0)">
+      <rect x="${x0 + 12}" y="${-H - 9}" width="${W}" height="${H}" rx="3" fill="${c}" ${ol(2.5)}/>
+      <rect x="${x0 + 12}" y="${-H - 9}" width="${W}" height="${H}" rx="3" fill="${P.ink}" opacity=".25"/>
+      <path d="M${x0 + W} ${-H + 2} L${x0 + W + 9} ${-H - 6} V-8 L${x0 + W} 0 Z" fill="${P.paper}" ${ol(2)}/>
+      <path d="M${x0 + W + 3} ${-H + 10} V-10 M${x0 + W + 6} ${-H + 6} V-12" stroke="${P.paperShade}" stroke-width="1.5"/>
+      <rect x="${x0}" y="${-H}" width="${W}" height="${H}" rx="3" fill="${c}" ${ol(3)}/>
+      <rect x="${x0}" y="${-H}" width="16" height="${H}" fill="${P.ink}" opacity=".2"/><path d="M${x0 + 16} ${-H} V0" stroke="${P.ink}" stroke-width="2" opacity=".6"/>
+      <path d="M${x0 + 26} ${-H + 18} H${x0 + W - 10} M${x0 + 26} -18 H${x0 + W - 10}" stroke="${P.gold}" stroke-width="3"/>
+      ${shown.map((r, i) => text(r, 8, n(ty + i * size * 1.05), { font: 'display', size: n(size), anchor: 'middle', fill: P.gold })).join('')}
+    </g>`);
+}
+
 module.exports = {
   balanceScale, bell, countdownClock, wallClock, invitation, doorsRow, sharkFins, circuitBreaker, weather, photocopier,
   badge, van, radarScope, blackBox, jet, thermometer, pokerTable, puzzle, coffeeCup, clipboard, evidenceTray, houseOfCards, rocket,
+  tank, tankColumn, truck, cargoShip, book,
 };

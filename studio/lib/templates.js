@@ -2,7 +2,7 @@
 // A template gets (shot, ctx) and returns render(t) -> SVG. ctx = { dur, cue, cast }:
 //   cue('word') -> local seconds when that word is spoken (or a number of seconds), see lib/timing.js
 //
-// Templates: talk, versus, document, chart, stat, fuse, map, money, title, chapter.
+// Templates: talk, versus, document, chart, stat, fuse, pipes, case, compose, map, money, title, chapter, card (+ kits).
 // Every template also accepts the common overlay fields (see `overlays` below):
 //   tag, plate, stickers, stat, source, camera.
 // Shot-list reference with examples: SHOTS.md.
@@ -535,6 +535,22 @@ function caseShot(shot, ctx) {
     + overlays(shot, t, ctx, { side: 'left' });
 }
 
+// ---------- pipes: two supply pipelines feeding one front (house device, like the fuse) ----------
+// { template: 'pipes', heading, sub, a: { label, sub, on, share }, b: { label, sub, on, share }, front: { label, sub, on },
+//   shut: [{ pipe: 'a'|'b', on, label }], level }
+// The reservoir is there at the cut; each pipe draws on from its edge on its cue, its valve opens and the gauge rises;
+// a shut turns that pipe's wheel, its flow stops and drains and the needle drops by its share.
+function pipesShot(shot, ctx) {
+  const a = shot.a || {}, b = shot.b || {}, fr = shot.front || {};
+  const frontAt = ctx.cue(fr.on, fr.at ?? 0);
+  const aAt = ctx.cue(a.on, a.at ?? 0.5);
+  const bAt = ctx.cue(b.on, b.at ?? aAt + 1.8);
+  const shut = (shot.shut || []).map((s) => ({ ...s, at: ctx.cue(s.on, s.at ?? Math.max(bAt + 3, ctx.dur - 2.5)) }));
+  const view = { heading: shot.heading ?? 'TWO PIPES, ONE FRONT', sub: shot.sub, a: { ...a, at: aAt }, b: { ...b, at: bAt }, front: { ...fr, at: frontAt }, shut, level: shot.level };
+  return (t) => cam(dev.pipes({ ...view, t }), { zoom: cameraZoom(shot.camera || 'locked', t, ctx) })
+    + overlays(shot, t, ctx, { side: 'left' });
+}
+
 // ---------- map: real geography (lib/maps.js) ----------
 // { template: 'map', view: { fit: ['Germany', 'Poland'] | center: [lon, lat], zoom, dim,
 //     highlight: { Germany: 'red' | { color, on } }, hatch: { Czechia: { on } },
@@ -774,7 +790,7 @@ function compose(shot, ctx) {
   };
 }
 
-const TEMPLATES = { case: caseShot, compose, talk, versus, document: documentShot, chart, stat, fuse, map: mapShot, money, title, chapter, card,
+const TEMPLATES = { case: caseShot, compose, talk, versus, document: documentShot, chart, stat, fuse, pipes: pipesShot, map: mapShot, money, title, chapter, card,
   screen: kitTemplate('screen'), data: kitTemplate('data'), diagram: kitTemplate('diagram') };
 
 module.exports = { TEMPLATES, MOODS, POSES, KIT_KINDS, wrap };

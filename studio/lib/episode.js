@@ -72,7 +72,7 @@ function loadEpisode(dir) {
 
 // Pacing check against the measured reference rules (MOTION.md). Returns warning strings.
 // Events = the cut itself plus every cue (`on` / `at`) in the shot, and implicit template entrances.
-const MOVING = new Set(['fuse', 'chart', 'map', 'data', 'diagram', 'screen']); // built/continuous shots
+const MOVING = new Set(['fuse', 'pipes', 'chart', 'map', 'data', 'diagram', 'screen']); // built/continuous shots
 function lint(spec, plan, style = { pacing: { maxShot: 8, maxBuild: 13, maxGap: 4 } }) {
   const { maxShot, maxBuild, maxGap } = style.pacing;
   const warn = [];
@@ -152,7 +152,7 @@ function density(s) {
   const k = s.template + (s.kind ? `:${s.kind}` : '');
   if (['card', 'chapter', 'title', 'stat', 'data:countUp', 'data:tickerChip', 'data:calendarFlip', 'data:cheque', 'screen:phoneNotification'].includes(k)) return 'simple';
   if (s.template === 'talk' && (s.frame === 'close' || s.frame === 'reverse') && nChars <= 2 && nSt <= 1) return 'simple';
-  if (['diagram:montage', 'map', 'fuse', 'diagram:orgTree', 'diagram:loop', 'diagram:split', 'diagram:portraits', 'data:rankingBoard'].includes(k)) return 'busy';
+  if (['diagram:montage', 'map', 'fuse', 'pipes', 'diagram:orgTree', 'diagram:loop', 'diagram:split', 'diagram:portraits', 'data:rankingBoard'].includes(k)) return 'busy';
   if (s.template === 'talk' && (nChars >= 3 || nSt >= 3 || s.set === 'hall' || s.set === 'tradingFloor')) return 'busy';
   return 'medium';
 }

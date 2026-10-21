@@ -152,9 +152,10 @@ function hair(kind, color) {
 }
 
 // Default colours for hats that have an obvious one (used when the spec gives no hatColor / hatBand).
-const HAT_COLOR = { service: P.olive, police: P.policeNavy, hardhat: P.gold, helmet: P.redDark, pilotHelmet: P.greyLight };
-const HAT_BAND = { service: P.oliveDark, police: P.policeNavy, pilotHelmet: P.red };
-function hat(kind, color = P.charcoal, band = P.redDark) {
+const HAT_COLOR = { service: P.olive, police: P.policeNavy, hardhat: P.gold, helmet: P.redDark, pilotHelmet: P.greyLight,
+  ushanka: P.furDark, stahlhelm: P.greyDark, peaked: P.olive };
+const HAT_BAND = { service: P.oliveDark, police: P.policeNavy, pilotHelmet: P.red, ushanka: P.fur, peaked: P.redDark };
+function hat(kind, color = P.charcoal, band = P.redDark, back = false) {
   const o = `stroke="${P.ink}" stroke-width="3.5" stroke-linejoin="round"`;
   switch (kind) {
     case 'tophat':
@@ -193,6 +194,31 @@ function hat(kind, color = P.charcoal, band = P.redDark) {
         <path d="M-60 -282 Q0 -310 60 -282 Q58 -264 0 -270 Q-58 -264 -60 -282 Z" fill="${P.charcoal}" ${o}/>
         <path d="M-36 -284 Q0 -298 30 -288" stroke="${P.greyLight}" stroke-width="3" fill="none" opacity=".6" stroke-linecap="round"/>
         <rect x="-8" y="-326" width="16" height="22" rx="4" fill="${band}" stroke="${P.ink}" stroke-width="2.5"/>`;
+    case 'ushanka': { // Soviet fur hat: cloth crown (color), turned-up fur front and ear flaps (band), small red star
+      const tufts = (pts) => pts.map(([x, y]) => `<path d="M${x} ${y} q3 -5 7 -1" stroke="${P.ink}" stroke-width="2" fill="none" opacity=".35" stroke-linecap="round"/>`).join('');
+      const star = Array.from({ length: 10 }, (_, i) => { const a = -Math.PI / 2 + (i * Math.PI) / 5, r = i % 2 ? 4.2 : 10; return `${i ? 'L' : 'M'}${n(Math.cos(a) * r)} ${n(-298 + Math.sin(a) * r)}`; }).join(' ') + ' Z';
+      return `<path d="M-76 -264 Q-84 -226 -78 -196 Q-66 -184 -52 -196 Q-48 -230 -50 -264 Z" fill="${band}" ${o}/>
+        <path d="M76 -264 Q84 -226 78 -196 Q66 -184 52 -196 Q48 -230 50 -264 Z" fill="${band}" ${o}/>
+        ${tufts([[-72, -240], [-68, -214], [64, -240], [62, -214]])}
+        <path d="M-62 -296 Q-64 -350 0 -352 Q64 -350 62 -296 Z" fill="${color}" ${o}/>
+        <path d="M-40 -330 Q0 -342 40 -330" stroke="${P.ink}" stroke-width="2" fill="none" opacity=".3"/>
+        <path d="M-74 -300 Q-78 -326 -56 -326 Q0 -334 56 -326 Q78 -326 74 -300 Q76 -274 56 -272 Q0 -264 -56 -272 Q-76 -274 -74 -300 Z" fill="${band}" ${o}/>
+        ${tufts([[-60, -312], [-40, -290], [-22, -316], [22, -316], [40, -290], [58, -310]])}
+        ${back ? '' : `<path d="${star}" fill="${P.red}" stroke="${P.ink}" stroke-width="1.6" stroke-linejoin="round"/>`}`;
+    }
+    case 'stahlhelm': // plain WW2 German steel helmet: low dome over the brow, flared skirt at the sides. No insignia.
+      return `<path d="M-62 -272 Q-66 -342 0 -344 Q66 -342 62 -272 Q70 -254 86 -232 Q76 -224 62 -234 Q56 -252 48 -264 Q0 -278 -48 -264 Q-56 -252 -62 -234 Q-76 -224 -86 -232 Q-70 -254 -62 -272 Z" fill="${color}" ${o}/>
+        <path d="M-56 -272 Q0 -286 56 -272" stroke="${P.ink}" stroke-width="2.5" fill="none" opacity=".45"/>
+        <path d="M-40 -326 Q-54 -310 -56 -290" stroke="#fff" stroke-width="6" fill="none" opacity=".25" stroke-linecap="round"/>
+        <circle cx="-58" cy="-284" r="3" fill="${P.ink}" opacity=".5"/><circle cx="58" cy="-284" r="3" fill="${P.ink}" opacity=".5"/>`;
+    case 'peaked': // WW2 officer's peaked cap: tall crown rising at the front, coloured band (hatBand), piping, black visor, cockade
+      return `<path d="M-60 -292 Q-84 -314 -64 -330 Q-34 -356 0 -358 Q34 -356 64 -330 Q84 -314 60 -292 Z" fill="${color}" ${o}/>
+        <path d="M-64 -326 Q-34 -350 0 -352 Q34 -350 64 -326" stroke="${band}" stroke-width="3" fill="none"/>
+        <path d="M-58 -298 H58 V-280 Q0 -274 -58 -280 Z" fill="${band}" ${o}/>
+        <path d="M-56 -282 Q0 -268 56 -282 Q46 -254 0 -252 Q-46 -254 -56 -282 Z" fill="${P.ink}" ${o}/>
+        <path d="M-30 -268 Q0 -262 30 -268" stroke="${P.greyDark}" stroke-width="2" fill="none"/>
+        <path d="M-50 -284 Q0 -276 50 -284" stroke="${P.goldDark}" stroke-width="2.5" fill="none"/>
+        <circle cx="0" cy="-290" r="6.5" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/><circle cx="0" cy="-290" r="2.5" fill="${P.redDark}"/>`;
     default:
       return '';
   }
@@ -326,6 +352,33 @@ function body(spec) {
         <path d="M-16 -170 Q0 -154 16 -170" fill="${spec.skin || P.skin}" stroke="${P.ink}" stroke-width="3"/>
         <path d="M-36 -136 Q-34 -146 -32 -150 M36 -136 Q34 -146 32 -150" stroke="${P.ink}" stroke-width="2.5" fill="none"/>
         ${pr}`;
+    }
+    case 'greatcoat': { // long military greatcoat to the boots: fold-down collar, double-breasted brass buttons, belt. suit = colour
+      const c = spec.suit || P.greatcoat;
+      const btn = (x, y) => `<circle cx="${x}" cy="${y}" r="3.2" fill="${P.goldDark}" stroke="${P.ink}" stroke-width="1.5"/>`;
+      return `<path d="M-54 -16 Q-52 -150 -28 -170 L28 -170 Q52 -150 54 -16 Q0 -10 -54 -16 Z" fill="${c}" ${o}/>
+        <path d="M-12 -170 L0 -152 L12 -170 Z" fill="${spec.shirt || P.oliveDark}" stroke="${P.ink}" stroke-width="2.5"/>
+        <path d="M8 -146 V-14" stroke="${P.ink}" stroke-width="2.5"/>
+        <path d="M-32 -60 L-36 -18 M32 -60 L36 -18" stroke="${P.ink}" stroke-width="2" opacity=".4"/>
+        ${btn(-10, -132)}${btn(24, -132)}${btn(-10, -110)}${btn(24, -110)}${btn(-10, -64)}${btn(24, -64)}
+        <rect x="-48" y="-96" width="96" height="13" fill="${P.leather}" stroke="${P.ink}" stroke-width="2.5"/>
+        <rect x="-8" y="-99" width="18" height="19" rx="2" fill="${P.goldDark}" stroke="${P.ink}" stroke-width="2"/>
+        <path d="M-30 -172 L-8 -146 L-24 -132 L-40 -158 Z M30 -172 L8 -146 L24 -132 L40 -158 Z" fill="${c}" stroke="${P.ink}" stroke-width="3" stroke-linejoin="round"/>
+        ${[-1, 1].map((sd) => `<g transform="translate(${sd * 36} -163) rotate(${sd * 24})"><rect x="-11" y="-5" width="22" height="10" rx="3" fill="${c}" stroke="${P.ink}" stroke-width="2"/></g>`).join('')}`;
+    }
+    case 'tunic': { // high-collared military tunic: stand collar, short button placket, two flapped breast pockets, belt. suit = colour
+      const c = spec.suit || P.olive;
+      const pocket = (sd) => `<path d="M${sd * 12} -134 H${sd * 36} V-110 H${sd * 12} Z" fill="none" stroke="${P.ink}" stroke-width="2.5"/>
+        <path d="M${sd * 10} -138 H${sd * 38} L${sd * 36} -126 Q${sd * 24} -121 ${sd * 12} -126 Z" fill="${c}" stroke="${P.ink}" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="${sd * 24}" cy="-127" r="2.6" fill="${P.goldDark}" stroke="${P.ink}" stroke-width="1.2"/>`;
+      return `<path d="${torso}" fill="${c}" ${o}/>
+        <rect x="-20" y="-176" width="40" height="18" rx="5" fill="${c}" stroke="${P.ink}" stroke-width="3"/>
+        <path d="M0 -158 V-96" stroke="${P.ink}" stroke-width="2.5"/>
+        ${[-148, -132, -116].map((y) => `<circle cx="0" cy="${y}" r="2.8" fill="${P.goldDark}" stroke="${P.ink}" stroke-width="1.4"/>`).join('')}
+        ${pocket(-1)}${pocket(1)}
+        <rect x="-42" y="-94" width="84" height="12" fill="${P.leather}" stroke="${P.ink}" stroke-width="2.5"/>
+        <rect x="-7" y="-97" width="14" height="18" rx="2" fill="${P.goldDark}" stroke="${P.ink}" stroke-width="2"/>
+        ${[-1, 1].map((sd) => `<g transform="translate(${sd * 34} -164) rotate(${sd * 26})"><rect x="-12" y="-5" width="24" height="10" rx="3" fill="${c}" stroke="${P.ink}" stroke-width="2"/></g>`).join('')}`;
     }
     default: // suit
       return `<path d="${torso}" fill="${spec.suit || P.navy}" ${o}/>
@@ -527,7 +580,7 @@ function backView(spec, st, skin) {
     <circle cx="-64" cy="-226" r="11" fill="${skin}" stroke="${P.ink}" stroke-width="3.5"/><circle cx="64" cy="-226" r="11" fill="${skin}" stroke="${P.ink}" stroke-width="3.5"/>
     <circle cx="0" cy="${HEAD_Y}" r="${HEAD_R}" fill="${skin}" ${o}/>
     ${hc !== skin ? `<path d="M-64 -214 A66 66 0 1 1 64 -214 Q0 -190 -64 -214 Z" fill="${hc}" stroke="${P.ink}" stroke-width="3.5"/>` : ''}
-    ${hat(spec.hat, spec.hatColor || HAT_COLOR[spec.hat], spec.hatBand || HAT_BAND[spec.hat])}</g></g>`;
+    ${hat(spec.hat, spec.hatColor || HAT_COLOR[spec.hat], spec.hatBand || HAT_BAND[spec.hat], true)}</g></g>`;
 }
 
 // Where a hand ends up for a pose (useful for attaching props or aiming bubbles).
@@ -633,8 +686,8 @@ function crowd(seed, rows, cols, x, y, w, h, scale = 0.3) {
 const FEATURES = {
   hair: ['slick', 'side', 'bald', 'bob', 'curly', 'long', 'spiky', 'ponytail', 'bun', 'none'],
   outfit: ['suit', 'shirt', 'dress', 'coat', 'hoodie', 'turtleneck', 'vest', 'robe', 'overalls', 'blazer',
-    'uniform', 'police', 'firefighter', 'flightsuit', 'labcoat', 'tuxedo', 'weddingDress', 'tshirt'],
-  hat: ['tophat', 'fedora', 'cap', 'service', 'police', 'hardhat', 'helmet', 'pilotHelmet'],
+    'uniform', 'police', 'firefighter', 'flightsuit', 'labcoat', 'tuxedo', 'weddingDress', 'tshirt', 'greatcoat', 'tunic'],
+  hat: ['tophat', 'fedora', 'cap', 'service', 'police', 'hardhat', 'helmet', 'pilotHelmet', 'ushanka', 'stahlhelm', 'peaked'],
   moustache: ['brush', 'walrus', 'thin'],
   beard: ['short', 'full'],
   colors: ['suit', 'shirt', 'tie', 'hairColor', 'skin', 'hatColor', 'hatBand', 'moustacheColor', 'blushColor', 'beardColor', 'necklace', 'printColor'],

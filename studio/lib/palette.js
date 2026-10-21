@@ -73,6 +73,14 @@ module.exports = {
   vanWhite: '#ebe8df',   // plain white van, jet fuselage
   steel: '#8e979a',      // machines, breaker panels
 
+  // WW2 kit (lib/props-extra.js vehicles, lib/characters.js costumes)
+  oliveLight: '#8a8a62', // canvas covers and tarps (truck tilt, deck cargo)
+  fur: '#8b7559',        // ushanka fur (front and ear flaps)
+  furDark: '#6c5a45',    // ushanka crown
+  greatcoat: '#7a6d57',  // Soviet greatcoat (grey-brown wool)
+  fieldGrey: '#717667',  // German WW2 field-grey uniform (no insignia)
+  leather: '#5a3f2b',    // belts, straps
+
   board: '#2f3a34',      // chalkboard / dark device backgrounds
   boardDark: '#232b27',
 };

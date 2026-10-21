@@ -81,6 +81,12 @@ const DOCS = {
   evidenceTray: 'top-down evidence tray, tagged items placed after `at` (items: ["PASSPORT","MAP","CASH",...])',
   houseOfCards: 'cards stack into a pyramid after `at`, collapse at `fallAt` (levels, fallAt absolute seconds)',
   rocket: 'rocket on a pad, lifts off with a smoke trail (launch seconds after `at`)',
+  // WW2 kit (no Nazi symbols; red star = Soviet, white star = American)
+  tank: 'T-34-style tank, side view; tracks run when driving (dir 1|-1, drive px/s from `at`, star true|false red star, color)',
+  tankColumn: '3-6 tanks in a line driving across from `at`; x = lead tank (count, speed px/s, dir, gap px, s default 0.45, star, color)',
+  truck: 'Studebaker-style 6x6 truck, side view (cargo canvas|crates|rockets (Katyusha)|bread, dir, drive px/s, star: white door star, color)',
+  cargoShip: 'Liberty-style cargo ship on a full-width strip of water, crates on deck, funnel smoke, bobs (dir, sail px/s from `at`, water; s ~0.7)',
+  book: 'hardback book standing tilted with a cover title (title, color, tilt), or open: true lying open with two pages of lines',
 };
 
 module.exports = { PROPS, DOCS };

@@ -41,7 +41,7 @@ Starters: `episodes/finance-starter` (money topics) and `episodes/template-start
 
 | Field | Meaning |
 |---|---|
-| `template` | **required**: `talk`, `versus`, `document`, `chart`, `stat`, `fuse`, `map`, `money`, `title`, `chapter`, `card`, `screen`, `data`, `diagram` |
+| `template` | **required**: `talk`, `versus`, `document`, `chart`, `stat`, `fuse`, `pipes`, `case`, `compose`, `map`, `money`, `title`, `chapter`, `card`, `screen`, `data`, `diagram` |
 | `id` | optional label for the shot (shown by `--plan`) |
 | `vo` | the narration spoken during this shot, copied exactly from the script. The shot's length comes from it. Shots without `vo` (chapter cards) last `dur` seconds, and the narration pauses for them |
 | `dur` | force a length in seconds (normally leave it out) |
@@ -137,6 +137,20 @@ A numeric `value` counts up. A text `value` just pops. Without `set`, the backgr
 Up to 5 stops. The spark reaches each stop on its word. `endStyle`: `bomb` (default), `card`, `flag`; `rope`: `fuse` (default) or
 `thread` (a red string; defaults the heading to THE RECORD). For tragedies use `"endStyle":"card","rope":"thread"`, or `case`.
 
+### `pipes`: two supply pipelines feeding one front (Eastern Front house device)
+```json
+{ "template": "pipes", "vo": "...", "heading": "TWO PIPES, ONE FRONT", "sub": "what kept the Red Army moving",
+  "front": { "label": "THE FRONT", "on": "front" },
+  "a": { "label": "SOVIET PIPE", "sub": "from behind the Urals", "on": "soviet" },
+  "b": { "label": "ALLIED PIPE", "sub": "from three oceans", "on": "allied", "share": 0.3 },
+  "shut": [ { "pipe": "b", "on": "closes", "label": "CUT" } ] }
+```
+On the dark device board: a reservoir with a needle gauge (`front`, there at the cut unless cued), pipe `a` (red) from the
+left edge and pipe `b` (blue steel) from the top right. Each pipe draws on from its edge on its word, its valve wheel spins
+open and liquid runs in, filling the reservoir. A `shut` turns that valve: its flow stops, the pipe drains and the needle drops
+by that pipe's share (`label` = optional stamp). `level` (0..1, default 0.9) = the reading with both open; `share` (default 0.5
+each) splits it. For a follow-up shot with the pipes already running, give both pipes `"at": -5`.
+
 ### `case`: the investigation board (mysteries, disputed claims, tragedies)
 ```json
 { "template": "case", "vo": "...", "heading": "THE CLAIMS", "sub": "and what the record shows",
@@ -165,6 +179,9 @@ Anchors are bottom-centre (people and props; `jet` is centred). Items pop in on 
   `radarScope` (blips, ring), `blackBox` (ping), `jet` (kind business|fighter, dir, fly; open sky only), `thermometer` (value, max, unit, label),
   `pokerTable` (cards), `puzzle` (cols, rows, missing), `coffeeCup` (color), `clipboard` (title, count <= 10),
   `evidenceTray` (items), `houseOfCards` (levels, fallAt), `rocket` (launch)
+- WW2 (no Nazi symbols; red star = Soviet, white star = American): `tank` (dir, drive, star, color), `tankColumn` (count 3-6,
+  speed, dir, gap; x = lead tank), `truck` (cargo canvas|crates|rockets|bread, dir, drive, star), `cargoShip` (dir, sail, water;
+  full-width water strip, use s ~0.7), `book` (title, color, tilt, or open: true)
 One-line descriptions of every prop: `DOCS` at the bottom of `lib/propkit.js`.
 
 ### `map`: real geography
@@ -248,15 +265,20 @@ She is an occasional character, not a presenter on every shot. See RECIPES.md, "
 ```
 - Hair: `slick`, `side`, `bald`, `bob`, `curly`, `bun`, `long`, `spiky`, `ponytail`
 - Extras: `glasses`, `moustache` (`brush`, `walrus`, `thin`), `beard` (`short`, `full`), `hat` (`tophat`, `fedora`, `cap`, `service`,
-  `police`, `hardhat`, `helmet`, `pilotHelmet`), `cigar`, `pin`, `badge`, `lanyard`, `headset`, `veil`
+  `police`, `hardhat`, `helmet`, `pilotHelmet`, `ushanka` (Soviet fur hat, small red star), `stahlhelm` (plain grey WW2 German
+  helmet, no insignia), `peaked` (officer's peaked cap; `hatColor` crown, `hatBand` band)), `cigar`, `pin`, `badge`, `lanyard`, `headset`, `veil`
 - Outfits: `suit`, `shirt`, `dress`, `coat`, `hoodie`, `turtleneck`, `vest`, `robe`, `overalls`, `blazer`, `uniform`, `police`,
-  `firefighter`, `flightsuit`, `labcoat`, `tuxedo`, `weddingDress`, `tshirt` (+ `print`: 1-3 letters on the chest)
+  `firefighter`, `flightsuit`, `labcoat`, `tuxedo`, `weddingDress`, `tshirt` (+ `print`: 1-3 letters on the chest),
+  `greatcoat` (long double-breasted military coat with belt; colour from `suit`, default Soviet grey-brown; `"suit": "fieldGrey"`
+  for German), `tunic` (high-collared military tunic with breast pockets; colour from `suit`, default olive)
+- Colours: `hatColor`, `hatBand` also take palette names. Eastern Front examples: Soviet soldier `{ "outfit": "greatcoat", "hat": "ushanka" }`,
+  German soldier `{ "outfit": "greatcoat", "suit": "fieldGrey", "hat": "stahlhelm" }`, officer `{ "outfit": "tunic", "hat": "peaked" }`
 - Colours (palette names or hex): `suit`, `shirt`, `tie`, `hairColor`, `beardColor`, `printColor`, `skin` (`skin1` light … `skin6` deep)
 - `--plan` lists every valid value and suggests the nearest one for a typo.
 
 ## Pacing rules (checked by `node render.js episodes/<ep> --plan`)
 - War: shots about 3.5s, with anything over 8s split. Finance: story shots about 3s, split over 7s.
-  Built shots (`fuse`, `chart`, `map`, `data`, `diagram`, `screen`) can run to ~13s (war) or ~15s (finance) if elements keep landing.
+  Built shots (`fuse`, `pipes`, `chart`, `map`, `data`, `diagram`, `screen`) can run to ~13s (war) or ~15s (finance) if elements keep landing.
 - Something must happen every 1–1.5s: a sticker, a pose, an expression change, a bubble, a stat.
   The checker warns when nothing happens for more than 4s.
 - Cut wide → close on the same set to keep the pace up.

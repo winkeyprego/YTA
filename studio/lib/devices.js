@@ -6,11 +6,14 @@
 //   fuse({ stops, end, k, t, endStyle: 'bomb' | 'card' | 'flag', rope: 'fuse' | 'thread' })
 //   caseBoard({ heading, sub, cards: [{ title, lines, verdict, verdictColor, verdictAt, at }], k, t })
 //       the calm investigation device (cork board, pinned cards, red thread, verdict stamps); caseSchedule() fills times.
+//   pipes({ heading, sub, a, b, front, shut, level, t })
+//       two supply pipelines feeding one front: a reservoir with a needle gauge, valves that open and shut.
 //   For real tragedies and claims, prefer rope: 'thread' + endStyle: 'card', or the case board (no fire, no bomb).
 
 const P = require('./palette');
 const { n, text, textWidth, esc, W, H } = require('./svg');
 const { rng, prog, ease, clamp, lerp, pop } = require('./motion');
+const rad = (d) => (d * Math.PI) / 180;
 
 // Device-only colours (candidates for palette.js): cork board and the red investigation thread.
 const C = {
@@ -284,6 +287,203 @@ function caseBoard({ heading, sub, cards = [], k, t = 0 }) {
 }
 const pinSvg = (x, y, head = P.red, r = 10) => `<circle cx="${n(x + 2)}" cy="${n(y + 4)}" r="${r}" fill="#000" opacity=".25"/><circle cx="${n(x)}" cy="${n(y)}" r="${r}" fill="${head}" stroke="${P.ink}" stroke-width="2.5"/><circle cx="${n(x - r * 0.3)}" cy="${n(y - r * 0.3)}" r="${n(r * 0.32)}" fill="${P.paper}" opacity=".7"/>`;
 
+// ---------- pipes: two supply pipelines feeding one front ----------
+// pipes({ heading, sub, a: { label, sub, at, share }, b: {...}, front: { label, sub, at }, shut: [{ pipe: 'a'|'b', at, label }],
+//         level, t })  (all times already resolved to seconds)
+// On the dark device board: a round reservoir with a needle gauge (centre-right, labelled front.label), pipe A entering from
+// the left edge (red), pipe B from the top-right edge (blue steel), each with a valve wheel and a hanging tag (label + sub).
+// A pipe draws on from its edge at its `at`, its valve wheel spins open and liquid runs in (moving dashes) and fills the
+// reservoir. A shut turns the wheel the other way: the flow before the valve stops, the rest drains, and the gauge drops by
+// that pipe's share. level (0..1, default 0.9) = the reading with both pipes open; share (a/b, default 0.5 each) splits it.
+const PIPE_GEO = {
+  C: [780, 430], R: 118,
+  a: { pts: [[-40, 470], [700, 470]], color: P.red, dark: P.redDark, valve: 470, tag: [215, 518, 360] },
+  b: { pts: [[1320, 236], [972, 236], [972, 430], [910, 430]], color: P.blue, dark: P.navy, valve: 170, tag: [1118, 282, 250] },
+};
+// polyline with rounded corners -> sampled points with cumulative length
+function pipeRoute(pts, r = 40) {
+  const out = [pts[0]];
+  for (let i = 1; i < pts.length; i++) {
+    const [x1, y1] = pts[i];
+    if (i === pts.length - 1) { out.push([x1, y1]); break; }
+    const [x0, y0] = pts[i - 1], [x2, y2] = pts[i + 1];
+    const l1 = Math.hypot(x1 - x0, y1 - y0), l2 = Math.hypot(x2 - x1, y2 - y1);
+    const e = [x1 - ((x1 - x0) / l1) * r, y1 - ((y1 - y0) / l1) * r], x = [x1 + ((x2 - x1) / l2) * r, y1 + ((y2 - y1) / l2) * r];
+    out.push(e);
+    for (let k = 1; k <= 10; k++) {
+      const u = k / 10;
+      out.push([0, 1].map((j) => (1 - u) ** 2 * e[j] + 2 * (1 - u) * u * [x1, y1][j] + u * u * x[j]));
+    }
+  }
+  const cum = [0];
+  for (let i = 1; i < out.length; i++) cum.push(cum[i - 1] + Math.hypot(out[i][0] - out[i - 1][0], out[i][1] - out[i - 1][1]));
+  return { p: out, cum, L: cum[cum.length - 1] };
+}
+function routeAt(R, s) {
+  s = clamp(s, 0, R.L);
+  let i = 1;
+  while (i < R.cum.length - 1 && R.cum[i] < s) i++;
+  const k = (s - R.cum[i - 1]) / Math.max(1e-6, R.cum[i] - R.cum[i - 1]);
+  const [x0, y0] = R.p[i - 1], [x1, y1] = R.p[i];
+  const l = Math.hypot(x1 - x0, y1 - y0) || 1;
+  return [lerp(x0, x1, k), lerp(y0, y1, k), (x1 - x0) / l, (y1 - y0) / l, i];
+}
+function routeCut(R, s0, s1) {
+  if (s1 - s0 < 0.5) return '';
+  const [ax, ay, , , i0] = routeAt(R, s0), [bx, by, , , i1] = routeAt(R, s1);
+  let d = `M${n(ax)} ${n(ay)}`;
+  for (let i = i0; i < i1; i++) d += ` L${n(R.p[i][0])} ${n(R.p[i][1])}`;
+  return d + ` L${n(bx)} ${n(by)}`;
+}
+const PIPE_ROUTES = { a: pipeRoute(PIPE_GEO.a.pts), b: pipeRoute(PIPE_GEO.b.pts) };
+
+function pipeTimes(p, shut) {
+  const open = p.at + 1.0; // drawn on (0.9s), then the valve opens
+  const s = (shut || []).find((x) => x && x.at != null);
+  return { draw: p.at, open, close: s ? s.at + 0.5 : Infinity, shutAt: s ? s.at : Infinity, shutLabel: s && s.label };
+}
+
+function pipeLine(key, p, tm, t) {
+  const G = PIPE_GEO[key], R = PIPE_ROUTES[key];
+  const D = R.L * ease.inOut(prog(t, tm.draw, 0.9));
+  if (D <= 0.5) return { pipe: '', top: '' };
+  const d = routeCut(R, 0, D);
+  let out = `<path d="${d}" stroke="${P.ink}" stroke-width="48" fill="none" stroke-linejoin="round"/>
+    <path d="${d}" stroke="${G.color}" stroke-width="38" fill="none" stroke-linejoin="round"/>
+    <path d="${d}" stroke="${P.ink}" stroke-width="14" fill="none" stroke-linejoin="round" opacity=".55"/>`;
+  // flange rings along the pipe
+  for (let s = 110; s < D - 16; s += 180) {
+    const [x, y, ux, uy] = routeAt(R, s);
+    const seg = `M${n(x - uy * 27)} ${n(y + ux * 27)} L${n(x + uy * 27)} ${n(y - ux * 27)}`;
+    out += `<path d="${seg}" stroke="${P.ink}" stroke-width="15"/><path d="${seg}" stroke="${G.dark}" stroke-width="8"/>`;
+  }
+  // liquid: fills from the edge once open; after a shut the part past the valve drains into the reservoir
+  const F = t > tm.open ? Math.min(R.L, (t - tm.open) * 700) : 0;
+  const PER = 34, flow = 130;
+  const liquid = (s0, s1, tStop) => {
+    const dd = routeCut(R, s0, s1);
+    if (!dd) return '';
+    const shift = flow * Math.max(0, Math.min(t, tStop) - tm.open);
+    const off = (((s0 - shift) % PER) + PER) % PER;
+    return `<path d="${dd}" stroke="${P.goldDark}" stroke-width="12" fill="none" stroke-linejoin="round"/>
+      <path d="${dd}" stroke="${P.gold}" stroke-width="6" fill="none" stroke-dasharray="15 19" stroke-dashoffset="${n(off)}"/>`;
+  };
+  if (F > 0) {
+    if (t < tm.close) out += liquid(0, F, Infinity);
+    else {
+      out += `<g opacity="${n(1 - 0.35 * clamp((t - tm.close) * 2))}">${liquid(0, Math.min(F, G.valve), tm.close)}</g>`;
+      out += liquid(Math.max(G.valve, G.valve + (t - tm.close) * 520), F, Infinity);
+    }
+  }
+  // valve body + wheel (appears as the pipe draws past it); spins open, then shut
+  let top = '';
+  if (D >= G.valve - 20) {
+    const [vx, vy] = routeAt(R, G.valve);
+    const k = ease.outBack(clamp((D - G.valve + 20) / 60));
+    const rot = -300 * ease.inOut(prog(t, tm.open - 0.1, 0.7)) + 300 * ease.inOut(prog(t, tm.shutAt, 0.8));
+    const spokes = [0, 45, 90, 135].map((a) => `<path d="M${n(Math.cos(rad(a)) * 27)} ${n(Math.sin(rad(a)) * 27)} L${n(-Math.cos(rad(a)) * 27)} ${n(-Math.sin(rad(a)) * 27)}" stroke="${P.ink}" stroke-width="4.5"/>`).join('');
+    out += `<g transform="translate(${n(vx)} ${n(vy)}) scale(${n(k)})">
+      <rect x="-12" y="-74" width="24" height="44" fill="${P.greyDark}" stroke="${P.ink}" stroke-width="2.5"/>
+      <rect x="-30" y="-32" width="60" height="64" rx="9" fill="${G.dark}" stroke="${P.ink}" stroke-width="3.5"/>
+      ${[-20, 20].map((bx) => [-22, 22].map((by) => `<circle cx="${bx}" cy="${by}" r="3.5" fill="${P.greyLight}" stroke="${P.ink}" stroke-width="1.5"/>`).join('')).join('')}
+      <g transform="translate(0 -76) rotate(${n(rot)})">${spokes}
+        <circle r="30" fill="none" stroke="${P.ink}" stroke-width="12"/><circle r="30" fill="none" stroke="${G.color}" stroke-width="6"/>
+        <circle cx="0" cy="-30" r="6" fill="${P.paper}" stroke="${P.ink}" stroke-width="2.5"/>
+        <circle r="8" fill="${G.dark}" stroke="${P.ink}" stroke-width="2.5"/></g></g>`;
+  }
+  // the tag hangs from the pipe on a string
+  const [tx, ty, maxW] = G.tag;
+  const tagS = key === 'a' ? tx - G.pts[0][0] : G.pts[0][0] - tx;
+  if (D >= tagS - 10 && (p.label || p.sub)) {
+    const k = clamp((D - tagS + 10) / 60);
+    const label = String(p.label || '').toUpperCase(), sub = p.sub ? String(p.sub) : '';
+    const ls = Math.min(32, (maxW - 36) / Math.max(1, textWidth(label, 1, 'display')));
+    const ss = Math.min(24, (maxW - 30) / Math.max(1, textWidth(sub, 1, 'hand')));
+    const w = Math.min(maxW, Math.max(textWidth(label, ls, 'display'), sub ? textWidth(sub, ss, 'hand') : 0) + 40);
+    const h = sub ? 84 : 56;
+    const py = PIPE_GEO[key].pts[0][1] + 24;
+    const rot = key === 'a' ? -2 : 2;
+    top += `<g opacity="${n(clamp(k * 3))}" transform="translate(${tx} ${py}) rotate(${n(rot * (1 + 2 * damp(t - tm.draw - 0.4)))}) scale(${n(0.5 + 0.5 * ease.outBack(k))}) translate(${-tx} ${-py})">
+      <path d="M${tx} ${py} V${ty + 10}" stroke="${P.paperDim}" stroke-width="2.5"/>
+      <g filter="url(#shadow)"><rect x="${n(tx - w / 2)}" y="${ty}" width="${n(w)}" height="${h}" rx="4" fill="${P.paper}" stroke="${P.ink}" stroke-width="3"/></g>
+      <circle cx="${tx}" cy="${ty + 10}" r="4" fill="${P.board}" stroke="${P.ink}" stroke-width="1.5"/>
+      <g data-qa="text" data-qn="pipe ${key} tag">${text(label, tx, ty + 46, { size: n(ls), font: 'display', fill: G.dark, anchor: 'middle' })}
+      ${sub ? text(sub, tx, ty + 74, { size: n(ss), font: 'hand', fill: P.inkSoft, anchor: 'middle' }) : ''}</g></g>`;
+  }
+  // the shut stamp lands on the pipe just downstream of the valve (clear of the tag)
+  if (tm.shutLabel && D >= G.valve) {
+    const [sx, sy] = routeAt(R, G.valve + 95);
+    top += stampMark(String(tm.shutLabel).toUpperCase(), sx, sy, t, tm.shutAt + 0.3, { size: 26, rot: key === 'a' ? -8 : 7, color: P.red });
+  }
+  return { pipe: out, top };
+}
+const damp = (k, f = 8, d = 2.4) => (k <= 0 ? 0 : Math.sin(k * f) * Math.exp(-k * d));
+
+function pipes({ heading, sub, a = {}, b = {}, front = {}, shut = [], level, t = 0 }) {
+  const [cx, cy] = PIPE_GEO.C, R = PIPE_GEO.R;
+  const hs = heading ? Math.min(54, 1000 / Math.max(1, textWidth(heading, 1, 'display'))) : 54;
+  let out = `<rect x="-200" y="-200" width="${W + 400}" height="${H + 400}" fill="${P.woodDark}"/>
+    <rect x="22" y="22" width="${W - 44}" height="${H - 44}" fill="${P.board}" stroke="${P.ink}" stroke-width="5"/>
+    <path d="M120 640 Q400 625 700 644 T1160 636" stroke="${P.paperDim}" stroke-width="3" fill="none" opacity=".1"/>
+    ${heading ? `<g data-qa="text" data-qn="pipes heading">${text(heading, 640, 110, { size: n(hs), font: 'display', fill: P.paper, anchor: 'middle', opacity: 0.9 })}</g>` : ''}
+    ${sub ? text(sub, 640, 150, { size: 28, fill: P.paperDim, anchor: 'middle' }) : ''}`;
+  const max = level ?? 0.9;
+  const sa = a.share ?? (b.share != null ? 1 - b.share : 0.5), sb = b.share ?? 1 - sa;
+  let lv = 0, flowing = false;
+  const lines = [['a', a, sa], ['b', b, sb]].map(([key, p, share]) => {
+    if (p.at == null) return { pipe: '', top: '' };
+    const tm = pipeTimes(p, shut.filter((s) => s && s.pipe === key));
+    const arrive = tm.open + PIPE_ROUTES[key].L / 700;
+    const fill = ease.inOut(prog(t, arrive, 1.3)), drain = ease.inOut(prog(t, tm.close + 0.3, 1.6));
+    lv += max * share * fill * (1 - drain);
+    if (t > arrive && t < tm.close) flowing = true;
+    return pipeLine(key, p, tm, t);
+  });
+  out += lines.map((l) => l.pipe).join('');
+  // reservoir + needle gauge
+  const fp = front.at != null ? pop(t, front.at, 0.25) : { on: true, s: 1, o: 1 };
+  if (fp.on) {
+    const wr = 92;
+    const yl = cy + wr - 2 * wr * clamp(lv) + Math.sin(t * 3) * (flowing ? 1.6 : 0.6);
+    const hw = Math.sqrt(Math.max(0, wr * wr - (yl - cy) ** 2));
+    const liquid = lv > 0.004 ? `<path d="M${n(cx - hw)} ${n(yl)} A${wr} ${wr} 0 ${lv > 0.5 ? 1 : 0} 0 ${n(cx + hw)} ${n(yl)} Z" fill="${P.goldDark}"/>
+      <path d="M${n(cx - hw + 4)} ${n(yl)} H${n(cx + hw - 4)}" stroke="${P.gold}" stroke-width="5" stroke-linecap="round"/>` : '';
+    const gy = cy - R - 60, gr = 54;
+    const ang = -120 + 240 * clamp(lv) + (flowing ? Math.sin(t * 9) * 1.2 : 0);
+    const ticks = Array.from({ length: 11 }, (_, i) => {
+      const a2 = rad(-120 + i * 24), r0 = i % 5 === 0 ? 36 : 41;
+      return `<path d="M${n(cx + Math.sin(a2) * r0)} ${n(gy - Math.cos(a2) * r0)} L${n(cx + Math.sin(a2) * 47)} ${n(gy - Math.cos(a2) * 47)}" stroke="${P.ink}" stroke-width="${i % 5 === 0 ? 3.5 : 2}"/>`;
+    }).join('');
+    const arcP = (a2, r) => `${n(cx + Math.sin(rad(a2)) * r)} ${n(gy - Math.cos(rad(a2)) * r)}`;
+    const label = String(front.label || 'THE FRONT').toUpperCase();
+    const ls = Math.min(36, 300 / Math.max(1, textWidth(label, 1, 'display')));
+    const pw = Math.max(textWidth(label, ls, 'display'), front.sub ? textWidth(front.sub, 22, 'hand') : 0) + 48, ph = front.sub ? 78 : 56, py = cy + R + 16;
+    const rivets = Array.from({ length: 16 }, (_, i) => `<circle cx="${n(cx + Math.cos((i * Math.PI) / 8) * (R - 11))}" cy="${n(cy + Math.sin((i * Math.PI) / 8) * (R - 11))}" r="3.2" fill="${P.greyDark}" stroke="${P.ink}" stroke-width="1.2"/>`).join('');
+    out += `<g opacity="${n(fp.o)}" transform="translate(${cx} ${cy}) scale(${n(fp.s)}) translate(${-cx} ${-cy})">
+      <rect x="${cx - 8}" y="${gy + gr - 4}" width="16" height="${cy - R - gy - gr + 10}" fill="${P.greyDark}" stroke="${P.ink}" stroke-width="2.5"/>
+      <circle cx="${cx}" cy="${cy}" r="${R}" fill="${P.steel}" stroke="${P.ink}" stroke-width="5"/>${rivets}
+      <circle cx="${cx}" cy="${cy}" r="${wr}" fill="${P.boardDark}" stroke="${P.ink}" stroke-width="3"/>
+      ${liquid}
+      ${[0.25, 0.5, 0.75].map((f) => `<path d="M${cx + 62} ${n(cy + wr - 2 * wr * f)} H${cx + 80}" stroke="${P.paper}" stroke-width="2.5" opacity=".5"/>`).join('')}
+      <path d="M${n(cx + Math.cos(rad(200)) * 76)} ${n(cy + Math.sin(rad(200)) * 76)} A76 76 0 0 1 ${n(cx + Math.cos(rad(250)) * 76)} ${n(cy + Math.sin(rad(250)) * 76)}" stroke="#fff" stroke-width="8" fill="none" opacity=".18" stroke-linecap="round"/>
+      <circle cx="${cx}" cy="${cy}" r="${wr}" fill="none" stroke="${P.ink}" stroke-width="3"/>
+      <circle cx="${cx}" cy="${gy}" r="${gr}" fill="${P.paper}" stroke="${P.ink}" stroke-width="4"/>
+      <path d="M${arcP(-120, 44)} A44 44 0 0 1 ${arcP(-80, 44)}" stroke="${P.red}" stroke-width="7" fill="none" opacity=".85"/>
+      ${ticks}
+      ${text('E', n(cx + Math.sin(rad(-122)) * 28), n(gy - Math.cos(rad(-122)) * 28 + 6), { size: 18, anchor: 'middle', fill: P.inkSoft })}
+      ${text('F', n(cx + Math.sin(rad(122)) * 28), n(gy - Math.cos(rad(122)) * 28 + 6), { size: 18, anchor: 'middle', fill: P.inkSoft })}
+      ${text('SUPPLY', cx, gy + 40, { size: 14, anchor: 'middle', fill: P.inkSoft })}
+      <g transform="translate(${cx} ${gy}) rotate(${n(ang)})"><path d="M0 8 V-40" stroke="${P.ink}" stroke-width="7" stroke-linecap="round"/><path d="M0 6 V-38" stroke="${P.red}" stroke-width="3.5" stroke-linecap="round"/></g>
+      <circle cx="${cx}" cy="${gy}" r="7" fill="${P.ink}"/>
+      <g filter="url(#shadow)"><rect x="${n(cx - pw / 2)}" y="${py}" width="${n(pw)}" height="${ph}" rx="4" fill="${P.paper}" stroke="${P.ink}" stroke-width="3"/></g>
+      <circle cx="${n(cx - pw / 2 + 12)}" cy="${py + 12}" r="3.5" fill="${P.greyDark}"/><circle cx="${n(cx + pw / 2 - 12)}" cy="${py + 12}" r="3.5" fill="${P.greyDark}"/>
+      <g data-qa="text" data-qn="pipes front plate">${text(label, cx, py + 42, { size: n(ls), font: 'display', anchor: 'middle' })}
+      ${front.sub ? text(front.sub, cx, py + 68, { size: 22, font: 'hand', anchor: 'middle', fill: P.inkSoft }) : ''}</g>
+    </g>`;
+  }
+  return out + lines.map((l) => l.top).join('');
+}
+
 // Running tally like the references' "MISSED EXITS" scoreboard.
 function tally(label, value, x, y, { w = 300 } = {}) {
   return `<g transform="translate(${x} ${y})" filter="url(#shadow)">
@@ -294,4 +494,4 @@ function tally(label, value, x, y, { w = 300 } = {}) {
   </g>`;
 }
 
-module.exports = { fuse, fuseProgress, fuseSchedule, tally, fuseY, caseBoard, caseSchedule, stampMark, verdictColor, DEVICE_COLORS: C };
+module.exports = { fuse, fuseProgress, fuseSchedule, tally, fuseY, caseBoard, caseSchedule, pipes, stampMark, verdictColor, DEVICE_COLORS: C };
