@@ -98,6 +98,7 @@ async function insertGaps(audio, gaps, tmp) {
 // chapter/title/card shots are meant to be sparse; everything else should never hold an (almost) empty frame
 const EMPTY_OK = new Set(['chapter', 'card', 'title']);
 const EMPTY_EDGES = Number(process.env.QA_EMPTY || 0.02);
+const BUSY_TEXT = Number(process.env.QA_BUSY || 0.12); // share of edge pixels under plain text above which it reads poorly
 
 // Share of edge pixels in a tiny render of the frame: a plain backdrop scores ~0.01, any real content far more.
 async function edgeDensity(page, s, lt, fps) {
@@ -132,13 +133,17 @@ async function runQA(browser, tl, fps, name, outDir, from = 0, to = Infinity) {
     const seen = new Set();
     for (const lt of times) {
       const svg = frame(s.render(lt, { dur: s.dur, global: s.start + lt, fps }), s.start + lt, { grain: false });
-      const found = await page.evaluate((m) => {
+      const res = await page.evaluate((m) => {
         document.getElementById('stage').innerHTML = m;
         const els = [...document.querySelectorAll('[data-qa]')].map((e) => {
           const r = e.getBoundingClientRect();
           let op = 1;
           for (let p = e; p && p.getAttribute; p = p.parentNode) { const v = p.getAttribute('opacity'); if (v != null) op *= Number(v); }
-          return { kind: e.getAttribute('data-qa'), qn: e.getAttribute('data-qn') || 'face', x: r.left, y: r.top, w: r.width, h: r.height, op };
+          // plain = text with no plate behind it (stickers/tags put data-qa on their backing rect); outlined = has a halo
+          const tx = e.tagName === 'text' ? [e] : [...e.querySelectorAll('text')];
+          const plain = e.tagName !== 'rect' && !e.querySelector('rect') && tx.length > 0;
+          const outlined = tx.length > 0 && tx.every((x) => x.getAttribute('paint-order') === 'stroke');
+          return { kind: e.getAttribute('data-qa'), qn: e.getAttribute('data-qn') || 'face', x: r.left, y: r.top, w: r.width, h: r.height, op, plain, outlined };
         }).filter((e) => e.w > 2 && e.h > 2 && e.op > 0.5);
         const area = (a) => a.w * a.h;
         const inter = (a, b) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
@@ -159,8 +164,33 @@ async function runQA(browser, tl, fps, name, outDir, from = 0, to = Infinity) {
             if (inter(A, core) > 0.06 * area(core)) out.push(`${A.qn} covers a face`);
           }
         }
-        return out;
+        // small plain text is hard to read on a phone
+        texts.filter((A) => A.plain && A.h < 20).forEach((A) => out.push(`${A.qn} is small (${Math.round(A.h)}px tall; use 28px+)`));
+        return { out, plain: texts.filter((A) => A.plain && !A.outlined).map((A) => ({ qn: A.qn, x: A.x, y: A.y, w: A.w, h: A.h })) };
       }, svg);
+      const found = res.out;
+      // plain text over a busy part of the picture: measure the picture under it with all text hidden
+      if (res.plain.length) {
+        const busy = await page.evaluate(async ([m, boxes]) => {
+          const img = new Image();
+          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(m.replace('</svg>', '<style>text{visibility:hidden}</style></svg>'));
+          if (!(await img.decode().then(() => true, () => false))) return [];
+          const c = document.createElement('canvas'); c.width = 640; c.height = 360;
+          const g = c.getContext('2d'); g.drawImage(img, 0, 0, 640, 360);
+          const d = g.getImageData(0, 0, 640, 360).data;
+          return boxes.map((b) => {
+            const x0 = Math.max(0, Math.floor(b.x / 2)), x1 = Math.min(639, Math.ceil((b.x + b.w) / 2)), y0 = Math.max(0, Math.floor(b.y / 2)), y1 = Math.min(359, Math.ceil((b.y + b.h) / 2));
+            let e = 0, tot = 0;
+            for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+              const k = (y * 640 + x) * 4, r = k + 4, dn = k + 2560;
+              tot++;
+              if (Math.abs(d[k] - d[r]) + Math.abs(d[k + 1] - d[r + 1]) + Math.abs(d[k + 2] - d[r + 2]) > 40 || Math.abs(d[k] - d[dn]) + Math.abs(d[k + 1] - d[dn + 1]) + Math.abs(d[k + 2] - d[dn + 2]) > 40) e++;
+            }
+            return { qn: b.qn, busy: tot ? e / tot : 0 };
+          });
+        }, [svg, res.plain]);
+        busy.filter((b) => b.busy > BUSY_TEXT).forEach((b) => found.push(`${b.qn} sits on a busy part of the picture: move it to a clean area, or give it a plate/sticker`));
+      }
       // nearly empty frame (a misspelled field, a kit with no data, a screen that left)
       const ed = lt > 0.8 ? await edgeDensity(page, s, lt, fps) : 1;
       if (ed < 0) found.push('the frame SVG does not parse (an unescaped & or < in some text?)');

@@ -176,7 +176,7 @@ function fitTo(keys, { padding = 70, all = false, maxZoom = 40 } = {}) {
 
 // ---------- overlays ----------
 // Growing curved arrow (map style: flat fill, ink outline, arrowhead), labelled at the midpoint.
-function mapArrow(a, b, t, at, { dur = 0.8, color = P.red, width = 14, bend = 0.18, label, labelSize = 26 } = {}) {
+function mapArrow(a, b, t, at, { dur = 0.8, color = P.red, width = 14, bend = 0.18, label, labelSize = 32 } = {}) {
   const k = ease.inOut(prog(t, at, dur));
   if (k <= 0) return '';
   const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
@@ -221,7 +221,7 @@ function legend(items, t, at = 0, { x = 26, y = 86 } = {}) {
   const rows = items.map((it, i) => `
     <rect x="${x + 14}" y="${y + 12 + i * 34}" width="30" height="22" fill="${it.hatch ? 'url(#hatch)' : it.color}" stroke="${P.ink}" stroke-width="2"/>
     ${it.hatch ? `<rect x="${x + 14}" y="${y + 12 + i * 34}" width="30" height="22" fill="none" stroke="${P.ink}" stroke-width="2"/>` : ''}
-    ${text(it.label, x + 56, y + 30 + i * 34, { size: 22 })}`).join('');
+    ${text(it.label, x + 56, y + 30 + i * 34, { size: 26 })}`).join('');
   return `<g opacity="${n(p.o)}" filter="url(#shadow)"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${P.paper}" stroke="${P.ink}" stroke-width="2.5"/>${rows}</g>`;
 }
 
@@ -252,7 +252,7 @@ function mapRing(r, view, t) {
   return `${fill}<path d="${d}" fill="none" stroke="${P.paper}" stroke-width="${(r.width || 3.5) + 3}" stroke-linecap="round" stroke-dasharray="14 10" opacity=".7"/>
     <path d="${d}" fill="none" stroke="${color}" stroke-width="${r.width || 3.5}" stroke-linecap="round" stroke-dasharray="14 10"/>
     <circle cx="${n(cx)}" cy="${n(cy)}" r="5" fill="${color}" stroke="${P.ink}" stroke-width="2"/>
-    ${k > 0.6 ? haloText(label, top[0], top[1] - 12, { size: r.size || 24, anchor: 'middle', fill: color === P.red ? P.redDark : P.ink, opacity: clamp((k - 0.6) * 4) }) : ''}`;
+    ${k > 0.6 ? haloText(label, top[0], top[1] - 12, { size: r.size || 30, anchor: 'middle', fill: color === P.red ? P.redDark : P.ink, opacity: clamp((k - 0.6) * 4) }) : ''}`;
 }
 
 // ---------- the map ----------
@@ -313,14 +313,14 @@ function mapView({ t = 0, center = [0, 20], zoom = 1, res, highlight = {}, hatch
 
   const labelSvg = labels.map((l) => {
     const [x, y] = project(l.lon, l.lat, view);
-    const s = l.size || 26;
+    const s = l.size || 32;
     const fill = l.color || P.ink;
     const halo = l.halo || (fill === P.paper ? P.ink : P.paper);
     return popAt(x, y, t, l.at ?? 0, haloText(l.text, x, y + s * 0.35, { size: s, anchor: 'middle', fill, halo, spacing: l.spacing ?? 2 }));
   }).join('');
   const citySvg = cities.map((c) => {
     const [x, y] = project(c.lon, c.lat, view);
-    const s = c.size || 24;
+    const s = c.size || 30;
     const right = c.side !== 'left';
     return popAt(x, y, t, c.at ?? 0, `<circle cx="${n(x)}" cy="${n(y)}" r="7" fill="${P.paper}" stroke="${P.ink}" stroke-width="3"/><circle cx="${n(x)}" cy="${n(y)}" r="2.5" fill="${P.ink}"/>
       ${haloText(c.name, x + (right ? 14 : -14), y + s * 0.33, { size: s, anchor: right ? 'start' : 'end' })}`);

@@ -11,7 +11,7 @@ const popAround = (cx, cy, p, inner, rot = 0) =>
 
 // Taped paper tag, top-left. Slides in over 0.08s, then the text types at ~30 cps (measured).
 // Use for place + date on every new location or time.
-function dateTag(label, t, at = 0.1, { x = 26, y = 22, rot = -1.2, size = 25 } = {}) {
+function dateTag(label, t, at = 0.1, { x = 26, y = 22, rot = -1.2, size = 30 } = {}) {
   if (t < at) return '';
   const w = textWidth(label, size) + 44;
   const shown = typed(label, t, at + 0.08, 30);
@@ -39,7 +39,7 @@ function namePlate(name, role, t, at = 0.5, { y = 592 } = {}) {
 
 // Pop-in paper sticker. The main way the narration's key words land on screen.
 // Hand-lettered caps like the references. Stagger several stickers 0.7-1s apart.
-function sticker(label, x, y, t, at, { rot = -3, size = 32, color = P.red, fill = P.paper, font = 'hand' } = {}) {
+function sticker(label, x, y, t, at, { rot = -3, size = 38, color = P.red, fill = P.paper, font = 'hand' } = {}) {
   const w = textWidth(label, size, font) + 36;
   const h = size + 24;
   const inner = `<g filter="url(#shadow)"><rect data-qa="text" data-qn="sticker '${esc(label)}'" x="${n(x - w / 2)}" y="${n(y - h / 2)}" width="${n(w)}" height="${h}" fill="${fill}" stroke="${color}" stroke-width="3"/>
