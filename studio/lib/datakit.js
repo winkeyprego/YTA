@@ -201,7 +201,7 @@ function rankingBoard(spec, t) {
   const rowH = Math.min(78, 430 / Math.max(1, rows.length));
   const top = 190;
   const labelW = Math.max(...rows.map((r) => textWidth(r.label, 30)), 120);
-  const barX = 260 + labelW + 20, barMax = 1060 - barX - 150;
+  const barX = 300 + labelW * 1.08 + 24, barMax = Math.max(160, 1060 - barX - 150); // labels start at x=300
   const body = rows.map((r, i) => {
     const ra = at + i * stagger;
     if (t < ra) return '';

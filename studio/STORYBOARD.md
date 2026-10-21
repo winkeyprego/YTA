@@ -22,9 +22,9 @@ It's about 3× less writing than shots.json, and cue words can't mismatch the na
 | `who` | character(s): `name:spot:mood:pose`. Mood can change on a word (`smug>shocked@lost`); pose can land on a word (`present@genius`) | `"who":"sbf:center:smug>shocked@lost:present@genius"`, or a list for several people |
 | `say` | the first character says a line (floating line or bubble per preset) | `"say":"We're fine.@fine"` |
 | `talk` | a conversation; use with `"f":"r"` to cut to each speaker | `"talk":["ceo\|How bad?@bad","sbf\|Worse.@worse"]` |
-| `st` | stickers on words; optional colour after a colon | `"st":["GENIUS@genius","$32 BILLION@billion:gold"]` |
+| `st` | stickers on words; optional colour after a colon. Use the object form to place one: `{"text":"GENIUS","on":"genius","x":900,"y":160}` | `"st":["GENIUS@genius","$32 BILLION@billion:gold"]` |
 | `arrow` | handwritten name + arrow on the first character | `"arrow":"Sam Bankman-Fried@sam"` |
-| `f` | framing: `w` wide, `c` close, `r` conversation cuts | `"f":"c"` |
+| `f` | framing: `w` wide (people at medium size), `F` full set (shows signs, boards, screens), `c` close, `r` conversation cuts | `"f":"c"` |
 | `cam` | camera: `locked`, `creep`, `punch@word`, `push@word`, `steps` | `"cam":"punch@collapse"` |
 
 Everything else is a normal `shots.json` field (see SHOTS.md) and passes straight through: `set`, `setOpts`, `tag`, `plate`,
