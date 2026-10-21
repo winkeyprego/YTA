@@ -41,7 +41,13 @@ history/war, one interchangeable style.
 - Real people: **draw a likeness, don't paste photos** (rights, style, YouTube reuse). Likeness features now exist
   (face shapes, brows, hair styles, age lines, glasses shapes); procedure in SHOTS.md "Likeness".
 
-**Open test (finish it first):** a blind test. A fresh agent with only the repo makes 3 minutes from a middle stretch of
+**Blind test #1 (done, 2026-10-21):** a fresh agent with only the repo made a middle 3 minutes of the Soviets voiceover
+by following the skill. Result: clearly on-method (own device that builds, story-specific places, staged scenes, clean
+checks). Gaps it exposed, now in the skill: device and sets repeated too often within 3 minutes, a few plain frames, small
+people in some wides, transcript ending silently dropped, compose/montage timing undocumented. **Next: blind test #2**
+on another random stretch to confirm the fixes.
+
+**How a blind test works:** A fresh agent with only the repo makes 3 minutes from a middle stretch of
 the private Soviets voiceover (owner's local copy; not in the repo) by following the skill. Compare it with the samples;
 everything it gets wrong is something missing from the docs: fix the docs/skill, then repeat on another random stretch.
 Its notes and output were in the cloud session's scratchpad (`episodes/blind-soviets/`), which may be gone; if so, rerun:

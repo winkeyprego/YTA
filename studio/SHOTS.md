@@ -80,6 +80,11 @@ Starters: `episodes/finance-starter` (money topics) and `episodes/template-start
   - `controlRoom` `{mapLabel}` (left/center/right = seated operators) · `ovalOffice` (center = behind the desk)
   - `cinema` `{title, festival}` (festival front at night) · `cinemaInside` `{title}` (screening room, stage spots)
   - `balcony` `{skyline: 'generic'|'wtc', time: 'day'|'dusk'|'night', towers, light}` · `gulfSkyline`
+  **WW2 Eastern Front** (`lib/sets-history.js`; no gore, no Nazi symbols):
+  - `redSquare` `{snow, tanks}` · `kremlinStudy` `{lamp}` (center = behind the desk) · `frontRoad` `{season: 'summer'|'winter', trucks}`
+  - `arcticPort` `{ship, snow}` (Arkhangelsk docks) · `tankPlant` `{night, sparks, gate, name}` (Ural tank works: crane, T-34 hulls,
+    welding; `gate` + `name` = open gate with a sign, for tanks rolling out) · `trench` `{crate: 'tin'|'tinOpen'|'bread'|'empty'|false, dusk}`
+    (inside a winter trench; the crate with a tin or a loaf sits front centre)
   Exteriors (`towerNight`, `bankExterior`, `skylineWTC`, `memorial`, `fieldPA`, `pentagon`, `capitol`, `courthouse`, `embassy`,
   `gulfSkyline`, `prisonExterior`) default to the full frame.
 - `chars[]`: `who` (a cast key, see below), `spot` (`left`, `center`, `right`, `farLeft`, `farRight`), `mood`, `pose`, `poseOn`,
@@ -150,6 +155,10 @@ left edge and pipe `b` (blue steel) from the top right. Each pipe draws on from 
 open and liquid runs in, filling the reservoir. A `shut` turns that valve: its flow stops, the pipe drains and the needle drops
 by that pipe's share (`label` = optional stamp). `level` (0..1, default 0.9) = the reading with both open; `share` (default 0.5
 each) splits it. For a follow-up shot with the pipes already running, give both pipes `"at": -5`.
+Callbacks that build: per pipe `open` (0..1, a trickle at 0.2), `widen: { "to": 0.9, "on": "wider" }` (the wheel turns, the stream
+thickens, the needle rises), `off: true` (only the other pipe). `ground: { label, on }` + `feeds: [{ label, sub, on }]` (up to 3) =
+a ground line ("what a trench can see") with pipe b branching underneath into outlets that light up on their words.
+In a storyboard, use `"beat"` instead of `"b"` on pipes lines (`b` is pipe b).
 
 ### `case`: the investigation board (mysteries, disputed claims, tragedies)
 ```json
@@ -167,7 +176,7 @@ Verdicts: `FALSE`, `UNPROVEN`, `STILL OPEN`, `TRUE`, `MISLEADING` (or any text, 
              { "text": "Words", "x": 640, "y": 140, "size": 60, "on": "words" },
              { "sticker": "KEY PHRASE", "x": 900, "y": 300, "on": "key" } ] }
 ```
-`bg`: `board`, `paper`, `wall`, `desk`, `night`, or any set name (with `setOpts`); `front: true` draws that set's foreground.
+`bg`: `board`, `paper`, `wall`, `desk`, `night`, `sky` (open winter sky over a low horizon, for planes), or any set name (with `setOpts`); `front: true` draws that set's foreground.
 Anchors are bottom-centre (people and props; `jet` is centred). Items pop in on their cue. Props:
 - Money: `cashStack` (height, w), `moneyBag` (label), `coinPile` (count), `goldBars` (rows), `banknote` (value, rot), `piggyBank` (shake),
   `vault` (opens from its cue), `moneyRain`
@@ -181,7 +190,9 @@ Anchors are bottom-centre (people and props; `jet` is centred). Items pop in on 
   `evidenceTray` (items), `houseOfCards` (levels, fallAt), `rocket` (launch)
 - WW2 (no Nazi symbols; red star = Soviet, white star = American): `tank` (dir, drive, star, color), `tankColumn` (count 3-6,
   speed, dir, gap; x = lead tank), `truck` (cargo canvas|crates|rockets|bread, dir, drive, star), `cargoShip` (dir, sail, water;
-  full-width water strip, use s ~0.7), `book` (title, color, tilt, or open: true)
+  full-width water strip, use s ~0.7), `book` (title, color, tilt, or open: true), `fieldGun` (fire: seconds after its cue, a
+  number or list: recoil + muzzle flash; elev, star), `warplane` (kind fighter|attack, star red|white|false, fly; centre anchor,
+  sky only), `fog` (y, height, density; list it last, give it `"at": 0`), `tinCan` (label, color, open), `breadLoaf` (cut, knife)
 One-line descriptions of every prop: `DOCS` at the bottom of `lib/propkit.js`.
 
 ### `map`: real geography

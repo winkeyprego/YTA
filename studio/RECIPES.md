@@ -50,6 +50,9 @@ Never draw real logos. Companies are lettered emblems (`emblem: "G"`) plus their
 
 ## E. Cause and effect, or a chain of events
 1. **The fuse (house device):** a timeline of missed chances. `{ "template": "fuse", "stops": [{ "year": "2003", "title": "...", "lines": ["..."], "on": "2003" }], "end": { "label": "...", "on": "<word>" } }`
+1b. **The pipes (supply stories):** two sources feeding one front; the valve can open, widen, shut, or feed hidden outlets
+   under a ground line. `{ "t":"pipes","beat":12,"a":{ "label":"SOVIET PIPE","at":-5 },"b":{ "label":"ALLIED PIPE","open":0.25,"widen":{ "to":0.9,"on":"wider" } } }`
+   (storyboard: `"beat"`, not `"b"`). Build it across 3-5 callbacks: one pipe, a trickle, wider, what it feeds (`ground` + `feeds`).
 2. **Equation (F):** `{ "template": "diagram", "kind": "equation", "title": "...", "terms": [{ "label": "CHEAP MONEY", "icon": "cash", "on": "cheap" }, { "label": "HYPE", "icon": "rocket", "on": "hype" }], "ops": ["+", "="], "result": { "label": "BUBBLE", "on": "bubble" } }`
 3. **Feedback loop or flywheel (F):** `{ "template": "diagram", "kind": "loop", "title": "...", "center": "repeat", "nodes": [{ "label": "...", "icon": "chartUp", "on": "<word>" }] }`
 4. **Map with arrows (W):** for anything that spreads across places: `{ "template": "map", "view": { "fit": ["United States of America", "United Kingdom"], "arrows": [{ "from": [-74, 40.7], "to": [-0.1, 51.5], "on": "<word>", "label": "PANIC" }] } }`

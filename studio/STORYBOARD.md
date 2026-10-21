@@ -18,7 +18,7 @@ It's about 3× less writing than shots.json, and cue words can't mismatch the na
 | Key | Means | Example |
 |---|---|---|
 | `t` / `k` | template / kind | `"t":"data","k":"countUp"` |
-| `b` | beat(s) this shot covers (`"beat"` works too; use it when a kit has its own `b` field, like `dualChart`) | `"b":12` or `"b":"12-13"` |
+| `b` | beat(s) this shot covers (`"beat"` works too; use it when a template has its own `b` field: `pipes`, `dualChart`) | `"b":12` or `"b":"12-13"` |
 | `who` | character(s): `name:spot:mood:pose`. Mood can change on a word (`smug>shocked@lost`); pose can land on a word (`present@genius`) | `"who":"sbf:center:smug>shocked@lost:present@genius"`, or a list for several people |
 | `say` | the first character says a line (floating line or bubble per preset) | `"say":"We're fine.@fine"` |
 | `talk` | a conversation; use with `"f":"r"` to cut to each speaker | `"talk":["ceo\|How bad?@bad","sbf\|Worse.@worse"]` |
@@ -67,6 +67,9 @@ The director validates the header alone with `--plan` ("header OK: no shots yet"
   the transcript's token. Better still, transcribe with `--names "Aschenbrenner, Tyler Cowen"` to get them right.
 - A beat with dropped words is still fine: cue on a word that is there.
 - Montage frames: give **all** frames a time (`at`/`on`) or **none** (then they're spread evenly). A mix is a warning.
+  The first frame should be `"at": 0` (a first frame cued on a later word opens on an empty frame).
+- `compose` items: the first item is on screen at the cut; later items without `on`/`at` appear at 0.2 + 0.5 x i seconds.
+  Give important items their own cue word.
 - Episode folders can live anywhere: `node render.js /any/path/to/episode` works.
 
 ## Automatic variety

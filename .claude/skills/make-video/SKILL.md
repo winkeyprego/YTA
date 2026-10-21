@@ -17,12 +17,14 @@ from existing recipes. Only touch `studio/lib/` when a beat truly needs somethin
 ## Steps (full-length episode)
 1. **Folder:** `studio/episodes/<short-name>/` with `vo.mp3` (and `SCRIPT.md` if the owner gave a script).
    Pick a preset: `"finance"` for money topics, `"war"` for history. It only sets defaults; any recipe works in any video.
-2. **Words:** `python3 studio/tools/transcribe.py studio/episodes/<ep>/vo.mp3`, which makes `words.json`.
+2. **Words:** `python3 studio/tools/transcribe.py studio/episodes/<ep>/vo.mp3 --names "Name One, Name Two"`, which makes
+   `words.json`. Pass the story's proper names with `--names`. Check the LAST beat matches the end of the audio (a dropped
+   final sentence is silent); if not, re-run with another model and compare.
 3. **Beats:** `node studio/tools/beats.js studio/episodes/<ep>`, which makes `beats.txt` (numbered beats, ~3s each).
 4. **Director pass (the most important step; do it before any storyboard line):** read ALL of beats.txt once, then write
    `PLAN.md` with these sections:
-   - **The story's device:** one visual metaphor that belongs to THIS story and returns 3-5 times as a callback, building
-     each time (the fuse for an avoidable disaster; two pipes feeding one front for a supply war; a ruler extending a trend
+   - **The story's device:** one visual metaphor that belongs to THIS story and returns 3-5 times across the whole video
+     (at most twice in any 3 minutes), building each time (the fuse for an avoidable disaster; two pipes feeding one front for a supply war; a ruler extending a trend
      line for a man who bets on extrapolation). Not a generic chart. It usually needs building in step 5.
    - **People:** every recurring person in the header `cast`. **Likeness:** for real people, look at a reference photo if
      one is available and pick 2-3 signature features (hair shape and colour, glasses, beard/moustache, face shape, brows,
@@ -42,7 +44,9 @@ from existing recipes. Only touch `studio/lib/` when a beat truly needs somethin
 5. **Library pass:** build the NEEDS items (use the `add-to-library` skill), the device and the most-used places first,
    spread so every chapter debuts something. They stay in the library, so later videos get cheaper. One builder agent with a
    precise spec (field names, look, a test contact sheet it must read) is enough; write the storyboard meanwhile against
-   the spec'd names.
+   the spec'd names. No agent tool? Build them yourself, smallest set first. Put a new piece's `data-qa` marker on its
+   backing plate, not on the text, or `--qa` flags its text as "on a busy picture".
+   **Variety inside 3 minutes:** no set more than twice, no graphic kind more than twice, the device at most twice.
 6. **Storyboard:** write `storyboard.txt`, one line per beat or small beat range, by type:
    - **Stage the moment first** (RECIPES "Staging"): who is doing what, to whom, where? People sit, turn to each other,
      hand things over, take calls; use over-the-shoulder and three-quarter close-ups. About 1 beat in 4 is a scene designed
@@ -65,7 +69,8 @@ from existing recipes. Only touch `studio/lib/` when a beat truly needs somethin
    - Does the device appear and build? Do the chapters each show a new place?
    Fix, re-check, look again. Then render a 20-30s stretch first (`--from/--to`) before the whole video.
 9. **Render:** `node render.js episodes/<ep>` gives `studio/renders/<ep>.mp4` (1080p, with the voice).
-10. **Report** in plain words, list unverified facts, update `studio/HANDOFF.md`, then commit and push.
+10. **Report** in plain words, list unverified facts, update `studio/HANDOFF.md`, then commit and push (unless the owner
+   said not to; never commit private audio or storyboards made from someone else's narration).
 
 ## Never
 - Copy other channels' frames, art, audio, scripts or logos.
