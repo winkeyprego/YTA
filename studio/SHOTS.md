@@ -188,6 +188,9 @@ White handwritten script on black, typed. A later line replaces the earlier one 
 
 ### `screen` / `data` / `diagram`: the finance kits
 A `kind` picks the graphic; the remaining fields belong to that kind. Any `"on": "word"` (or `xxxOn`) inside is timed to the narration.
+The graphic itself is always on screen at the cut. A shot-level `on` on a later word moves to the kind's key moment where it
+has one (browserArticle highlight, socialPost likes, email send, videoPage views, cheque signature, leverage move, dualChart
+split, winnersLosers verdict); the first element of a build (nodes, terms, rows, people...) is shown at the cut.
 The full field lists are at the top of `lib/screens.js`, `lib/datakit.js` and `lib/diagrams.js`. Ready-to-copy examples are in RECIPES.md.
 
 | template | kinds |

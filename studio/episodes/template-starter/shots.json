@@ -29,7 +29,7 @@
      "mood2On": "september"
     }
    ],
-   "tag": "NEW YORK \u00b7 15 SEPT 2008 \u00b7 1:45 AM",
+   "tag": "NEW YORK · 15 SEPT 2008 · 1:45 AM",
    "camera": "creep",
    "stickers": [
     {
@@ -98,8 +98,8 @@
      "kind": "cashStack",
      "args": [
       640,
-      600,
-      300,
+      640,
+      380,
       "$t",
       "$at"
      ],
@@ -109,7 +109,6 @@
    "stickers": [
     {
      "text": "BIGGEST IN U.S. HISTORY",
-     "on": "biggest",
      "x": 640,
      "y": 120,
      "color": "ink"
@@ -129,7 +128,7 @@
      "poseOn": "idea"
     }
    ],
-   "tag": "NEW YORK \u00b7 SPRING 2006",
+   "tag": "NEW YORK · SPRING 2006",
    "plate": {
     "name": "A Wall Street Banker",
     "role": "Mortgage desk",
@@ -220,10 +219,10 @@
     ]
    ],
    "turn": 2006.5,
-   "turnLabel": "PEAK \u00b7 JULY 2006",
+   "turnLabel": "PEAK · JULY 2006",
    "fallOn": "fell",
    "change": {
-    "text": "\u221227%",
+    "text": "−27%",
     "on": "quarter"
    },
    "source": "S&P/Case-Shiller U.S. National Home Price Index (approximate path)"
@@ -273,7 +272,7 @@
     "sub": "SEPT 2008",
     "on": "lehman"
    },
-   "tag": "2003 \u2192 2008"
+   "tag": "2003 → 2008"
   },
   {
    "template": "map",

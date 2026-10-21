@@ -547,10 +547,12 @@ function money(shot, ctx) {
   return (t) => {
     const set = sets()[shot.set];
     const bg = set ? set.draw(t, shot.setOpts || {}) : boardBg();
-    const items = (shot.items || []).map((it) => {
+    const items = (shot.items || []).map((it, i) => {
       const fn = m[it.kind];
       if (!fn) return '';
-      const args = (it.args || []).map((a) => (a === '$t' ? t : a === '$at' ? ctx.cue(it.on, it.at ?? 0.4) : a));
+      const cue = ctx.cue(it.on, it.at ?? -0.1);
+      const at = i === 0 && cue > 0.15 ? 0.05 : cue; // the first graphic is there at the cut
+      const args = (it.args || []).map((a) => (a === '$t' ? t : a === '$at' ? at : a));
       return fn(...args);
     }).join('');
     return cam(bg + items, { zoom: cameraZoom(shot.camera || 'creep', t, ctx) }) + overlays(shot, t, ctx);
@@ -640,6 +642,14 @@ function subShots(list, ctx) {
   });
 }
 
+const OPEN_AT = -0.12; // entrances start just before the cut, so the first frames already show the graphic
+const KEY_MOMENT = { browserArticle: 'highlightAt', socialPost: 'likesAt', email: 'sendAt', videoPage: 'viewsAt', cheque: 'signAt',
+  leverage: 'moveAt', dualChart: 'splitAt', winnersLosers: 'verdictAt' };
+const BUILD_LISTS = ['terms', 'nodes', 'stages', 'people', 'steps', 'rows', 'slices', 'cards', 'messages', 'lines', 'blips', 'items'];
+function leadFirst(list) {
+  if (Array.isArray(list) && list[0] && typeof list[0] === 'object' && typeof list[0].at === 'number' && list[0].at > 0.15) list[0] = { ...list[0], at: 0.05 };
+  return list;
+}
 function kitTemplate(which) {
   return (shot, ctx) => {
     const kit = lazy(KIT_FILES[which]);
@@ -647,7 +657,13 @@ function kitTemplate(which) {
     const fn = kit[shot.kind];
     if (!KIT_KINDS[which].includes(shot.kind) || typeof fn !== 'function') throw new Error(`${which}: unknown kind "${shot.kind}" (${KIT_KINDS[which].join(', ')})`);
     const spec = resolveCues(Object.fromEntries(Object.entries(shot).filter(([k]) => !KIT_SKIP.includes(k) && k !== 'panels' && k !== 'frames')), ctx);
-    if (spec.at == null) spec.at = 0.3;
+    // The cut lands on content, never on an empty backdrop: the graphic is (almost) fully in at 0.2s. A cue on a later word
+    // moves to the kind's key moment (the send, the signature, the split...) instead of delaying the whole graphic.
+    if (spec.at == null || spec.at <= 0.6) spec.at = OPEN_AT;
+    else if (KEY_MOMENT[shot.kind] && spec[KEY_MOMENT[shot.kind]] == null) { spec[KEY_MOMENT[shot.kind]] = spec.at; spec.at = OPEN_AT; }
+    // builds (nodes, terms, rows, people...): the first element is there at the cut; the rest land on their words
+    BUILD_LISTS.forEach((k) => leadFirst(spec[k]));
+    if (spec.root && typeof spec.root.at === 'number' && spec.root.at > 0.15) spec.root = { ...spec.root, at: 0.05 };
     // Never hold a blank frame waiting for a cue word:
     if (shot.kind === 'countUp') {
       // big sums read as "$45 BILLION" / "$225 MILLION"; the count starts at the cut and lands on the spoken word
@@ -659,12 +675,8 @@ function kitTemplate(which) {
     }
     if (shot.kind === 'countUp' || shot.kind === 'countDown') {
       const land = spec.at;
-      spec.at = Math.min(land, 0.25);
+      spec.at = Math.min(land, 0);
       if (shot.dur == null && land > 0.8) spec.dur = Math.max(1.2, land - spec.at + 0.3);
-    }
-    if (shot.kind === 'browserArticle' && spec.at > 0.6) {
-      if (spec.highlightAt == null) spec.highlightAt = spec.at;
-      spec.at = 0.3;
     }
     const panels = shot.panels ? subShots(resolveCues(shot.panels, ctx), ctx) : null;
     // montage frames without an `at` are spread evenly over the shot (no long hold on the last frame)
@@ -698,7 +710,8 @@ const COMPOSE_BG = {
 function compose(shot, ctx) {
   const kit = lazy('./propkit');
   const PROPS = (kit && kit.PROPS) || {};
-  const items = (shot.items || []).map((it, i) => ({ ...it, at: ctx.cue(it.on, it.at ?? 0.3 + i * 0.6) }));
+  const items = (shot.items || []).map((it, i) => ({ ...it, at: ctx.cue(it.on, it.at ?? (i === 0 ? -0.1 : 0.2 + i * 0.5)) }));
+  leadFirst(items);
   return (t) => {
     const set = sets()[shot.bg];
     const bg = set ? set.draw(t, shot.setOpts || {}) : (COMPOSE_BG[shot.bg || 'paper'] || COMPOSE_BG.paper)();

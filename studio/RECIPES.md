@@ -150,6 +150,11 @@ in an explanation (for example, a portrait in a `portraits` row, or a character 
 The reference videos alternate **busy, information-rich scenes** (a set with several people, a montage, a map with arrows,
 a diagram building up) with **simple scenes that are easy to follow**: one big number, one key phrase, a black card, a clean
 close-up with a single sticker. Simple is not empty: it's one clear idea, big, with nothing competing.
+- **Every cut lands on something.** Graphics are already in at the cut (the templates do this): the screen, card, chart frame
+  or first build element is on screen within 0.2s, and the cue word drives the key moment (the count landing, the send, the
+  stamp, the next node), not the whole graphic's arrival. `--qa` flags a shot that opens on an almost empty frame, or holds
+  one mid-shot. Fix it by cueing earlier, adding a caption/sticker, or picking a fuller recipe. One small object on a big board
+  is not a simple shot, it's an empty one: make the object big, or pair it with its number or phrase.
 - Give **key information a simple shot so it lands**: the big number (`data:countUp`, `stat`), the key phrase (`card`, or a close-up with ONE sticker), the date (`data:calendarFlip`).
 - Aim for **~25–35% simple shots**. Never put 5+ busy shots in a row, and never 4+ simple shots in a row.
 - After a busy build (diagram, map, montage), the next beat is usually simple. After 2–3 simple beats, open up again.

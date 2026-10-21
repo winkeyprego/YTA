@@ -99,6 +99,26 @@ async function insertGaps(audio, gaps, tmp) {
 const EMPTY_OK = new Set(['chapter', 'card', 'title']);
 const EMPTY_EDGES = Number(process.env.QA_EMPTY || 0.02);
 
+// Share of edge pixels in a tiny render of the frame: a plain backdrop scores ~0.01, any real content far more.
+async function edgeDensity(page, s, lt, fps) {
+  const svg = frame(s.render(lt, { dur: s.dur, global: s.start + lt, fps }), s.start + lt, { grain: false, vignette: false });
+  return page.evaluate(async (m) => {
+    const img = new Image();
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(m);
+    await img.decode().catch(() => null);
+    const c = document.createElement('canvas'); c.width = 128; c.height = 72;
+    const g = c.getContext('2d'); g.drawImage(img, 0, 0, 128, 72);
+    const d = g.getImageData(0, 0, 128, 72).data;
+    let e = 0;
+    for (let y = 0; y < 71; y++) for (let x = 0; x < 127; x++) {
+      const k = (y * 128 + x) * 4, r = k + 4, b = k + 512;
+      if (Math.abs(d[k] - d[r]) + Math.abs(d[k + 1] - d[r + 1]) + Math.abs(d[k + 2] - d[r + 2]) > 40
+        || Math.abs(d[k] - d[b]) + Math.abs(d[k + 1] - d[b + 1]) + Math.abs(d[k + 2] - d[b + 2]) > 40) e++;
+    }
+    return e / (127 * 71);
+  }, svg);
+}
+
 async function runQA(browser, tl, fps, name, outDir, from = 0, to = Infinity) {
   const page = await openStage(browser, 1);
   const issues = [];
@@ -140,26 +160,15 @@ async function runQA(browser, tl, fps, name, outDir, from = 0, to = Infinity) {
         }
         return out;
       }, svg);
-      // nearly empty frame (a misspelled field, a kit with no data, a screen that left): count edges in a tiny render
-      if (lt > 0.8 && !EMPTY_OK.has(s.template)) {
-        const edges = await page.evaluate(async (m) => {
-          const img = new Image();
-          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(m);
-          await img.decode().catch(() => null);
-          const c = document.createElement('canvas'); c.width = 128; c.height = 72;
-          const g = c.getContext('2d'); g.drawImage(img, 0, 0, 128, 72);
-          const d = g.getImageData(0, 0, 128, 72).data;
-          let e = 0;
-          for (let y = 0; y < 71; y++) for (let x = 0; x < 127; x++) {
-            const k = (y * 128 + x) * 4, r = k + 4, b = k + 512;
-            if (Math.abs(d[k] - d[r]) + Math.abs(d[k + 1] - d[r + 1]) + Math.abs(d[k + 2] - d[r + 2]) > 40
-              || Math.abs(d[k] - d[b]) + Math.abs(d[k + 1] - d[b + 1]) + Math.abs(d[k + 2] - d[b + 2]) > 40) e++;
-          }
-          return e / (127 * 71);
-        }, frame(s.render(lt, { dur: s.dur, global: s.start + lt, fps }), s.start + lt, { grain: false, vignette: false }));
-        if (edges < EMPTY_EDGES) found.push(`frame is almost empty (check field names against the kit header in SHOTS.md, or the cue times)`);
+      // nearly empty frame (a misspelled field, a kit with no data, a screen that left)
+      if (lt > 0.8 && !EMPTY_OK.has(s.template) && (await edgeDensity(page, s, lt, fps)) < EMPTY_EDGES) {
+        found.push(`frame is almost empty (check field names against the kit header in SHOTS.md, or the cue times)`);
       }
       found.forEach((f) => { if (!seen.has(f)) { seen.add(f); issues.push({ shot: i + 1, name: s.name, t: s.start + lt, msg: f }); } });
+    }
+    // the cut must land on something: an opening that builds from an empty backdrop reads as a gap
+    if (!EMPTY_OK.has(s.template) && s.dur > 1 && (await edgeDensity(page, s, 0.2, fps)) < EMPTY_EDGES) {
+      issues.push({ shot: i + 1, name: s.name, t: s.start + 0.2, msg: 'opens on an almost empty frame (something should be on screen within 0.2s of the cut)' });
     }
   }
   const fmt = (x) => `${Math.floor(x / 60)}:${(x % 60).toFixed(1).padStart(4, '0')}`;
