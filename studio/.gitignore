@@ -1,0 +1,4 @@
+node_modules/
+renders/*
+!renders/sample-2008-cold-open.mp4
+!renders/sample-2008-cold-open-sheet.jpg

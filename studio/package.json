@@ -1,0 +1,12 @@
+{
+  "name": "studio",
+  "private": true,
+  "description": "Code-drawn 2D explainer animation pipeline",
+  "scripts": {
+    "sample": "node render.js episodes/sample-2008-cold-open",
+    "sample:sheet": "node render.js episodes/sample-2008-cold-open --sheet 1.5 --scale 1"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}
