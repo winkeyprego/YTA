@@ -96,10 +96,16 @@ def render(c, buy, icon, foot, document):
 
         def card(i, x):
             initial = (x['handle'].lstrip('@')[:1] or 'A').upper()
-            video = f'<a href="{e(x["url"])}">{e(x["video"])}</a>' if x.get('url') else e(x['video'])
+            title = f'{cm["videoLabel"]} {x["video"]}' if x.get('video') else cm['noVideo']
+            video = f'<a href="{e(x["url"])}">{e(title)}</a>' if x.get('url') else e(title)
             likes = f'<p class="comment-likes">{icon("thumb")}{e(str(x["likes"]))}</p>' if x.get('likes') else ''
-            return f'<article class="comment{" is-extra" if i >= 6 else ""}" data-comment><header><span class="comment-avatar tone-{i % 3}" aria-hidden="true">{e(initial)}</span><div><p class="comment-handle">{e(x["handle"])}</p><p class="comment-video">{e(cm["videoLabel"])} {video}</p></div></header><p class="comment-text">{e(x["text"])}</p>{likes}</article>'
-        feature = f'<figure class="comment-feature" data-comment><blockquote>{e(featured["text"])}</blockquote><figcaption>{e(featured["handle"])} · {e(cm["videoLabel"])} {e(featured["video"])}</figcaption></figure>' if featured else ''
+            return f'<article class="comment{" is-extra" if i >= 6 else ""}" data-comment><header><span class="comment-avatar tone-{i % 3}" aria-hidden="true">{e(initial)}</span><div><p class="comment-handle">{e(x["handle"])}</p><p class="comment-video">{video}</p></div></header><p class="comment-text">{e(x["text"])}</p>{likes}</article>'
+        if featured:
+            where = f'{cm["videoLabel"]} {featured["video"]}' if featured.get('video') else cm['noVideo']
+            long = ' is-long' if len(featured['text']) > 260 else ''
+            feature = f'<figure class="comment-feature{long}" data-comment><blockquote>{e(featured["text"])}</blockquote><figcaption>{e(featured["handle"])} · {e(where)}</figcaption></figure>'
+        else:
+            feature = ''
         more = f'<button class="comment-more" type="button" data-comments-more aria-expanded="false" hidden data-more="{e(cm["more"])}" data-less="{e(cm["less"])}">{e(cm["more"])}</button>' if len(rest) > 6 else ''
         comments = f'''<section class="comments section" id="comments"><div class="wrap"><div class="comments-head">{art('alicia-portrait', '', 'comments-avatar', life=False)}<div class="section-head">{head(cm['eyebrow'], cm['heading'], cm['intro'])}</div></div>{feature}<div class="comment-wall">{''.join(card(i, x) for i, x in enumerate(rest))}</div>{more}<p class="fine-print">{e(cm['disclosure'])}</p></div></section>'''
 

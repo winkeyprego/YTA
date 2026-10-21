@@ -20,7 +20,7 @@ comments=C.get('comments',{}).get('items',[])
 if comments:
  assert len([a for t,a in p.tags if 'data-comment' in a])==len(comments)
  assert C['comments']['disclosure'] in text
- assert all(x.get('handle') and x.get('text') and x.get('video') for x in comments)
+ assert all(x.get('handle') and x.get('text') for x in comments) and sum(bool(x.get('featured')) for x in comments)<=1
 else:
  assert 'id="comments"' not in source
 assert 'aria-label="Alicia"' in source and 'sig-flourish' in source

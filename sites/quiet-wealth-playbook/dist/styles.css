@@ -349,6 +349,7 @@ details[open]>summary .icon{transform:rotate(45deg)}
 .comment-feature{margin-top:clamp(40px,5vw,64px);max-width:920px;position:relative;padding-left:clamp(40px,5vw,70px)}
 .comment-feature::before{content:"\201C";position:absolute;left:0;top:-.18em;font:clamp(80px,9vw,130px)/1 var(--italic);color:var(--gold-soft)}
 .comment-feature blockquote{font:clamp(26px,3.2vw,42px)/1.32 var(--display);letter-spacing:-.015em;white-space:pre-line}
+.comment-feature.is-long blockquote{font-size:clamp(21px,2.2vw,28px);line-height:1.45}
 .comment-feature figcaption{margin-top:18px;font-size:15px;color:var(--muted)}
 .comment-wall{columns:3 280px;column-gap:22px;margin-top:clamp(36px,5vw,56px)}
 .comment{break-inside:avoid;margin-bottom:22px;background:var(--paper);border:1px solid var(--rule);border-radius:14px;padding:22px 24px;transition:transform .4s var(--ease),box-shadow .4s}
