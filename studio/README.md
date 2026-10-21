@@ -8,6 +8,8 @@ Everything is drawn with code (SVG), animated with pure time functions, and rend
 by headless Chromium + ffmpeg. No hand animation and no image generator are needed, and any frame can
 be re-rendered on its own.
 
+**Continuing this project? Read [`HANDOFF.md`](HANDOFF.md) first.**
+
 ## Quick start
 
 Needs Node 18+, ffmpeg, and Playwright's Chromium.

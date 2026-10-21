@@ -6,6 +6,7 @@ channels. The owner is not a developer: explain in plain words, show results as 
 and keep the pipeline runnable with one command.
 
 ## Read before changing anything
+0. `HANDOFF.md`: project memory: goal, decisions, status, next steps. **Update it at the end of every session.**
 1. `STYLE-GUIDE.md`: what things look like. Stay on-model.
 2. `MOTION.md`: how things move and how long they stay.
 3. `docs/REFERENCE-ANALYSIS.md`: measured numbers from the reference videos. Prefer these numbers over guesses.
