@@ -126,6 +126,15 @@ The host (`"who": "host"`) is an **occasional** recurring character, not a prese
 She appears now and then: as an aside (M3), introducing a breakdown ("Let's break it down"), or as one of the people
 in an explanation (for example, a portrait in a `portraits` row, or a character in a `talk` scene). Most beats use the regular cast.
 
+## Rhythm: busy vs simple (balance, never empty)
+The reference videos alternate **busy, information-rich scenes** (a set with several people, a montage, a map with arrows,
+a diagram building up) with **simple scenes that are easy to follow**: one big number, one key phrase, a black card, a clean
+close-up with a single sticker. Simple is not empty: it's one clear idea, big, with nothing competing.
+- Give **key information a simple shot so it lands**: the big number (`data:countUp`, `stat`), the key phrase (`card`, or a close-up with ONE sticker), the date (`data:calendarFlip`).
+- Aim for **~25–35% simple shots**. Never put 5+ busy shots in a row, and never 4+ simple shots in a row.
+- After a busy build (diagram, map, montage), the next beat is usually simple. After 2–3 simple beats, open up again.
+- `--plan` prints the rhythm (simple / medium / busy) and warns when the balance is off.
+
 ## Rotation rules
 - Never three beats of the same recipe in a row. Change the set at least every three beats.
 - Finance: a black card about every 10–12 shots, a metaphor every 1–2 minutes, the host at most every ~2 minutes.

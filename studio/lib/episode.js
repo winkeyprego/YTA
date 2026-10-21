@@ -108,6 +108,19 @@ function lint(spec, plan, style = { pacing: { maxShot: 8, maxBuild: 13, maxGap: 
   return warn;
 }
 
+// Density of a shot, for rhythm: references alternate busy, information-rich scenes with simple ones
+// (a big number, one phrase, a clean close-up) that are easy to follow. Never empty, never all busy.
+function density(s) {
+  const nChars = (s.chars || []).length;
+  const nSt = (s.stickers || []).length;
+  const k = s.template + (s.kind ? `:${s.kind}` : '');
+  if (['card', 'chapter', 'title', 'stat', 'data:countUp', 'data:tickerChip', 'data:calendarFlip', 'data:cheque', 'screen:phoneNotification'].includes(k)) return 'simple';
+  if (s.template === 'talk' && (s.frame === 'close' || s.frame === 'reverse') && nChars <= 2 && nSt <= 1) return 'simple';
+  if (['diagram:montage', 'map', 'fuse', 'diagram:orgTree', 'diagram:loop', 'diagram:split', 'diagram:portraits', 'data:rankingBoard'].includes(k)) return 'busy';
+  if (s.template === 'talk' && (nChars >= 3 || nSt >= 3 || s.set === 'hall' || s.set === 'tradingFloor')) return 'busy';
+  return 'medium';
+}
+
 // Episode-wide variety report (printed by --plan): what the whole video is made of.
 function variety(spec, plan) {
   const n = spec.shots.length;
@@ -125,6 +138,13 @@ function variety(spec, plan) {
     run = same ? run + 1 : 1;
     if (run > worstRun) { worstRun = run; worstAt = i + 2 - run; }
   });
+  const dens = spec.shots.map(density);
+  const dc = { simple: 0, medium: 0, busy: 0 };
+  dens.forEach((d) => dc[d]++);
+  let bRun = 0, bWorst = 0, bAt = 0;
+  dens.forEach((d, i) => { bRun = d === 'busy' ? bRun + 1 : 0; if (bRun > bWorst) { bWorst = bRun; bAt = i + 2 - bRun; } });
+  let sRun = 0, sWorst = 0, sAt = 0;
+  dens.forEach((d, i) => { sRun = d === 'simple' ? sRun + 1 : 0; if (sRun > sWorst) { sWorst = sRun; sAt = i + 2 - sRun; } });
   const pct = (x) => `${Math.round((100 * x) / n)}%`;
   const top = (o) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => `${k} ${pct(v)}`).join(', ');
   const notes = [];
@@ -133,13 +153,18 @@ function variety(spec, plan) {
   const topSet = Object.entries(sets).sort((a, b) => b[1] - a[1])[0];
   if (topSet && topSet[1] / n > 0.25) notes.push(`set "${topSet[0]}" is ${pct(topSet[1])} of shots: vary locations`);
   if (worstRun >= 4) notes.push(`${worstRun} near-identical shots in a row from shot ${worstAt}`);
+  if (n >= 12 && dc.simple / n < 0.18) notes.push(`only ${pct(dc.simple)} simple shots: give key numbers/phrases a simple shot (countUp, stat, card, clean close-up) so they land`);
+  if (n >= 12 && dc.simple / n > 0.45) notes.push(`${pct(dc.simple)} simple shots: add richer scenes (talk with set, diagrams, maps, montage)`);
+  if (bWorst >= 5) notes.push(`${bWorst} busy shots in a row from shot ${bAt}: put a simple beat in between`);
+  if (sWorst >= 4) notes.push(`${sWorst} simple shots in a row from shot ${sAt}: the pace will sag, add a richer scene`);
   return [
     `shots ${n}, ${(total / 60).toFixed(1)} min, avg ${(total / n).toFixed(1)}s/shot`,
     `mix: ${top(kinds)}`,
     `sets: ${top(sets) || '-'}`,
     `black cards: ${cards} (1 per ${cards ? Math.round(n / cards) : '-'} shots), host shots: ${host}`,
+    `rhythm: simple ${pct(dc.simple)}, medium ${pct(dc.medium)}, busy ${pct(dc.busy)} (aim ~25-35% simple, never 5+ busy in a row)`,
     ...notes.map((x) => `NOTE ${x}`),
   ];
 }
 
-module.exports = { loadEpisode, lint, variety };
+module.exports = { loadEpisode, lint, variety, density };

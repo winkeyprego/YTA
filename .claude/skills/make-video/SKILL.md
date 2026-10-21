@@ -19,20 +19,25 @@ from existing recipes. Only touch `studio/lib/` when a beat truly needs somethin
    Pick a preset: `"finance"` for money topics, `"war"` for history. It only sets defaults; any recipe works in any video.
 2. **Words:** `python3 studio/tools/transcribe.py studio/episodes/<ep>/vo.mp3`, which makes `words.json`.
 3. **Beats:** `node studio/tools/beats.js studio/episodes/<ep>`, which makes `beats.txt` (numbered beats, ~3s each).
-4. **Plan the cast and sets once:** list the recurring people (header `cast`, 1–2 signature features each), places and
-   devices. Put a `# chapter` comment roughly every 4–5 minutes.
-5. **Storyboard:** write `storyboard.txt`, one line per beat or small beat range, by type:
+4. **Director pass:** read ALL of beats.txt once. Plan the recurring people (header `cast`, 1–2 signature features each),
+   chapters (a card every 4–5 minutes), recurring sets and motifs, the biggest moments, and how each PAUSE beat is used.
+   Write it to `PLAN.md`. List what the library is missing in `NEEDS.md`.
+5. **Library pass:** build the important NEEDS items once (use the `add-to-library` skill). For minor ones, use the closest existing visual.
+6. **Storyboard:** write `storyboard.txt`, one line per beat or small beat range, by type:
    - Pick a recipe for each beat's type (RECIPES A–P). Rotate them: never the same recipe three times running.
    - Give every shot a cue on one of its own words.
    - Use the host only occasionally. Use a black card about every 10–12 shots (finance) and a metaphor every 1–2 minutes.
+   - **Rhythm:** alternate busy scenes with simple ones (RECIPES "Rhythm"). Key numbers and phrases get a simple shot so they
+     land. Aim for ~25–35% simple shots; never 5+ busy or 4+ simple in a row.
+   - Long episodes: write chapters in parallel part files (`storyboard.01.txt`, `storyboard.02.txt`, ...).
    - Write it in chunks of about 40 beats. After each chunk, run `--plan` and fix what it reports.
-6. **Check:** `cd studio && node render.js episodes/<ep> --plan`, then fix everything until it says `checks: OK`
+7. **Check:** `cd studio && node render.js episodes/<ep> --plan`, then fix everything until it says `checks: OK`
    (errors name the storyboard line). Then `node render.js episodes/<ep> --qa` and fix every layout issue
    (`--still <t> --scale 1` shows the frame).
-7. **Look:** `node render.js episodes/<ep> --sheet 3 --scale 1`, then Read the jpg. Look for sameness, empty frames, and
+8. **Look:** `node render.js episodes/<ep> --sheet 3 --scale 1`, then Read the jpg. Look for sameness, empty frames, and
    anything ugly the checks can't know about.
-8. **Render:** `node render.js episodes/<ep>` gives `studio/renders/<ep>.mp4` (1080p, with the voice).
-9. **Report** in plain words, list unverified facts, update `studio/HANDOFF.md`, then commit and push.
+9. **Render:** `node render.js episodes/<ep>` gives `studio/renders/<ep>.mp4` (1080p, with the voice).
+10. **Report** in plain words, list unverified facts, update `studio/HANDOFF.md`, then commit and push.
 
 ## Never
 - Copy other channels' frames, art, audio, scripts or logos.
