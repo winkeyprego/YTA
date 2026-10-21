@@ -1,42 +1,41 @@
 ---
 name: make-video
-description: Turn a topic, script or voiceover into a finished animated YouTube video with the studio toolkit (studio/). Use whenever the owner asks to make, draft, preview, re-time or render an episode (money or history topics; one shared style).
+description: Turn a topic, script or voiceover into a finished animated YouTube documentary with the studio toolkit (studio/). Use whenever the owner asks to make, draft, preview, re-time or render an episode (money or history topics; one shared style).
 ---
 
 # Make a video
 
-The studio is a finished toolkit. **Do not build new rendering code for a normal episode.** An episode is plain data
-(`studio/episodes/<ep>/shots.json`) assembled from existing templates and recipes. Only touch `studio/lib/` when a beat
-truly needs something that doesn't exist; in that case use the `add-to-library` skill.
+The studio is a finished toolkit. **Do not write rendering code for a normal episode.** An episode is data, assembled
+from existing recipes. Only touch `studio/lib/` when a beat truly needs something that doesn't exist (use `add-to-library`).
 
 ## Read first (every time)
 1. `studio/HANDOFF.md`: current status and the owner's decisions.
-2. `studio/RECIPES.md`: which visual to use for which kind of sentence. This is your menu.
-3. `studio/SHOTS.md`: the exact fields for every template.
-4. The starter for the style you're making: `studio/episodes/finance-starter/shots.json` (finance) or
-   `studio/episodes/template-starter/shots.json` (war/history). Copy its patterns.
+2. `studio/RECIPES.md`: which visual for which kind of sentence. This is your menu.
+3. `studio/STORYBOARD.md`: the compact format you'll write.
+4. `studio/SHOTS.md`: the full field reference, when a recipe needs a field.
 
-## Steps
-1. **Folder:** `studio/episodes/<short-name>/`. Pick the preset that fits the topic (`"finance"` for money, `"war"` for history).
-   It only sets defaults: **any recipe or graphic can be used in any video**, so pick the best visual for each sentence.
-2. **Script:** in `SCRIPT.md`, at ~165 words per minute. Add a sources table for every number, date and quote on screen,
-   and mark anything unverified. Never invent quotes for real people.
-3. **Voice (optional now):** if `vo.mp3` exists, run `python3 studio/tools/transcribe.py studio/episodes/<ep>/vo.mp3` to make `words.json`.
-   Without it, timing is estimated, and you can add the voice later without changing the shot list.
-4. **Shot list:** split the script into 8–11-word beats. For each beat: name its type from RECIPES.md (A–P), copy a recipe,
-   set `"vo"` to the beat's exact words, and add at least one `"on"` cue on a word that is **in that beat's vo**.
-   Rotate recipes. Use the host only occasionally. Start with a cold open (RECIPES P).
-5. **Check:** run `cd studio && node render.js episodes/<ep> --plan`. **Fix every error and warning**, then run it again until it says `checks: OK`.
-6. **Look:** run `node render.js episodes/<ep> --sheet 1 --scale 1`, then Read the jpg in `studio/renders/`.
-   Fix any overlaps, empty-looking frames, labels covering faces, text spilling out of boxes, or the same set too many times.
-   Use `--still <sec> --scale 1` to inspect a moment closely.
-7. **Render:** run `node render.js episodes/<ep>`, which writes `studio/renders/<ep>.mp4` (1080p, with the voice if present).
-   For a quick look at one section, use `--from 30 --to 60 --fps 12 --scale 1`.
-8. **Report** to the owner in plain words, send the video or contact sheet, and list unverified facts.
-9. **Update `studio/HANDOFF.md`** (session log, plus anything new in the library), then commit and push.
+## Steps (full-length episode)
+1. **Folder:** `studio/episodes/<short-name>/` with `vo.mp3` (and `SCRIPT.md` if the owner gave a script).
+   Pick a preset: `"finance"` for money topics, `"war"` for history. It only sets defaults; any recipe works in any video.
+2. **Words:** `python3 studio/tools/transcribe.py studio/episodes/<ep>/vo.mp3`, which makes `words.json`.
+3. **Beats:** `node studio/tools/beats.js studio/episodes/<ep>`, which makes `beats.txt` (numbered beats, ~3s each).
+4. **Plan the cast and sets once:** list the recurring people (header `cast`, 1–2 signature features each), places and
+   devices. Put a `# chapter` comment roughly every 4–5 minutes.
+5. **Storyboard:** write `storyboard.txt`, one line per beat or small beat range, by type:
+   - Pick a recipe for each beat's type (RECIPES A–P). Rotate them: never the same recipe three times running.
+   - Give every shot a cue on one of its own words.
+   - Use the host only occasionally. Use a black card about every 10–12 shots (finance) and a metaphor every 1–2 minutes.
+   - Write it in chunks of about 40 beats. After each chunk, run `--plan` and fix what it reports.
+6. **Check:** `cd studio && node render.js episodes/<ep> --plan`, then fix everything until it says `checks: OK`
+   (errors name the storyboard line). Then `node render.js episodes/<ep> --qa` and fix every layout issue
+   (`--still <t> --scale 1` shows the frame).
+7. **Look:** `node render.js episodes/<ep> --sheet 3 --scale 1`, then Read the jpg. Look for sameness, empty frames, and
+   anything ugly the checks can't know about.
+8. **Render:** `node render.js episodes/<ep>` gives `studio/renders/<ep>.mp4` (1080p, with the voice).
+9. **Report** in plain words, list unverified facts, update `studio/HANDOFF.md`, then commit and push.
 
 ## Never
-- Copy other channels' frames, art, audio, scripts or logos. Their audio can't be used even as a voice, except as private test material.
-- Draw a person freehand in a shot. Use `who` from the cast; add new people via `"cast"` in shots.json.
-- Skip `--plan`, or render with errors.
-- Use a cue word that isn't in that shot's `vo` (the validator will stop you).
+- Copy other channels' frames, art, audio, scripts or logos.
+- Draw a person freehand. Use the cast, and add named people to the header `cast`.
+- Render with `--plan` errors or `--qa` issues outstanding.
+- Retype narration in the storyboard. Reference beats with `"b"`.

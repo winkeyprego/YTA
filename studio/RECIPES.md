@@ -130,3 +130,14 @@ in an explanation (for example, a portrait in a `portraits` row, or a character 
 - Never three beats of the same recipe in a row. Change the set at least every three beats.
 - Finance: a black card about every 10–12 shots, a metaphor every 1–2 minutes, the host at most every ~2 minutes.
 - War: date tags on every place or time change, the fuse as the spine, chapter cards every 4–5 minutes.
+
+## Sensitive topics (always)
+- **Real tragedies** (terror attacks, disasters, war casualties): never depict the violence, impacts, injuries or victims.
+  Show them through **news screens, maps, documents, calendars, skyline silhouettes, memorial imagery** (candles, a lit
+  skyline, a flag at half-mast), and people's reactions (worried, sad), at a respectful pace. No jokes or comic metaphors
+  on those beats.
+- **Claims and theories** (conspiracies, accusations, rumours): frame them as claims, not facts. Use stickers like
+  "THE CLAIM", "WHAT PEOPLE SAY", "THE THEORY", "THE EVIDENCE", or a `versus` of claim vs record. Social posts are illustrative.
+  Mark them with a source line.
+- **Real people:** caricature only through the cast's signature features. Never show them doing something the narration
+  doesn't say they did, and never put invented quotes in their mouths. Quotes on screen must be the narration's own words.

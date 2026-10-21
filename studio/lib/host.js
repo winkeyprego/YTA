@@ -123,7 +123,7 @@ function heroHead(st) {
     <path d="M53 ${CY - 4} Q60 ${CY + 4} 54 ${CY + 12}" stroke="${LOOK.skinShade}" stroke-width="2.5" fill="none"/>
     <circle cx="57" cy="${CY + 22}" r="4.5" fill="${P.gold}" stroke="${P.ink}" stroke-width="1.8"/>
     <!-- face -->
-    <ellipse cx="0" cy="${CY}" rx="56" ry="66" fill="${LOOK.skin}" stroke="${P.ink}" stroke-width="4.5"/>
+    <ellipse data-qa="face" cx="0" cy="${CY}" rx="56" ry="66" fill="${LOOK.skin}" stroke="${P.ink}" stroke-width="4.5"/>
     <ellipse cx="-34" cy="${CY + 26}" rx="12" ry="7" fill="${LOOK.blush}" opacity=".35"/>
     <ellipse cx="34" cy="${CY + 26}" rx="12" ry="7" fill="${LOOK.blush}" opacity=".35"/>
     ${eyesHero(eyesKind, look)}

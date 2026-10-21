@@ -17,7 +17,7 @@ function dateTag(label, t, at = 0.1, { x = 26, y = 22, rot = -1.2, size = 25 } =
   const shown = typed(label, t, at + 0.08, 30);
   const sx = tween(t, at, 0.08, -w - 40, x, ease.out);
   return `<g transform="translate(${n(sx)} ${y}) rotate(${rot})" filter="url(#shadow)">
-    <rect width="${n(w)}" height="48" fill="${P.paper}" stroke="${P.ink}" stroke-width="2.5"/>
+    <rect data-qa="text" data-qn="date tag" width="${n(w)}" height="48" fill="${P.paper}" stroke="${P.ink}" stroke-width="2.5"/>
     <rect x="-12" y="-8" width="40" height="18" fill="${P.tape}" opacity=".85" transform="rotate(-24 8 1)"/>
     ${text(shown, 20, 34, { size, font: 'hand' })}
   </g>`;
@@ -29,7 +29,7 @@ function namePlate(name, role, t, at = 0.5, { y = 592 } = {}) {
   const w = Math.max(textWidth(name, 34), textWidth(role, 20)) + 60;
   const x = tween(t, at, 0.35, -w - 20, 40, ease.out);
   return `<g transform="translate(${n(x)} ${y})" filter="url(#shadow)">
-    <rect width="${n(w)}" height="84" fill="${P.paper}" stroke="${P.ink}" stroke-width="2.5"/>
+    <rect data-qa="text" data-qn="name plate" width="${n(w)}" height="84" fill="${P.paper}" stroke="${P.ink}" stroke-width="2.5"/>
     <rect width="10" height="84" fill="${P.red}"/>
     ${text(name, 26, 40, { size: 34, font: 'hand' })}
     <path d="M26 50 H${n(w - 30)}" stroke="${P.red}" stroke-width="2.5"/>
@@ -42,7 +42,7 @@ function namePlate(name, role, t, at = 0.5, { y = 592 } = {}) {
 function sticker(label, x, y, t, at, { rot = -3, size = 32, color = P.red, fill = P.paper, font = 'hand' } = {}) {
   const w = textWidth(label, size, font) + 36;
   const h = size + 24;
-  const inner = `<g filter="url(#shadow)"><rect x="${n(x - w / 2)}" y="${n(y - h / 2)}" width="${n(w)}" height="${h}" fill="${fill}" stroke="${color}" stroke-width="3"/>
+  const inner = `<g filter="url(#shadow)"><rect data-qa="text" data-qn="sticker '${esc(label)}'" x="${n(x - w / 2)}" y="${n(y - h / 2)}" width="${n(w)}" height="${h}" fill="${fill}" stroke="${color}" stroke-width="3"/>
     ${text(label, x, y + size * 0.36, { size, font, fill: color, anchor: 'middle' })}</g>`;
   return popAround(x, y, pop(t, at), inner, rot);
 }
@@ -69,7 +69,7 @@ function bubble({ x, y, w, lines, tail, size = 27, cps = 18 }, t, at) {
   }).join('');
   const shape = `<g filter="url(#shadow)">
       <path d="${tailPath}" fill="${P.bubble}" stroke="${P.ink}" stroke-width="4" stroke-linejoin="round"/>
-      <rect x="${x}" y="${y}" width="${w}" height="${n(h)}" rx="${n(Math.min(40, h / 2))}" fill="${P.bubble}" stroke="${P.ink}" stroke-width="4"/>
+      <rect data-qa="text" data-qn="bubble" x="${x}" y="${y}" width="${w}" height="${n(h)}" rx="${n(Math.min(40, h / 2))}" fill="${P.bubble}" stroke="${P.ink}" stroke-width="4"/>
     </g>
     <path d="M${n(bx - 22)} ${n(baseY + (below ? -3 : 3))} L${n(bx + 10)} ${n(baseY + (below ? -3 : 3))}" stroke="${P.bubble}" stroke-width="7"/>`;
   return { svg: popAround(tx, ty, p, shape + textLines), end };
@@ -106,7 +106,7 @@ function stamp(label, x, y, t, at, { rot = -8, size = 44, color = P.red } = {}) 
 function bigStat(value, caption, x, y, t, at, { size = 84, color = P.gold, capColor = P.paper, anchor = 'start' } = {}) {
   if (t < at) return '';
   const k = ease.out(prog(t, at, 0.4));
-  return `<g opacity="${n(k)}" transform="translate(0 ${n((1 - k) * 18)})">
+  return `<g data-qa="text" data-qn="stat '${esc(value)}'" opacity="${n(k)}" transform="translate(0 ${n((1 - k) * 18)})">
     ${text(value, x, y, { size, font: 'display', fill: color, anchor })}
     ${caption ? text(caption, x + (anchor === 'middle' ? 0 : 4), y + size * 0.55, { size: size * 0.4, font: 'display', fill: capColor, anchor, spacing: 1 }) : ''}
   </g>`;
@@ -190,7 +190,7 @@ function floatLine({ x, y, text: str, tail, size = 40, cps = 30, color = P.ink, 
   const tick = tail ? `<path d="M${n(sx)} ${n(sy)} L${n(sx + (tx - sx) * k)} ${n(sy + (ty - sy) * k)}" stroke="${color}" stroke-width="3" stroke-linecap="round"/>` : '';
   const halos = `stroke="${halo}" stroke-width="7" stroke-linejoin="round" paint-order="stroke"`;
   return {
-    svg: `<g opacity="${n(clamp((t - at) * 6))}">${tick}<text x="${n(left)}" y="${n(y)}" class="t-script" font-size="${size}" fill="${color}" ${halos}>${esc(shown)}</text></g>`,
+    svg: `<g opacity="${n(clamp((t - at) * 6))}">${tick}<text data-qa="text" data-qn="line '${esc(str.slice(0, 24))}'" x="${n(left)}" y="${n(y)}" class="t-script" font-size="${size}" fill="${color}" ${halos}>${esc(shown)}</text></g>`,
     end,
   };
 }
@@ -199,7 +199,7 @@ function floatLine({ x, y, text: str, tail, size = 40, cps = 30, color = P.ink, 
 function scriptCaption(label, t, at = 0.1, { x = 40, y = 64, size = 42, color = P.ink, halo = P.paper } = {}) {
   if (t < at) return '';
   const shown = typed(label, t, at, 30);
-  return `<text x="${x}" y="${y}" class="t-script" font-size="${size}" fill="${color}" stroke="${halo}" stroke-width="7" paint-order="stroke" stroke-linejoin="round" opacity="${n(clamp((t - at) * 6))}">${esc(shown)}</text>`;
+  return `<text data-qa="text" data-qn="caption" x="${x}" y="${y}" class="t-script" font-size="${size}" fill="${color}" stroke="${halo}" stroke-width="7" paint-order="stroke" stroke-linejoin="round" opacity="${n(clamp((t - at) * 6))}">${esc(shown)}</text>`;
 }
 
 // Black narration card for pivot sentences: centred white script, typed ~28 cps, fade in 0.3s.
@@ -239,7 +239,7 @@ function nameArrow(label, x, y, tx, ty, t, at, { size = 38, color = P.ink, halo 
     <path d="M${n(sx)} ${n(sy)} Q${n(cx)} ${n(cy)} ${n(tx)} ${n(ty)}" fill="none" stroke="${halo}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${n(len)}" stroke-dashoffset="${n(len * (1 - k))}"/>
     <path d="M${n(sx)} ${n(sy)} Q${n(cx)} ${n(cy)} ${n(tx)} ${n(ty)}" fill="none" stroke="${color}" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="${n(len)}" stroke-dashoffset="${n(len * (1 - k))}"/>
     ${k >= 1 ? `<path d="M0 0 L-16 -8 M0 0 L-16 8" stroke="${color}" stroke-width="3.5" stroke-linecap="round" transform="translate(${n(tx)} ${n(ty)}) rotate(${n(ang)})"/>` : ''}
-    <text x="${n(x)}" y="${n(y)}" class="t-script" font-size="${size}" fill="${color}" text-anchor="middle" stroke="${halo}" stroke-width="7" paint-order="stroke">${esc(typed(label, t, at + 0.2, 30))}</text>
+    <text data-qa="text" data-qn="name '${esc(label)}'" x="${n(x)}" y="${n(y)}" class="t-script" font-size="${size}" fill="${color}" text-anchor="middle" stroke="${halo}" stroke-width="7" paint-order="stroke">${esc(typed(label, t, at + 0.2, 30))}</text>
   </g>`;
 }
 

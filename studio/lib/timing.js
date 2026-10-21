@@ -76,6 +76,16 @@ function schedule(shots, words) {
   let shift = 0; // total silence inserted so far (timeline = audio + shift)
   for (let i = 0; i < shots.length; i++) {
     const s = shots[i];
+    if (!al[i].hasVo && s.fill) {
+      // occupies a silence already in the narration: runs until the next voiced shot starts
+      let j = i + 1;
+      while (j < shots.length && !al[j].hasVo) j++;
+      const end = j < shots.length ? first(j) + shift : clock + s.fill;
+      const dur = Math.max(0.8, end - clock);
+      out.push({ start: clock, dur, words: [] });
+      clock += dur;
+      continue;
+    }
     if (!al[i].hasVo) {
       const dur = s.dur || 2.0;
       gaps.push({ at: clock - shift, dur });
@@ -85,7 +95,7 @@ function schedule(shots, words) {
       continue;
     }
     const start = clock;
-    const nextVoiced = i + 1 < shots.length && al[i + 1].hasVo;
+    const nextVoiced = i + 1 < shots.length && al[i + 1].hasVo && !shots[i + 1].fill;
     const end = nextVoiced ? first(i + 1) + shift : last(i) + shift + (s.tail ?? (i === shots.length - 1 ? 0.8 : 0.4));
     const dur = Math.max(s.minDur || 1.2, s.dur || end - start);
     out.push({ start, dur, words: al[i].toks.map((w) => ({ w: w.w, s: w.s + shift - start, e: w.e + shift - start })), est: !!al[i].est });

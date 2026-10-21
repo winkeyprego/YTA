@@ -8,7 +8,7 @@
 // Shot-list reference with examples: SHOTS.md.
 
 const P = require('./palette');
-const { g, tr, text, camera: cam, W, H, n } = require('./svg');
+const { g, tr, text, textWidth, camera: cam, W, H, n } = require('./svg');
 const M = require('./motion');
 const { character, CAST } = require('./characters');
 const props = require('./props');
@@ -90,8 +90,8 @@ function stickerXY(i, side, setName) {
 //   stickers: [{ text, on | at, x, y, rot, size, color: red|ink|gold|green|blue, font: hand|display }]
 //   stat: { value, caption, on, x, y }
 //   source: 'small source line, bottom-right'
-function overlays(shot, t, ctx, { side = 'left', skipStickers = false } = {}) {
-  ctx = { ...ctx, setName: shot.set };
+function overlays(shot, t, ctx, { side = 'left', skipStickers = false, obstacles = null } = {}) {
+  ctx = { ...ctx, setName: shot.set, obstacles };
   let out = '';
   if (shot.stat) {
     const s = shot.stat;
@@ -109,9 +109,29 @@ function overlays(shot, t, ctx, { side = 'left', skipStickers = false } = {}) {
   return out;
 }
 
+// Free-space placement: try candidate spots (preferred side first) and take the first one that clears every
+// obstacle (faces, dialogue, tag, plate) and the stickers already placed. Used when a talk shot passes obstacles.
+const rectsHit = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+function freeSpot(w, h, side, taken) {
+  const xs = side === 'right' ? [980, 1090, 800, 640, 300, 190] : [300, 190, 470, 640, 980, 1090];
+  const ys = [400, 484, 316, 568, 232, 150];
+  for (const y of ys) for (const x of xs) {
+    const r = { x: x - w / 2 - 8, y: y - h / 2 - 8, w: w + 16, h: h + 16 };
+    if (r.x < 10 || r.x + r.w > 1270 || r.y < 10 || r.y + r.h > 710) continue;
+    if (!taken.some((o) => rectsHit(r, o))) return [x, y, r];
+  }
+  return null;
+}
+
 function stickersSvg(list, t, ctx, side = 'left') {
+  const taken = ctx.obstacles ? [...ctx.obstacles] : null;
   return (list || []).map((s, i) => {
-    const [ax, ay] = stickerXY(i, side, ctx.setName);
+    let [ax, ay] = stickerXY(i, side, ctx.setName);
+    if (taken && (s.x == null || s.y == null)) {
+      const size = s.size || 34;
+      const spot = freeSpot(textWidth(s.text, size, s.font || 'hand') + 36, size + 24, side, taken);
+      if (spot) { [ax, ay] = spot; taken.push(spot[2]); }
+    }
     return ui.sticker(s.text, s.x ?? ax, s.y ?? ay, t, ctx.cue(s.on, s.at ?? 0.6 + i * 0.9), {
       rot: s.rot ?? (i % 2 ? 2 : -3),
       size: s.size || 34,
@@ -262,7 +282,7 @@ function talk(shot, ctx) {
         let lt = d.at;
         lines.forEach((ln, i) => {
           const w = ln.length * size * 0.42;
-          const y = Math.max(64 + size * 0.8, hy - hr * 1.2 - 34 - (lines.length - 1 - i) * size * 1.1);
+          const y = Math.max(64 + size * 0.8 + i * size * 1.3, hy - hr * 1.2 - 34 - (lines.length - 1 - i) * size * 1.3);
           const x = Math.max(30 + w / 2, Math.min(1250 - w / 2, hx));
           out += ui.floatLine({ x, y, text: ln, tail: i === lines.length - 1 ? [hx, hy - hr * 1.08] : null, size, cps: d.cps }, t, lt).svg;
           lt += ln.length / d.cps;
@@ -279,7 +299,19 @@ function talk(shot, ctx) {
         out += ui.nameArrow(na.text, nx, ny, hx + (nx > hx ? hr * 1.05 : -hr * 1.05), hy - hr * 0.2, t, ctx.cue(na.on, na.at ?? 0.5));
       }
     }
-    return out + overlays(shot, t, ctx, { side });
+    // obstacles for sticker placement: every visible face, the dialogue, and the tag/plate corners
+    const obstacles = chars.map((ch) => { const { hx, hy, hr } = headOf(ch); return { x: hx - hr * 1.1, y: hy - hr * 1.25, w: hr * 2.2, h: hr * 2.5 }; })
+      .filter((r) => r.x < 1280 && r.x + r.w > 0 && r.y < 720 && r.y + r.h > 0);
+    if (d && sp) {
+      const { hx, hy, hr } = headOf(sp);
+      obstacles.push(d.mode === 'bubble'
+        ? { x: Math.min(hx, 640) - 520, y: Math.max(60, hy - hr - 260), w: 1040, h: 300 } // generous: the bubble sits beside/above the head
+        : { x: hx - 360, y: Math.max(40, hy - hr * 1.2 - 34 - 110), w: 720, h: 140 });
+    }
+    if (shot.tag) obstacles.push({ x: 0, y: 0, w: 560, h: 96 });
+    if (shot.plate) obstacles.push({ x: 0, y: 580, w: 560, h: 140 });
+    if (shot.nameArrow) obstacles.push({ x: 0, y: 40, w: 1280, h: 90 });
+    return out + overlays(shot, t, ctx, { side, obstacles });
   };
 }
 
@@ -535,7 +567,7 @@ const KIT_KINDS = {
   data: ['stockChart', 'rankingBoard', 'winnersLosers', 'calendarFlip', 'cheque', 'countUp', 'tickerChip'],
   diagram: ['equation', 'loop', 'funnel', 'orgTree', 'portraits', 'steps', 'split', 'montage'],
 };
-const KIT_SKIP = ['template', 'kind', 'vo', 'dur', 'minDur', 'tail', 'id', 'vignette', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
+const KIT_SKIP = ['template', 'kind', 'vo', 'dur', 'minDur', 'tail', 'id', 'vignette', 'fill', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
 
 // split panels / montage frames may carry a whole sub-shot: { shot: { template: 'talk', ... }, at }.
 // The sub-shot renders with its own clock starting at the panel's `at`.

@@ -18,12 +18,26 @@ const { TEMPLATES } = require('./templates');
 
 function loadEpisode(dir) {
   let spec;
-  try {
-    spec = JSON.parse(fs.readFileSync(path.join(dir, 'shots.json'), 'utf8'));
-  } catch (e) {
-    throw new Error(`shots.json is not valid JSON: ${e.message}`);
+  let where = (msg) => msg;
+  const boardWarnings = [];
+  if (fs.existsSync(path.join(dir, 'storyboard.txt')) || fs.readdirSync(dir).some((f) => /^storyboard\..+\.txt$/.test(f))) {
+    // compact storyboard (STORYBOARD.md) -> shots spec; messages point at storyboard lines
+    const sb = require('./storyboard').compileStoryboard(dir);
+    spec = sb.spec;
+    where = (msg) => msg.replace(/^shots? (\d+)(-(\d+))?/, (m, a, _, b) => `${m} [${sb.lineOf[a - 1]}${b ? ` to ${sb.lineOf[b - 1]}` : ''}]`);
+    if (sb.missing.length) boardWarnings.push(`beats not used by any shot: ${sb.missing.join(', ')}`);
+    if (sb.doubled.length) boardWarnings.push(`beats used twice: ${sb.doubled.join(', ')}`);
+    fs.writeFileSync(path.join(dir, 'shots.compiled.json'), JSON.stringify(spec, null, 1));
+  } else {
+    try {
+      spec = JSON.parse(fs.readFileSync(path.join(dir, 'shots.json'), 'utf8'));
+    } catch (e) {
+      throw new Error(`shots.json is not valid JSON: ${e.message}`);
+    }
   }
   const check = require('./validate').validate(spec);
+  check.errors = check.errors.map(where);
+  check.warnings = [...boardWarnings, ...check.warnings.map(where)];
   if (check.errors.length) {
     throw new Error(`shots.json has ${check.errors.length} problem(s). Fix these first:\n- ${check.errors.join('\n- ')}`
       + (check.warnings.length ? `\n\nwarnings:\n- ${check.warnings.join('\n- ')}` : ''));
@@ -41,7 +55,7 @@ function loadEpisode(dir) {
     return { name: shot.id || `${i + 1}-${shot.template}${shot.kind ? `-${shot.kind}` : ''}`, dur: win.dur, render: (t) => render(t), frameOpts: { vignette: shot.vignette ?? style.vignette } };
   });
   return {
-    lint: () => [...check.warnings, ...lint(spec, plan, style)],
+    lint: () => [...check.warnings, ...lint(spec, plan, style).map(where)],
     style: style.name,
     fps: spec.fps || 24,
     audio: spec.audio,
@@ -81,7 +95,7 @@ function lint(spec, plan, style = { pacing: { maxShot: 8, maxBuild: 13, maxGap: 
     for (let k = 1; k < ev.length; k++) if (ev[k] - ev[k - 1] > gap) { gap = ev[k] - ev[k - 1]; gapAt = ev[k - 1]; }
     const label = `shot ${i + 1} (${shot.template}, ${win.dur.toFixed(1)}s)`;
     if (!MOVING.has(shot.template) && !['card', 'chapter', 'title'].includes(shot.template) && gap > maxGap) warn.push(`${label}: nothing happens for ${gap.toFixed(1)}s from ${gapAt.toFixed(1)}s. Add a sticker/pose/stat on a word, or split the shot`);
-    if (!MOVING.has(shot.template) && !['card', 'chapter'].includes(shot.template) && win.dur > maxShot) warn.push(`${label}: longer than ${maxShot}s. Split it (wide -> close, or a second template)`);
+    if (!MOVING.has(shot.template) && !['card', 'chapter'].includes(shot.template) && !shot.fill && win.dur > maxShot) warn.push(`${label}: longer than ${maxShot}s. Split it (wide -> close, or a second template)`);
     if (shot.template === 'title' && win.dur > 5) warn.push(`${label}: title cards should be short. Move most of this narration to the next shot`);
     if (MOVING.has(shot.template) && win.dur > maxBuild + 1) warn.push(`${label}: very long even for a built-up shot (max ~${maxBuild}s)`);
     if (shot.template === 'card' && win.dur > 4) warn.push(`${label}: black cards hold 0.5-2.5s after typing. Keep the narration on them short`);

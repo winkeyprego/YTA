@@ -9,7 +9,7 @@ const { MOODS, POSES } = require('./templates');
 
 const lazy = (m) => { try { return require(m); } catch (e) { return {}; } };
 
-const COMMON = ['template', 'vo', 'dur', 'minDur', 'tail', 'id', 'vignette', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
+const COMMON = ['template', 'vo', 'dur', 'minDur', 'tail', 'id', 'vignette', 'fill', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
 const FIELDS = {
   talk: ['set', 'setOpts', 'chars', 'frame', 'focus', 'focusXY', 'zoom', 'speaker', 'line', 'lineOn', 'lineAt', 'lineWidth', 'cps', 'speaking', 'lines', 'bubble', 'dialogue', 'light', 'nameArrow'],
   versus: ['left', 'right', 'title'],
@@ -73,7 +73,7 @@ function validate(spec) {
     (REQUIRED[tpl] || []).forEach((k) => { if (shot[k] == null) errors.push(`${at}: missing "${k}"`); });
 
     const voToks = tokens(shot.vo);
-    if (tpl !== 'chapter' && !shot.vo && !shot.dur) warnings.push(`${at}: no "vo" and no "dur". It will last 2s with the narration paused`);
+    if (tpl !== 'chapter' && !shot.vo && !shot.dur && !shot.fill) warnings.push(`${at}: no "vo" and no "dur". It will last 2s with the narration paused`);
     if (tpl === 'card' && !shot.text && !shot.lines) errors.push(`${at}: card needs "text" or "lines"`);
     if (spec.style && !['war', 'finance'].includes(spec.style) && i === 0) errors.push(`unknown style "${spec.style}" (war, finance)`);
     if (tpl === 'chapter' && shot.vo) warnings.push(`${at}: chapter cards normally have no "vo" (narration pauses for them)`);

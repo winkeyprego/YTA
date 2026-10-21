@@ -271,7 +271,7 @@ function character(spec = {}, st = {}) {
     : '';
   const skin = spec.skin || P.skin;
   // Hero characters (e.g. the finance host, lib/host.js) bring their own detailed head via spec.drawHead.
-  const head = spec.drawHead ? spec.drawHead(st, spec) : `<circle cx="0" cy="${HEAD_Y}" r="${HEAD_R}" fill="${skin}" stroke="${P.ink}" stroke-width="${OUT}"/>
+  const head = spec.drawHead ? spec.drawHead(st, spec) : `<circle data-qa="face" cx="0" cy="${HEAD_Y}" r="${HEAD_R}" fill="${skin}" stroke="${P.ink}" stroke-width="${OUT}"/>
     ${hair(spec.hair, spec.hairColor || '#4a4038')}
     ${spec.earrings ? `<circle cx="-64" cy="-212" r="5" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/><circle cx="64" cy="-212" r="5" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/>` : ''}
     <ellipse cx="-38" cy="-210" rx="12" ry="7" fill="${spec.blushColor || P.blush}" opacity=".75"/>

@@ -9,7 +9,8 @@
 //   node render.js episodes/<name> --fps 12             -> quick low-fps preview
 //   node render.js episodes/<name> --workers 3          -> parallel browser workers (default: CPUs - 1)
 //
-//   node render.js episodes/<name> --plan               -> print each shot's start/length (no rendering)
+//   node render.js episodes/<name> --plan               -> print each shot's start/length + checks (no rendering)
+//   node render.js episodes/<name> --qa                 -> layout check: overlaps, text off screen, faces covered
 //
 // An episode folder contains EITHER
 //   shots.json (+ words.json, audio): plain data built with templates (lib/episode.js, SHOTS.md), OR
@@ -92,6 +93,55 @@ async function insertGaps(audio, gaps, tmp) {
   return out;
 }
 
+// ---- layout QA: measure where faces and on-screen text land; report overlaps and text off-frame ----
+// Elements opt in with data-qa="face" | "text" (lib/ui.js, characters.js, host.js). No screenshots: fast.
+async function runQA(browser, tl, fps, name, outDir) {
+  const page = await openStage(browser, 1);
+  const issues = [];
+  for (let i = 0; i < tl.length; i++) {
+    const s = tl[i];
+    const times = s.dur > 1.2 ? [0.45, 0.72, 0.97].map((k) => s.dur * k) : [s.dur * 0.8];
+    const seen = new Set();
+    for (const lt of times) {
+      const svg = frame(s.render(lt, { dur: s.dur, global: s.start + lt, fps }), s.start + lt, { grain: false });
+      const found = await page.evaluate((m) => {
+        document.getElementById('stage').innerHTML = m;
+        const els = [...document.querySelectorAll('[data-qa]')].map((e) => {
+          const r = e.getBoundingClientRect();
+          let op = 1;
+          for (let p = e; p && p.getAttribute; p = p.parentNode) { const v = p.getAttribute('opacity'); if (v != null) op *= Number(v); }
+          return { kind: e.getAttribute('data-qa'), qn: e.getAttribute('data-qn') || 'face', x: r.left, y: r.top, w: r.width, h: r.height, op };
+        }).filter((e) => e.w > 2 && e.h > 2 && e.op > 0.5);
+        const area = (a) => a.w * a.h;
+        const inter = (a, b) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+        const texts = els.filter((e) => e.kind === 'text');
+        const faces = els.filter((e) => e.kind === 'face' && e.w > 60); // ignore background crowds
+        const out = [];
+        for (let a = 0; a < texts.length; a++) {
+          const A = texts[a];
+          const off = Math.max(0, -A.x, -A.y, A.x + A.w - 1280, A.y + A.h - 720);
+          if (off > 6) out.push(`${A.qn} runs ${Math.round(off)}px off screen`);
+          for (let b = a + 1; b < texts.length; b++) {
+            const B = texts[b];
+            if (inter(A, B) > 0.1 * Math.min(area(A), area(B))) out.push(`${A.qn} overlaps ${B.qn}`);
+          }
+          for (const F of faces) {
+            // face boxes are shrunk a little: touching a hairline is fine, covering eyes or mouth is not
+            const core = { x: F.x + F.w * 0.15, y: F.y + F.h * 0.2, w: F.w * 0.7, h: F.h * 0.7 };
+            if (inter(A, core) > 0.06 * area(core)) out.push(`${A.qn} covers a face`);
+          }
+        }
+        return out;
+      }, svg);
+      found.forEach((f) => { if (!seen.has(f)) { seen.add(f); issues.push({ shot: i + 1, name: s.name, t: s.start + lt, msg: f }); } });
+    }
+  }
+  const fmt = (x) => `${Math.floor(x / 60)}:${(x % 60).toFixed(1).padStart(4, '0')}`;
+  const lines = issues.map((x) => `shot ${x.shot} (${x.name}) at ${fmt(x.t)} [--still ${x.t.toFixed(1)}]: ${x.msg}`);
+  fs.writeFileSync(path.join(outDir, `${name}-qa.txt`), lines.join('\n') + '\n');
+  console.log(lines.length ? `layout QA: ${lines.length} issue(s)\n- ${lines.slice(0, 60).join('\n- ')}${lines.length > 60 ? `\n... (${lines.length - 60} more in renders/${name}-qa.txt)` : ''}` : `layout QA: OK (${tl.length} shots checked)`);
+}
+
 function run(cmd, a) {
   return new Promise((res, rej) => {
     const p = spawn(cmd, a, { stdio: ['ignore', 'inherit', 'inherit'] });
@@ -141,6 +191,12 @@ async function main() {
     return;
   }
   const browser = await chromium.launch();
+
+  if (o.qa != null) {
+    await runQA(browser, tl, fps, name, outDir);
+    await browser.close();
+    return;
+  }
 
   if (o.still != null) {
     const page = await openStage(browser, scale);
