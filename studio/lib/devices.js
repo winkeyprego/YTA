@@ -6,8 +6,9 @@
 //   fuse({ stops, end, k, t, endStyle: 'bomb' | 'card' | 'flag', rope: 'fuse' | 'thread' })
 //   caseBoard({ heading, sub, cards: [{ title, lines, verdict, verdictColor, verdictAt, at }], k, t })
 //       the calm investigation device (cork board, pinned cards, red thread, verdict stamps); caseSchedule() fills times.
-//   pipes({ heading, sub, a, b, front, shut, level, t })
-//       two supply pipelines feeding one front: a reservoir with a needle gauge, valves that open and shut.
+//   pipes({ heading, sub, a, b, front, shut, level, ground, feeds, t })
+//       two supply pipelines feeding one front: a reservoir with a needle gauge, valves that open, widen and shut;
+//       optionally a ground line with hidden branches of pipe b feeding things under it.
 //   For real tragedies and claims, prefer rope: 'thread' + endStyle: 'card', or the case board (no fire, no bomb).
 
 const P = require('./palette');
@@ -295,6 +296,11 @@ const pinSvg = (x, y, head = P.red, r = 10) => `<circle cx="${n(x + 2)}" cy="${n
 // A pipe draws on from its edge at its `at`, its valve wheel spins open and liquid runs in (moving dashes) and fills the
 // reservoir. A shut turns the wheel the other way: the flow before the valve stops, the rest drains, and the gauge drops by
 // that pipe's share. level (0..1, default 0.9) = the reading with both pipes open; share (a/b, default 0.5 each) splits it.
+// Per pipe: open (0..1, default 1) = how far its valve is open (a trickle at 0.2: thin stream, small share of the gauge);
+// widen: { to, at } = the wheel turns further on its cue and the stream thickens (also works to narrow: to < open).
+// ground: { label, at } = a ground line across the lower board ("what a trench can see" above it); the whole device moves
+// up to make room. feeds: [{ label, sub, at }] (up to 3) = branches of pipe b running under that ground line, each filling
+// and lighting its tag on its cue (the hidden part of the supply). feeds imply a ground line.
 const PIPE_GEO = {
   C: [780, 430], R: 118,
   a: { pts: [[-40, 470], [700, 470]], color: P.red, dark: P.redDark, valve: 470, tag: [215, 518, 360] },
@@ -340,7 +346,10 @@ const PIPE_ROUTES = { a: pipeRoute(PIPE_GEO.a.pts), b: pipeRoute(PIPE_GEO.b.pts)
 function pipeTimes(p, shut) {
   const open = p.at + 1.0; // drawn on (0.9s), then the valve opens
   const s = (shut || []).find((x) => x && x.at != null);
-  return { draw: p.at, open, close: s ? s.at + 0.5 : Infinity, shutAt: s ? s.at : Infinity, shutLabel: s && s.label };
+  const o0 = clamp(p.open ?? 1), w = p.widen && p.widen.at != null ? p.widen : null;
+  // how far the valve is open at time t (0..1): the starting opening, then the widen move over 1s from its cue
+  const openK = (t) => (w ? lerp(o0, clamp(w.to ?? 1), ease.inOut(prog(t, w.at, 1.0))) : o0);
+  return { draw: p.at, open, close: s ? s.at + 0.5 : Infinity, shutAt: s ? s.at : Infinity, shutLabel: s && s.label, openK, widenAt: w ? w.at : Infinity };
 }
 
 function pipeLine(key, p, tm, t) {
@@ -360,13 +369,14 @@ function pipeLine(key, p, tm, t) {
   // liquid: fills from the edge once open; after a shut the part past the valve drains into the reservoir
   const F = t > tm.open ? Math.min(R.L, (t - tm.open) * 700) : 0;
   const PER = 34, flow = 130;
+  const ok = tm.openK(t), sw = 3 + 9 * ok; // stream width follows the valve opening (12 = fully open, the old look)
   const liquid = (s0, s1, tStop) => {
     const dd = routeCut(R, s0, s1);
     if (!dd) return '';
     const shift = flow * Math.max(0, Math.min(t, tStop) - tm.open);
     const off = (((s0 - shift) % PER) + PER) % PER;
-    return `<path d="${dd}" stroke="${P.goldDark}" stroke-width="12" fill="none" stroke-linejoin="round"/>
-      <path d="${dd}" stroke="${P.gold}" stroke-width="6" fill="none" stroke-dasharray="15 19" stroke-dashoffset="${n(off)}"/>`;
+    return `<path d="${dd}" stroke="${P.goldDark}" stroke-width="${n(sw)}" fill="none" stroke-linejoin="round"/>
+      <path d="${dd}" stroke="${P.gold}" stroke-width="${n(sw * 0.5)}" fill="none" stroke-dasharray="15 19" stroke-dashoffset="${n(off)}"/>`;
   };
   if (F > 0) {
     if (t < tm.close) out += liquid(0, F, Infinity);
@@ -380,7 +390,8 @@ function pipeLine(key, p, tm, t) {
   if (D >= G.valve - 20) {
     const [vx, vy] = routeAt(R, G.valve);
     const k = ease.outBack(clamp((D - G.valve + 20) / 60));
-    const rot = -300 * ease.inOut(prog(t, tm.open - 0.1, 0.7)) + 300 * ease.inOut(prog(t, tm.shutAt, 0.8));
+    const rot = -300 * ease.inOut(prog(t, tm.open - 0.1, 0.7)) * (0.4 + 0.6 * tm.openK(Math.min(t, tm.widenAt)))
+      - 300 * (tm.openK(t) - tm.openK(Math.min(t, tm.widenAt))) + 300 * ease.inOut(prog(t, tm.shutAt, 0.8));
     const spokes = [0, 45, 90, 135].map((a) => `<path d="M${n(Math.cos(rad(a)) * 27)} ${n(Math.sin(rad(a)) * 27)} L${n(-Math.cos(rad(a)) * 27)} ${n(-Math.sin(rad(a)) * 27)}" stroke="${P.ink}" stroke-width="4.5"/>`).join('');
     out += `<g transform="translate(${n(vx)} ${n(vy)}) scale(${n(k)})">
       <rect x="-12" y="-74" width="24" height="44" fill="${P.greyDark}" stroke="${P.ink}" stroke-width="2.5"/>
@@ -419,7 +430,8 @@ function pipeLine(key, p, tm, t) {
 }
 const damp = (k, f = 8, d = 2.4) => (k <= 0 ? 0 : Math.sin(k * f) * Math.exp(-k * d));
 
-function pipes({ heading, sub, a = {}, b = {}, front = {}, shut = [], level, t = 0 }) {
+function pipes({ heading, sub, a = {}, b = {}, front = {}, shut = [], level, ground, feeds, t = 0 }) {
+  if ((feeds && feeds.length) || ground) return pipesUnder({ heading, sub, a, b, front, shut, level, ground, feeds, t });
   const [cx, cy] = PIPE_GEO.C, R = PIPE_GEO.R;
   const hs = heading ? Math.min(54, 1000 / Math.max(1, textWidth(heading, 1, 'display'))) : 54;
   let out = `<rect x="-200" y="-200" width="${W + 400}" height="${H + 400}" fill="${P.woodDark}"/>
@@ -435,7 +447,8 @@ function pipes({ heading, sub, a = {}, b = {}, front = {}, shut = [], level, t =
     const tm = pipeTimes(p, shut.filter((s) => s && s.pipe === key));
     const arrive = tm.open + PIPE_ROUTES[key].L / 700;
     const fill = ease.inOut(prog(t, arrive, 1.3)), drain = ease.inOut(prog(t, tm.close + 0.3, 1.6));
-    lv += max * share * fill * (1 - drain);
+    // an opening below 1 gives that pipe a smaller part of its share (a trickle barely moves the needle)
+    lv += max * share * fill * (1 - drain) * (0.25 + 0.75 * tm.openK(t));
     if (t > arrive && t < tm.close) flowing = true;
     return pipeLine(key, p, tm, t);
   });
@@ -482,6 +495,73 @@ function pipes({ heading, sub, a = {}, b = {}, front = {}, shut = [], level, t =
     </g>`;
   }
   return out + lines.map((l) => l.top).join('');
+}
+
+// The device with a ground line: the usual board scaled up and away (above ground = what the front sees), and under the
+// line pipe b branches into a buried manifold with up to 3 outlets, each filling and lighting its tag on its cue.
+const UNDER = { k: 0.78, dx: 141, dy: -22, GY: 508, MY: 572 };
+function pipesUnder({ heading, sub, a, b, front, shut, level, ground = {}, feeds = [], t }) {
+  const { k, dx, dy, GY, MY } = UNDER;
+  const board = pipes({ heading: null, sub: null, a, b, front, shut, level, t });
+  const hs = heading ? Math.min(50, 900 / Math.max(1, textWidth(heading, 1, 'display'))) : 50;
+  const gp = pop(t, ground.at ?? -1, 0.3);
+  // the board background stays full size; only the device (pipes + reservoir) is scaled up and away
+  let out = `<rect x="-200" y="-200" width="${W + 400}" height="${H + 400}" fill="${P.woodDark}"/>
+    <rect x="22" y="22" width="${W - 44}" height="${H - 44}" fill="${P.board}" stroke="${P.ink}" stroke-width="5"/>
+    <g transform="translate(${dx} ${dy}) scale(${k})">${board.replace(/^[\s\S]*?<rect x="22"[^>]*\/>/, '')}</g>
+    ${heading ? `<g data-qa="text" data-qn="pipes heading">${text(heading, 640, 76, { size: n(hs), font: 'display', fill: P.paper, anchor: 'middle', opacity: 0.9 })}</g>` : ''}
+    ${sub ? text(sub, 640, 108, { size: 24, fill: P.paperDim, anchor: 'middle' }) : ''}`;
+  // underground: dark earth band with strata and pebbles, the ground line on top (draws across from the left)
+  const gk = ease.inOut(prog(t, ground.at ?? -1, 0.6));
+  const r = rng(5);
+  const pebbles = Array.from({ length: 40 }, () => { const x = 40 + r() * 1200, y = GY + 20 + r() * 150, s = 2 + r() * 4; return `<ellipse cx="${n(x)}" cy="${n(y)}" rx="${n(s * 1.6)}" ry="${n(s)}" fill="${P.paperDim}" opacity=".08"/>`; }).join('');
+  out += `<g opacity="${n(clamp(gk * 2))}"><rect x="25" y="${GY}" width="${W - 50}" height="${H - 25 - GY}" fill="${P.boardDark}"/>${pebbles}
+      ${[GY + 50, GY + 110, GY + 160].map((y, i) => `<path d="M25 ${y} Q400 ${y - 8 + i * 4} 700 ${y + 4} T${W - 25} ${y - 2}" stroke="${P.ink}" stroke-width="2" fill="none" opacity=".35"/>`).join('')}</g>
+    <path d="M25 ${GY} H${n(25 + (W - 50) * gk)}" stroke="${P.paperDim}" stroke-width="5" stroke-dasharray="26 12" opacity=".9"/>`;
+  if (ground.label && gk > 0) {
+    const ls = Math.min(30, 330 / Math.max(1, textWidth(String(ground.label), 1, 'hand')));
+    out += `<g opacity="${n(gp.o)}" data-qa="text" data-qn="pipes ground label">${text(String(ground.label), 52, GY - 14, { size: n(ls), fill: P.paperDim })}</g>`;
+  }
+  // the branch: a tee on pipe b's top run, straight down through the ground, then a manifold running left
+  const bt = pipeTimes(b, (shut || []).filter((s) => s && s.pipe === 'b'));
+  const teeX = dx + k * 1190, teeY = dy + k * 236;
+  const list = (feeds || []).slice(0, 3);
+  const xs = list.length === 1 ? [640] : list.length === 2 ? [420, 860] : [250, 560, 870];
+  const leftX = (xs[0] ?? 640);
+  const route = pipeRoute([[teeX, teeY], [teeX, MY], [leftX, MY]], 34);
+  const branchAt = list.length ? Math.min(...list.map((f) => f.at ?? 0)) - 0.6 : Infinity;
+  const D = route.L * ease.inOut(prog(t, branchAt, 0.8));
+  if (D > 0.5) {
+    const d = routeCut(route, 0, D);
+    out += `<path d="${d}" stroke="${P.ink}" stroke-width="36" fill="none" stroke-linejoin="round"/>
+      <path d="${d}" stroke="${P.blue}" stroke-width="28" fill="none" stroke-linejoin="round"/>
+      <path d="${d}" stroke="${P.ink}" stroke-width="10" fill="none" stroke-linejoin="round" opacity=".5"/>`;
+    // liquid runs along the branch once it is drawn and pipe b is flowing
+    const F = t > bt.open && t > branchAt + 0.8 ? Math.min(D, (t - Math.max(bt.open, branchAt + 0.8)) * 600) : 0;
+    const dd = routeCut(route, 0, F);
+    const sw = 3 + 9 * bt.openK(t);
+    if (dd) out += `<path d="${dd}" stroke="${P.goldDark}" stroke-width="${n(sw)}" fill="none" stroke-linejoin="round"/>
+      <path d="${dd}" stroke="${P.gold}" stroke-width="${n(sw * 0.5)}" fill="none" stroke-dasharray="15 19" stroke-dashoffset="${n(-((t * 130) % 34))}"/>`;
+    out += `<rect x="${n(teeX - 24)}" y="${n(teeY - 22)}" width="48" height="44" rx="6" fill="${P.navy}" stroke="${P.ink}" stroke-width="3"/>`;
+  }
+  // outlets: a short pipe down from the manifold, a drip, and a paper tag that lights up when its branch fills
+  list.forEach((f, i) => {
+    const x = xs[i], fa = f.at ?? 0.5 + i * 1.5;
+    const pk = ease.outBack(clamp((t - fa + 0.15) / 0.35));
+    if (pk <= 0) return;
+    const lit = clamp((t - fa - 0.2) * 3);
+    const label = String(f.label || '').toUpperCase(), sub2 = f.sub ? String(f.sub) : '';
+    const ls = Math.min(30, 236 / Math.max(1, textWidth(label, 1, 'display')));
+    const ss = Math.min(24, 236 / Math.max(1, textWidth(sub2, 1, 'hand')));
+    const w = Math.max(200, Math.min(280, Math.max(textWidth(label, ls, 'display'), sub2 ? textWidth(sub2, ss, 'hand') : 0) + 40)), h = sub2 ? 82 : 58, ty = MY + 34;
+    const drip = lit > 0 ? `<circle cx="${x}" cy="${n(MY + 26 + ((t * 40) % 8))}" r="5" fill="${P.gold}" opacity="${n(lit)}"/>` : '';
+    out += `<g transform="translate(${x} ${MY}) scale(${n(pk)}) translate(${-x} ${-MY})">
+      <rect x="${x - 12}" y="${MY}" width="24" height="26" fill="${P.navy}" stroke="${P.ink}" stroke-width="3"/>${drip}
+      <g filter="url(#shadow)"><rect x="${n(x - w / 2)}" y="${ty}" width="${n(w)}" height="${h}" rx="5" fill="${lit > 0.5 ? P.gold : P.paper}" stroke="${P.ink}" stroke-width="3"/></g>
+      <g data-qa="text" data-qn="pipes feed ${i + 1}">${text(label, x, ty + 40, { size: n(ls), font: 'display', anchor: 'middle', fill: P.ink })}
+      ${sub2 ? text(sub2, x, ty + 68, { size: n(ss), font: 'hand', anchor: 'middle', fill: P.inkSoft }) : ''}</g></g>`;
+  });
+  return out;
 }
 
 // Running tally like the references' "MISSED EXITS" scoreboard.

@@ -551,16 +551,21 @@ function caseShot(shot, ctx) {
 
 // ---------- pipes: two supply pipelines feeding one front (house device, like the fuse) ----------
 // { template: 'pipes', heading, sub, a: { label, sub, on, share }, b: { label, sub, on, share }, front: { label, sub, on },
-//   shut: [{ pipe: 'a'|'b', on, label }], level }
+//   shut: [{ pipe: 'a'|'b', on, label }], level, ground: { label, on }, feeds: [{ label, sub, on }] }
+// Per pipe also: open (0..1 valve opening), widen: { to, on } (turns wider on a word), off: true (that pipe isn't there).
 // The reservoir is there at the cut; each pipe draws on from its edge on its cue, its valve opens and the gauge rises;
 // a shut turns that pipe's wheel, its flow stops and drains and the needle drops by its share.
 function pipesShot(shot, ctx) {
   const a = shot.a || {}, b = shot.b || {}, fr = shot.front || {};
   const frontAt = ctx.cue(fr.on, fr.at ?? 0);
-  const aAt = ctx.cue(a.on, a.at ?? 0.5);
-  const bAt = ctx.cue(b.on, b.at ?? aAt + 1.8);
-  const shut = (shot.shut || []).map((s) => ({ ...s, at: ctx.cue(s.on, s.at ?? Math.max(bAt + 3, ctx.dur - 2.5)) }));
-  const view = { heading: shot.heading ?? 'TWO PIPES, ONE FRONT', sub: shot.sub, a: { ...a, at: aAt }, b: { ...b, at: bAt }, front: { ...fr, at: frontAt }, shut, level: shot.level };
+  const aAt = a.off ? null : ctx.cue(a.on, a.at ?? 0.5);
+  const bAt = b.off ? null : ctx.cue(b.on, b.at ?? (aAt ?? 0) + 1.8);
+  const widen = (p) => (p.widen ? { ...p.widen, at: ctx.cue(p.widen.on, p.widen.at ?? ctx.dur / 2) } : undefined);
+  const shut = (shot.shut || []).map((s) => ({ ...s, at: ctx.cue(s.on, s.at ?? Math.max((bAt ?? 0) + 3, ctx.dur - 2.5)) }));
+  const feeds = (shot.feeds || []).map((f, i) => ({ ...f, at: ctx.cue(f.on, f.at ?? 1 + i * 1.6) }));
+  const ground = shot.ground || feeds.length ? { ...(shot.ground || {}), at: ctx.cue((shot.ground || {}).on, (shot.ground || {}).at ?? 0) } : undefined;
+  const view = { heading: shot.heading ?? 'TWO PIPES, ONE FRONT', sub: shot.sub, a: { ...a, at: aAt, widen: widen(a) }, b: { ...b, at: bAt, widen: widen(b) },
+    front: { ...fr, at: frontAt }, shut, level: shot.level, ground, feeds };
   return (t) => cam(dev.pipes({ ...view, t }), { zoom: cameraZoom(shot.camera || 'locked', t, ctx) })
     + overlays(shot, t, ctx, { side: 'left' });
 }

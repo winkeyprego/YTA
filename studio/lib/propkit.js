@@ -86,6 +86,11 @@ const DOCS = {
   tankColumn: '3-6 tanks in a line driving across from `at`; x = lead tank (count, speed px/s, dir, gap px, s default 0.45, star, color)',
   truck: 'Studebaker-style 6x6 truck, side view (cargo canvas|crates|rockets (Katyusha)|bread, dir, drive px/s, star: white door star, color)',
   cargoShip: 'Liberty-style cargo ship on a full-width strip of water, crates on deck, funnel smoke, bobs (dir, sail px/s from `at`, water; s ~0.7)',
+  fieldGun: 'WW2 field gun with shield, side view; recoil + muzzle flash at `fire` (seconds after `at`, number or list), elev, star (red), dir',
+  warplane: 'WW2 piston fighter, side view, anchor = centre (kind fighter|attack, star red|white|false, color, dir, fly px/s from `at`; open sky)',
+  fog: 'low fog drifting across the whole frame (y centre, height, density 0..1); put it last so it lies over the scene',
+  tinCan: 'tinned meat with a paper band (label, color, open: true = lid peeled back)',
+  breadLoaf: 'brick-shaped black rye loaf (cut 0-3 slices lying in front, knife: true)',
   book: 'hardback book standing tilted with a cover title (title, color, tilt), or open: true lying open with two pages of lines',
   staircase: 'steps rising left to right, a big label on each; a little figure hops up one step every `every` s after `at`, skipped numbers flash struck through (steps: ["GRADE 5","GRADE 7",...], every)',
 };

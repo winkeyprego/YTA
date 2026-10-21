@@ -263,7 +263,11 @@ She is an occasional character, not a presenter on every shot. See RECIPES.md, "
 ```json
 "cast": { "musk": { "base": "founder", "hair": "side", "hairColor": "#3a2d25" } }
 ```
-- Hair: `slick`, `side`, `bald`, `bob`, `curly`, `bun`, `long`, `spiky`, `ponytail`
+- Hair: `slick`, `side`, `bald`, `bob`, `curly`, `bun`, `long`, `spiky`, `ponytail`, `receding`, `buzz`, `wavy`, `combover`, `afro`,
+  `parted` (clean side parting). `templeColor` (colour) greys the sides; `hairVolume` (0.8-1.3) shrinks or grows the hair mass
+- Face: `face` (`round` default, `long`, `wide`, `square`), `jowls: true` (heavier lower face), `lines: true` (two soft age lines),
+  `brows` (`thin`, `thick`, `bushy`, `arched`; the mood still sets their angle), `earSize` (0.8-1.3, draws ears),
+  `glassesShape` (`round`, `square`, `half`; implies `glasses`)
 - Extras: `glasses`, `moustache` (`brush`, `walrus`, `thin`), `beard` (`short`, `full`), `hat` (`tophat`, `fedora`, `cap`, `service`,
   `police`, `hardhat`, `helmet`, `pilotHelmet`, `ushanka` (Soviet fur hat, small red star), `stahlhelm` (plain grey WW2 German
   helmet, no insignia), `peaked` (officer's peaked cap; `hatColor` crown, `hatBand` band)), `cigar`, `pin`, `badge`, `lanyard`, `headset`, `veil`
@@ -275,6 +279,24 @@ She is an occasional character, not a presenter on every shot. See RECIPES.md, "
   German soldier `{ "outfit": "greatcoat", "suit": "fieldGrey", "hat": "stahlhelm" }`, officer `{ "outfit": "tunic", "hat": "peaked" }`
 - Colours (palette names or hex): `suit`, `shirt`, `tie`, `hairColor`, `beardColor`, `printColor`, `skin` (`skin1` light … `skin6` deep)
 - `--plan` lists every valid value and suggests the nearest one for a typo.
+
+### Likeness (a real person)
+Same round-headed house style, no nose, no realistic face: likeness comes from choosing the right few features.
+1. Look at a reference photo (for your eyes only; never put it in the repo or the video).
+2. Pick the **2-3 most recognisable things**, in this order of pull: hair shape and colour (`hair`, `hairColor`, `templeColor`,
+   `hairVolume`), glasses (`glassesShape`), facial hair (`beard`, `moustache`), face shape (`face`, `jowls`), brows, skin tone
+   (`skin1`…`skin6`), the clothes they are always seen in (`outfit`, `suit`, `shirt`, `tie`). Age: `lines`, grey `hairColor`.
+3. Build the cast entry from the nearest `base`, changing only those features.
+4. Render a close-up still (`node render.js episodes/<ep> --still <sec> --scale 1` on a `close` shot of them) and put it
+   side by side with the photo. Squint: if the silhouette and the 2-3 features read, stop. If not, change ONE feature and re-render.
+5. Keep it fair: caricature through features only, never mocking (see CLAUDE.md "Real people").
+
+Example (a long-faced, bald, older central banker in half-moon reading glasses):
+```json
+"cast": { "chair": { "base": "oldBanker", "face": "long", "hair": "bald", "hairColor": "greyLight", "glassesShape": "half",
+  "brows": "bushy", "lines": true, "moustache": null } }
+```
+More combinations: `episodes/test-likeness` (`node render.js episodes/test-likeness --sheet 1 --scale 0.5`).
 
 ## Pacing rules (checked by `node render.js episodes/<ep> --plan`)
 - War: shots about 3.5s, with anything over 8s split. Finance: story shots about 3s, split over 7s.

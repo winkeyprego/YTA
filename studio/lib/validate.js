@@ -18,7 +18,7 @@ const FIELDS = {
   stat: ['value', 'prefix', 'suffix', 'caption', 'on', 'at', 'set', 'setOpts', 'size', 'countDur'],
   fuse: ['heading', 'sub', 'stops', 'end', 'tallyLabel', 'endStyle', 'rope'],
   case: ['heading', 'sub', 'cards'],
-  pipes: ['heading', 'sub', 'a', 'b', 'front', 'shut', 'level'],
+  pipes: ['heading', 'sub', 'a', 'b', 'front', 'shut', 'level', 'ground', 'feeds'],
   map: ['view', 'legend', 'legendOn', 'focus', 'fx', 'fy', 'city'],
   money: ['items', 'set', 'setOpts'],
   title: ['text', 'set', 'setOpts', 'size'],
@@ -90,15 +90,20 @@ function validate(spec) {
   // cast first, so a header-only storyboard (director's pass) can be validated on its own
   const { FEATURES } = require('./characters');
   const P = require('./palette');
-  const castKeysAllowed = ['base', 'outfit', 'hair', 'hat', 'moustache', 'beard', ...FEATURES.colors, ...FEATURES.flags, ...FEATURES.numbers, ...(FEATURES.strings || [])];
+  const ENUMS = FEATURES.enums || ['hair', 'outfit', 'hat', 'moustache', 'beard'];
+  const castKeysAllowed = ['base', ...ENUMS, ...FEATURES.colors, ...FEATURES.flags, ...FEATURES.numbers, ...(FEATURES.strings || [])];
   Object.entries(spec.cast || {}).forEach(([k, c]) => {
     if (!c || typeof c !== 'object') { errors.push(`cast "${k}": must be an object like { "base": "ceo", "glasses": true }`); return; }
     if (c.base && !CAST[c.base]) errors.push(`cast "${k}": unknown base "${c.base}"${suggest(c.base, Object.keys(CAST))}`);
     if (!c.base && !c.outfit) warnings.push(`cast "${k}": no "base" or "outfit", so it will look like the default banker`);
     Object.entries(c).forEach(([f, v]) => {
       if (!castKeysAllowed.includes(f)) { errors.push(`cast "${k}": unknown feature "${f}"${suggest(f, castKeysAllowed)}`); return; }
-      if (['hair', 'outfit', 'hat', 'moustache', 'beard'].includes(f) && v != null && !FEATURES[f].includes(v)) {
+      if (ENUMS.includes(f) && v != null && !FEATURES[f].includes(v)) {
         errors.push(`cast "${k}": ${f} "${v}" doesn't exist${suggest(v, FEATURES[f])} (${FEATURES[f].join(', ') || 'none yet'})`);
+      }
+      const range = (FEATURES.ranges || {})[f];
+      if (range && v != null && (typeof v !== 'number' || v < range[0] || v > range[1])) {
+        warnings.push(`cast "${k}": ${f} ${JSON.stringify(v)} should be a number from ${range[0]} to ${range[1]}`);
       }
       if (FEATURES.colors.includes(f) && typeof v === 'string' && !/^#[0-9a-f]{3,8}$/i.test(v) && !P[v]) {
         errors.push(`cast "${k}": ${f} "${v}" is not a hex colour or a palette name${suggest(v, Object.keys(P))}`);
@@ -219,7 +224,8 @@ function validate(spec) {
     if (tpl === 'fuse' && shot.rope && !['fuse', 'thread'].includes(shot.rope)) errors.push(`${at}: rope must be fuse or thread`);
     if (tpl === 'fuse' && (shot.stops || []).length > 5) errors.push(`${at}: the fuse fits at most 5 stops`);
     if (tpl === 'pipes') {
-      const PIPE_SUB = { a: ['label', 'sub', 'on', 'at', 'share'], b: ['label', 'sub', 'on', 'at', 'share'], front: ['label', 'sub', 'on', 'at'] };
+      const PIPE_SUB = { a: ['label', 'sub', 'on', 'at', 'share', 'open', 'widen', 'off'], b: ['label', 'sub', 'on', 'at', 'share', 'open', 'widen', 'off'],
+        front: ['label', 'sub', 'on', 'at'], ground: ['label', 'on', 'at'] };
       Object.entries(PIPE_SUB).forEach(([key, okSub]) => {
         const v = shot[key];
         if (v == null) return;
@@ -233,6 +239,14 @@ function validate(spec) {
         Object.keys(s || {}).forEach((f) => { if (!['pipe', 'on', 'at', 'label'].includes(f)) warnings.push(`${at} shut[${k}]: unknown field "${f}"${suggest(f, ['pipe', 'on', 'at', 'label'])}. It will be ignored`); });
       });
       if (shot.level != null && !(shot.level >= 0 && shot.level <= 1)) errors.push(`${at}: "level" must be between 0 and 1`);
+      ['a', 'b'].forEach((key) => {
+        const v = shot[key] || {};
+        if (v.open != null && !(v.open >= 0 && v.open <= 1)) errors.push(`${at}: ${key}.open must be between 0 and 1`);
+        if (v.widen != null && (typeof v.widen !== 'object' || !(v.widen.to >= 0 && v.widen.to <= 1))) errors.push(`${at}: ${key}.widen must be like { "to": 0.8, "on": "word" }`);
+      });
+      if (shot.a && shot.a.off && shot.b && shot.b.off) errors.push(`${at}: both pipes are "off"`);
+      if (shot.feeds != null && (!Array.isArray(shot.feeds) || shot.feeds.length > 3)) errors.push(`${at}: "feeds" must be a list of up to 3 like [{ "label": "...", "sub": "...", "on": "word" }]`);
+      (Array.isArray(shot.feeds) ? shot.feeds : []).forEach((f, k) => Object.keys(f || {}).forEach((x) => { if (!['label', 'sub', 'on', 'at'].includes(x)) warnings.push(`${at} feeds[${k}]: unknown field "${x}"${suggest(x, ['label', 'sub', 'on', 'at'])}. It will be ignored`); }));
     }
     if (tpl === 'chart' && (!Array.isArray(shot.data) || shot.data.length < 2)) errors.push(`${at}: chart needs at least 2 data points`);
     if (tpl === 'money') (shot.items || []).forEach((it, k) => { if (!money[it.kind]) errors.push(`${at} items[${k}]: unknown money kind "${it.kind}"${suggest(it.kind, Object.keys(money))}`); });

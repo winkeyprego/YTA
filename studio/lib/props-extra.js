@@ -993,8 +993,133 @@ function staircase(o, t) {
     ${treads}${labels}${skipped}${hopping ? '' : shadowE}${fig}`);
 }
 
+// ---------- field gun ----------
+// WW2 Soviet divisional field gun (ZiS-3 style), side view, muzzle to the right (o.dir -1 = left): two spoked wheels, an
+// angled shield (o.star default true: small red star), a long barrel with a muzzle brake, split trail to the ground.
+// o.fire: seconds after `at` (a number or a list) -> the barrel recoils, a short muzzle flash and a small puff that thins
+// out at once (no smoke column, no impact). o.elev = barrel elevation in degrees (default 8). About 560 x 240 at s = 1.
+function fieldGun(o, t) {
+  const dir = o.dir ?? 1, c = col(o.color, P.olive), el = o.elev ?? 8;
+  const shots = (Array.isArray(o.fire) ? o.fire : o.fire != null ? [o.fire] : []).map((f) => AT(o) + f);
+  const last = shots.filter((f) => t >= f).pop();
+  const since = last == null ? 99 : t - last;
+  const recoil = since < 0.5 ? (since < 0.06 ? since / 0.06 : 1 - ease.inOut(clamp((since - 0.06) / 0.44))) * 26 : 0;
+  const flash = since < 0.14 ? 1 - since / 0.14 : 0;
+  const puff = since < 1.4 ? since / 1.4 : 1;
+  const BX = 300; // muzzle x in the barrel's frame
+  const barrel = `<g transform="translate(-10 -118) rotate(${n(-el)})">
+      <g transform="translate(${n(-recoil)} 0)">
+        <rect x="-120" y="-9" width="150" height="20" rx="4" fill="${c}" ${ol(3)}/>
+        <rect x="20" y="-6" width="${BX - 36}" height="13" fill="${c}" ${ol(3)}/>
+        <rect x="${BX - 20}" y="-10" width="26" height="21" rx="3" fill="${P.charcoal}" ${ol(2.5)}/>
+        <path d="M${BX - 12} -10 V11 M${BX - 3} -10 V11" stroke="${P.greyDark}" stroke-width="2.5"/>
+        ${flash > 0 ? `<g transform="translate(${BX + 8} 0) scale(${n(0.6 + flash * 0.6)})"><path d="M0 0 L36 -22 L30 -6 L74 0 L30 6 L36 22 Z M0 0 L20 -34 L14 -6 Z M0 0 L20 34 L14 6 Z" fill="${P.gold}" stroke="${P.ink}" stroke-width="2.5" stroke-linejoin="round"/><circle r="14" fill="${P.bubble}"/></g>` : ''}
+        ${puff < 1 ? [0, 1, 2].map((i) => `<circle cx="${n(BX + 40 + puff * (60 + i * 30))}" cy="${n(-puff * (10 + i * 14))}" r="${n(10 + puff * (24 + i * 8))}" fill="${P.paperShade}" opacity="${n((1 - puff) * 0.55)}"/>`).join('') : ''}
+      </g>
+      <rect x="-34" y="-16" width="70" height="30" rx="4" fill="${c}" ${ol(3)}/>
+    </g>`;
+  const wheel = (x) => `<g transform="translate(${x} -46)"><circle r="46" fill="${P.ink}"/><circle r="38" fill="${P.charcoal}"/>
+      ${[0, 30, 60, 90, 120, 150].map((a) => `<path d="M${n(Math.cos(rad(a)) * 34)} ${n(Math.sin(rad(a)) * 34)} L${n(-Math.cos(rad(a)) * 34)} ${n(-Math.sin(rad(a)) * 34)}" stroke="${c}" stroke-width="5"/>`).join('')}
+      <circle r="12" fill="${c}" ${ol(2.5)}/><circle r="4" fill="${P.ink}"/></g>`;
+  return place(o, `<g transform="scale(${dir} 1)">
+    <ellipse cx="-40" cy="-2" rx="250" ry="9" fill="${P.ink}" opacity=".18"/>
+    <path d="M-30 -60 L-262 -6 L-250 6 L-20 -40 Z" fill="${P.oliveDark}" ${ol(3)}/>
+    <path d="M-262 -6 L-276 4 L-240 8 Z" fill="${P.charcoal}" ${ol(2.5)}/>
+    ${wheel(-70)}
+    <path d="M-30 -66 L-210 -10" stroke="${P.ink}" stroke-width="18" stroke-linecap="round"/><path d="M-30 -66 L-210 -10" stroke="${c}" stroke-width="11" stroke-linecap="round"/>
+    <rect x="-56" y="-104" width="100" height="44" rx="6" fill="${c}" ${ol(3)}/>
+    ${barrel}
+    <path d="M18 -196 L58 -192 L66 -70 L22 -74 Z" fill="${c}" ${ol(3.5)}/>
+    <path d="M24 -186 L56 -183" stroke="${P.ink}" stroke-width="2" opacity=".4"/>
+    ${o.star === false ? '' : `<path d="${starPath(42, -150, 11)}" fill="${P.red}" stroke="${P.ink}" stroke-width="1.6" stroke-linejoin="round"/>`}
+    ${wheel(30)}
+  </g>`);
+}
+
+// ---------- WW2 warplane ----------
+// Single-engine piston plane, side view, nose to the right (o.dir -1 = left). o.kind 'fighter' (default; slim, Yak or
+// Airacobra-like) | 'attack' (heavier, long canopy with a rear gunner's seat, Il-2-like). o.star 'red' (default, Soviet)
+// | 'white' (American: white star in a blue disc) | false. o.color (default olive). Spinning propeller; o.fly px/s from
+// `at`. Anchor = the plane's centre (open sky only). About 420 x 130 at s = 1.
+function warplane(o, t) {
+  const dir = o.dir ?? 1, c = col(o.color, P.olive), attack = o.kind === 'attack';
+  const dx = o.fly ? Math.max(0, t - AT(o)) * o.fly : 0;
+  const bob = Math.sin(t * 2.2 + (o.seed ?? 0)) * 3;
+  const L = attack ? 230 : 210;
+  const body = attack
+    ? `M${L} -6 Q${L - 6} -30 ${L - 40} -32 L-60 -30 L-190 -14 L-200 -2 L-190 8 L-40 20 L${L - 40} 22 Q${L - 6} 18 ${L} -6 Z`
+    : `M${L} -4 Q${L - 6} -24 ${L - 46} -26 L-40 -22 L-190 -8 L-198 0 L-190 6 L-40 16 L${L - 46} 18 Q${L - 6} 14 ${L} -4 Z`;
+  const canopy = attack
+    ? `<path d="M40 -30 Q60 -58 110 -56 L130 -30 Z" fill="${P.windowDark}" ${ol(2.5)}/><path d="M-6 -30 Q4 -50 36 -50 L40 -30 Z" fill="${P.windowDark}" ${ol(2.5)}/><path d="M60 -48 L64 -30 M88 -54 L92 -30" stroke="${P.greyLight}" stroke-width="2.5"/>`
+    : `<path d="M40 -24 Q56 -54 96 -52 L124 -24 Z" fill="${P.windowDark}" ${ol(2.5)}/><path d="M66 -48 L70 -24" stroke="${P.greyLight}" stroke-width="2.5"/><path d="M54 -38 L64 -46" stroke="${P.grey}" stroke-width="4" stroke-linecap="round" opacity=".6"/>`;
+  const star = o.star === false ? '' : o.star === 'white'
+    ? `<circle cx="-110" cy="-2" r="15" fill="${P.navy}" ${ol(2)}/><path d="${starPath(-110, -2, 12)}" fill="${P.bubble}"/>`
+    : `<path d="${starPath(-110, -3, 15)}" fill="${P.red}" stroke="${P.ink}" stroke-width="1.8" stroke-linejoin="round"/>`;
+  const spin = Math.abs(Math.sin(t * 40));
+  return `<g transform="translate(${n((o.x ?? 640) + dx * dir)} ${n((o.y ?? 300) + bob)}) scale(${n((o.s ?? 1) * dir)} ${n(o.s ?? 1)})">
+    <path d="M-170 -8 L-208 -60 L-182 -62 L-140 -10 Z" fill="${c}" ${ol(3)}/>
+    <path d="${body}" fill="${c}" ${ol(3.5)}/>
+    <path d="M-180 6 L${L - 40} 16" stroke="${P.paperDim}" stroke-width="5" opacity=".5"/>
+    ${canopy}${star}
+    <path d="M-10 4 L120 4 L136 16 L-6 18 Z" fill="${P.oliveDark}" ${ol(3)}/>
+    <path d="M-176 0 L-120 2 L-120 10 L-182 8 Z" fill="${P.oliveDark}" ${ol(2.5)}/>
+    ${attack ? `<path d="M-40 -32 L-74 -40" stroke="${P.ink}" stroke-width="4" stroke-linecap="round"/>` : ''}
+    <path d="M${L} -16 Q${L + 18} -6 ${L} 6 Z" fill="${P.charcoal}" ${ol(2.5)}/>
+    <ellipse cx="${L + 8}" cy="-5" rx="5" ry="${n(46 * (0.25 + 0.75 * spin))}" fill="${P.ink}" opacity=".55"/>
+    <ellipse cx="${L + 8}" cy="-5" rx="7" ry="50" fill="${P.paperShade}" opacity=".18"/>
+  </g>`;
+}
+
+// ---------- fog ----------
+// Low fog drifting across the whole frame: soft pale bands around o.y (default 520) spread over o.height (default 300),
+// o.density 0..1 (default 0.6). Draw it last in a compose so it lies over the scene. x/s are ignored.
+function fog(o, t) {
+  const r = rng(o.seed ?? 11), dens = clamp(o.density ?? 0.6), y0 = o.y ?? 520, h = o.height ?? 300;
+  return Array.from({ length: 9 }, (_, i) => {
+    const y = y0 - h / 2 + r() * h, w = 500 + r() * 500, sp = 6 + r() * 14;
+    const x = ((r() * 1800 + t * sp * (i % 2 ? 1 : -1)) % 1800 + 1800) % 1800 - 260;
+    return `<ellipse cx="${n(x)}" cy="${n(y)}" rx="${n(w / 2)}" ry="${n(30 + r() * 50)}" fill="${P.bubble}" opacity="${n(dens * (0.18 + r() * 0.18))}" filter="url(#glow)"/>`;
+  }).join('') + `<rect x="-200" y="${n(y0 - h / 2)}" width="1680" height="${n(h)}" fill="${P.paperDim}" opacity="${n(dens * 0.22)}"/>`;
+}
+
+// ---------- tin can ----------
+// Tinned meat (Lend-Lease style), a squat tin seen slightly from above: o.label on a paper band (default 'PORK'),
+// o.color = band colour (default red), o.open true = lid peeled back showing the meat. About 150 x 130 at s = 1.
+function tinCan(o) {
+  const band = col(o.color, P.red), label = String(o.label ?? 'PORK').toUpperCase();
+  const size = Math.min(30, 120 / Math.max(1, textWidth(label, 1, 'display')));
+  const top = o.open
+    ? `<ellipse cx="0" cy="-118" rx="70" ry="20" fill="${P.steel}" ${ol(3)}/><ellipse cx="0" cy="-116" rx="60" ry="15" fill="${P.blush}" ${ol(2)}/>
+       <path d="M-40 -120 Q-10 -128 30 -116 M-20 -110 Q10 -116 40 -108" stroke="${P.blushDeep}" stroke-width="3" fill="none" opacity=".7"/>
+       <path d="M40 -130 Q90 -190 30 -210 Q-20 -200 -40 -134" fill="${P.greyLight}" ${ol(3)}/><path d="M30 -200 Q70 -180 46 -140" stroke="${P.bubble}" stroke-width="4" fill="none" opacity=".6"/>`
+    : `<ellipse cx="0" cy="-118" rx="70" ry="20" fill="${P.greyLight}" ${ol(3)}/><ellipse cx="0" cy="-118" rx="56" ry="14" fill="none" stroke="${P.steel}" stroke-width="3"/>
+       <path d="M58 -124 L86 -134 L90 -126 L62 -118 Z" fill="${P.steel}" ${ol(2)}/>`;
+  return place(o, `<ellipse cx="0" cy="-2" rx="84" ry="10" fill="${P.ink}" opacity=".18"/>
+    <path d="M-70 -118 V-16 Q0 8 70 -16 V-118" fill="${P.greyLight}" ${ol(3)}/>
+    <path d="M-70 -96 Q0 -76 70 -96 V-36 Q0 -16 -70 -36 Z" fill="${band}" ${ol(2.5)}/>
+    <path d="M-60 -110 V-24" stroke="${P.bubble}" stroke-width="6" opacity=".45"/>
+    ${text(label, 0, n(-56 + size * 0.36), { size: n(size), font: 'display', anchor: 'middle', fill: P.paper })}
+    ${top}`);
+}
+
+// ---------- bread loaf ----------
+// A brick-shaped black rye army loaf, three-quarter view. o.cut = slices already cut off (0-3), lying in front; o.knife
+// true = a knife resting on it. About 260 x 120 at s = 1.
+function breadLoaf(o) {
+  const cut = clamp(Math.round(o.cut ?? 0), 0, 3), crust = P.woodMid, crumb = P.skin4, end = 110 - cut * 22;
+  const slices = Array.from({ length: cut }, (_, i) => `<g transform="translate(${n(150 + i * 26)} ${n(-4 - i * 3)}) rotate(${n(-14 + i * 6)})"><rect x="-14" y="-62" width="22" height="62" rx="5" fill="${crust}" ${ol(2.5)}/><rect x="-10" y="-58" width="14" height="54" rx="3" fill="${crumb}"/></g>`).join('');
+  return place(o, `<ellipse cx="10" cy="-2" rx="160" ry="10" fill="${P.ink}" opacity=".18"/>
+    <path d="M-120 -8 L-120 -84 Q-118 -100 -100 -100 L${end - 20} -100 Q${end} -100 ${end} -84 L${end} -8 Z" fill="${crust}" ${ol(3)}/>
+    <path d="M-120 -84 L-90 -112 L${end + 22} -112 L${end} -100" fill="${P.woodDeep}" ${ol(3)}/>
+    <path d="M${end} -100 L${end + 22} -112 L${end + 22} -20 L${end} -8 Z" fill="${cut ? crumb : crust}" ${ol(3)}/>
+    ${cut ? Array.from({ length: 10 }, (_, i) => `<circle cx="${n(end + 6 + (i % 3) * 6)}" cy="${n(-90 + i * 7)}" r="1.6" fill="${P.woodDeep}"/>`).join('') : ''}
+    <path d="M-80 -104 L-60 -108 M-30 -104 L-10 -108 M20 -104 L40 -108" stroke="${P.ink}" stroke-width="2.5" stroke-linecap="round" opacity=".5"/>
+    ${slices}
+    ${o.knife ? `<path d="M-60 -114 L80 -128 L84 -122 L-58 -106 Z" fill="${P.greyLight}" ${ol(2)}/><rect x="-118" y="-112" width="60" height="14" rx="4" fill="${P.woodDark}" ${ol(2)} transform="rotate(-6 -88 -105)"/>` : ''}`);
+}
+
 module.exports = {
   balanceScale, bell, countdownClock, wallClock, invitation, doorsRow, sharkFins, circuitBreaker, weather, photocopier,
   badge, van, radarScope, blackBox, jet, thermometer, pokerTable, puzzle, coffeeCup, clipboard, evidenceTray, houseOfCards, rocket,
-  tank, tankColumn, truck, cargoShip, book, staircase,
+  tank, tankColumn, truck, cargoShip, book, staircase, fieldGun, warplane, fog, tinCan, breadLoaf,
 };
