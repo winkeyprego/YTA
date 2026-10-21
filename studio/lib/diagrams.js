@@ -58,13 +58,9 @@ const popIn = (cx, cy, t, at, inner, rot = 0) => {
   return `<g opacity="${n(p.o)}" transform="translate(${n(cx)} ${n(cy)}) rotate(${n(rot)}) scale(${n(p.s)}) translate(${n(-cx)} ${n(-cy)})">${inner}</g>`;
 };
 
+// A framed paper board on the wall of a room (lib/backdrops.js), title written at the top.
 function background(title, t, { titleAt = 0 } = {}) {
-  const grid = [];
-  for (let x = -200; x <= W + 200; x += 40) grid.push(`M${x} -200 V${H + 200}`);
-  for (let y = -200; y <= H + 200; y += 40) grid.push(`M-200 ${y} H${W + 200}`);
-  return `<rect x="-200" y="-200" width="${W + 400}" height="${H + 400}" fill="${C.board}"/>
-    <path d="${grid.join(' ')}" stroke="${C.boardLine}" stroke-width="1.2" opacity=".7"/>
-    ${title && t >= titleAt ? text(title, 640, 84, { size: 52, font: 'script', anchor: 'middle', opacity: M.clamp((t - titleAt) * 5) }) : ''}`;
+  return require('./backdrops').board(undefined, title, t, { titleAt });
 }
 
 const shadowCard = (x, y, w, h, { fill = C.card, stroke = P.ink, rx = 10, sw = 3 } = {}) =>
@@ -437,6 +433,13 @@ function portraits(spec, t) {
   });
   return out;
 }
+portraits.elements = (spec) => {
+  const L = portraitsLayout(spec);
+  return L.people.map((p, i) => {
+    const x = 50 + L.gap * (i + 0.5);
+    return { x0: x - L.w / 2, x1: x + L.w / 2, y0: L.y - L.r - 10, y1: L.y + L.r + 22 + (L.hasSub ? 86 : 50) + 8, at: p.at ?? 0.4 + i * 1.5 };
+  });
+};
 // Frames the whole row (centre + the tightest zoom that keeps every name card on screen).
 portraits.focus = (spec) => {
   const L = portraitsLayout(spec);
@@ -478,13 +481,16 @@ function steps(spec, t) {
       const head = stepHead(spec, i);
       const small = L.rows > 1;
       const lines = wrapWords(s.label, small ? 13 : 14).slice(0, head ? (small ? 3 : 4) : (small ? 4 : 5));
+      const base = small ? 33 : 38;
+      // the longest line shrinks to fit inside the note
+      const fit = Math.min(base, ...lines.map((ln) => (base * (w - 36)) / Math.max(1, 1.18 * textWidth(ln, base, 'script'))));
       const lh = small ? 34 : 40;
       const top = y - h / 2;
       const body0 = head ? top + (small ? 102 : 112) : y - ((lines.length - 1) * lh) / 2 + 10;
       const inner = `<g transform="rotate(${i % 2 ? 2.5 : -2.5} ${x} ${y})"><rect x="${n(x - w / 2)}" y="${n(top)}" width="${n(w)}" height="${h}" fill="${colors[i % 4]}" stroke="${P.ink}" stroke-width="2.5" filter="url(#shadow)"/>
         <rect x="${n(x - 34)}" y="${n(top - 14)}" width="68" height="26" fill="${P.tape}" opacity=".85"/>
         ${head ? text(head, x, top + (small ? 52 : 60), { size: head.length > 8 ? 26 : small ? 30 : 34, font: 'display', anchor: 'middle', fill: P.red }) : ''}
-        ${lines.map((ln, k) => text(ln, x, body0 + k * lh, { size: small ? 33 : 38, font: 'script', anchor: 'middle' })).join('')}</g>`;
+        ${lines.map((ln, k) => text(ln, x, body0 + k * lh, { size: fit, font: 'script', anchor: 'middle' })).join('')}</g>`;
       out += popIn(x, y, t, at, inner);
     });
     return out;
@@ -516,6 +522,11 @@ function steps(spec, t) {
   });
   return wood + book + (spec.title ? text(spec.title, 380, 182, { size: 40, font: 'script', anchor: 'middle', fill: C.teal }) : '') + words;
 }
+steps.elements = (spec) => {
+  if (spec.style !== 'notes') return null;
+  const L = notesLayout(spec);
+  return L.list.map((st, i) => ({ x0: L.pos[i][0] - L.w / 2 - 8, x1: L.pos[i][0] + L.w / 2 + 8, y0: L.pos[i][1] - L.h / 2 - 20, y1: L.pos[i][1] + L.h / 2 + 10, at: st.at ?? 0.4 + i * 1.7 }));
+};
 steps.focus = (spec) => {
   if (spec.style !== 'notes') return [380, 300];
   const L = notesLayout(spec);

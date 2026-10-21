@@ -687,8 +687,11 @@ function kitTemplate(which) {
     const focus = which === 'diagram' && typeof fn.focus === 'function' ? fn.focus(spec) : null;
     const builds = focus && typeof kit.buildCamera === 'function' && !shot.camera;
     // builds with known element boxes get the follow camera: tight on what's there, widening as each element lands
-    const els = builds && typeof fn.elements === 'function' && typeof kit.followCamera === 'function' ? fn.elements(spec) : null;
+    const els = builds && typeof fn.elements === 'function' && typeof kit.followCamera === 'function' ? fn.elements(spec) : null; // null: keep buildCamera
+    // a stable room per shot (from its words), light rooms for data graphics that draw text straight onto the wall
+    const roomSeed = [...String(shot.vo || shot.kind)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
     return (t) => {
+      lazy('./backdrops').use(roomSeed, { light: which === 'data' });
       const fill = (list) => list && list.map((p) => ({ ...p, svg: p.render ? p.render(Math.max(0, t - (p.at || 0))) : p.svg || '' }));
       const world = fn({ ...spec, ...(panels ? { panels: fill(panels) } : {}), ...(frames ? { frames: fill(frames) } : {}) }, t);
       const c = els ? kit.followCamera(t, ctx.dur, els, { title: spec.title }) : builds ? kit.buildCamera(t, ctx.dur, focus) : { zoom: cameraZoom(shot.camera || 'locked', t, ctx) };
@@ -734,7 +737,7 @@ function compose(shot, ctx) {
       }
       if (it.text) {
         const k = M.clamp((t - it.at) * 5);
-        return `<g opacity="${n(k)}" data-qa="text" data-qn="text '${String(it.text).slice(0, 20)}'">${text(it.text, x, y, { size: it.size || 40, font: it.font || 'hand', fill: STICKER_COLORS[it.color] || it.color || (['board', 'night'].includes(shot.bg || 'board') ? P.paper : P.ink), anchor: it.anchor || 'middle' })}</g>`;
+        return `<g opacity="${n(k)}" data-qa="text" data-qn="text '${ui.esc(String(it.text).slice(0, 20))}'">${text(it.text, x, y, { size: it.size || 40, font: it.font || 'hand', fill: STICKER_COLORS[it.color] || it.color || (['board', 'night'].includes(shot.bg || 'board') ? P.paper : P.ink), anchor: it.anchor || 'middle' })}</g>`;
       }
       if (it.sticker) return ui.sticker(it.sticker, x, y, t, it.at, { size: it.size || 34, rot: it.rot ?? (i % 2 ? 2 : -3), color: STICKER_COLORS[it.color] || P.red });
       return '';

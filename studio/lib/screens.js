@@ -85,10 +85,9 @@ function measure(str, size, font = 'hand') {
 const ink = (w = 3) => `stroke="${P.ink}" stroke-width="${w}" stroke-linejoin="round"`;
 
 // ---------- shared helpers ----------
+// The room behind the screen (lib/backdrops.js; the kit template picks the room per shot).
 function backdrop({ desk = true } = {}) {
-  return `<defs><radialGradient id="scrWall" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="${C.wall}"/><stop offset="1" stop-color="${C.wallDeep}"/></radialGradient></defs>
-    <rect width="1280" height="720" fill="url(#scrWall)"/>
-    ${desk ? `<rect y="622" width="1280" height="98" fill="${C.desk}"/><path d="M0 622 H1280" stroke="${P.ink}" stroke-width="4"/><path d="M0 652 H1280" stroke="${C.deskDark}" stroke-width="2"/>` : ''}`;
+  return require('./backdrops').room(undefined, { desk });
 }
 
 // Entrance: rises 40px and fades in over 0.3s.

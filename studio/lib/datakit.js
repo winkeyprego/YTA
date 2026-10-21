@@ -75,9 +75,9 @@ const fmtChange = (c) => (typeof c === 'number' ? `${c > 0 ? '+' : c < 0 ? '−'
 const popAt = (cx, cy, p, inner) => (p.on ? `<g opacity="${n(p.o)}" transform="translate(${n(cx)} ${n(cy)}) scale(${n(p.s)}) translate(${n(-cx)} ${n(-cy)})">${inner}</g>` : '');
 const shadow = 'filter="url(#shadow)"';
 
+// The room behind the graphic (lib/backdrops.js; the kit template picks a light room per shot).
 function backdrop() {
-  return `<rect width="1280" height="720" fill="${C.bg}"/>
-    <path d="M0 560 Q640 520 1280 560 V720 H0 Z" fill="${C.bgFloor}"/>`;
+  return require('./backdrops').room(undefined, { deskY: 566 }); // graphics stand on the desk (the old floor line)
 }
 
 function emblem(cx, cy, r, letters, color = C.navy) {
