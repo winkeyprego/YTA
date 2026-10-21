@@ -14,7 +14,9 @@ assert len([a for t,a in p.tags if 'data-faq' in a])==7
 assert len([a for t,a in p.tags if 'data-month' in a])==12
 assert len([a for t,a in p.tags if 'data-reader' in a])==5
 assert len([a for t,a in p.tags if 'data-conversation-step' in a])==3
-assert len([a for t,a in p.tags if 'data-cost-row' in a])==3
+assert len([a for t,a in p.tags if 'data-question' in a])==len(C['checkup']['questions'])==8
+assert len([a for t,a in p.tags if 'data-leak-item' in a])==sum(len(g[1]) for g in C['leakHunt']['groups'])>=25
+assert 'data-cost-row' not in source
 assert len([a for t,a in p.tags if 'data-life' in a])==10
 comments=C.get('comments',{}).get('items',[])
 if comments:
@@ -27,7 +29,7 @@ assert 'aria-label="Alicia"' in source and 'sig-flourish' in source
 assert 'alicia-joint' not in source and 'data-greet' not in source
 assert len(C['pack']['items'])==11
 assert source.count(C['ui']['disclaimer'])==2
-assert source.index('id="the-pack"')<source.index('id="try-it"')<source.index('id="pricing"')
+assert source.index('id="check-up"')<source.index('id="the-pack"')<source.index('id="try-it"')<source.index('id="pricing"')
 assert 'composite characters based on real people' in text
 assert '105,000' not in text and '2,000,000' not in text and 'real-life stories' not in text
 assert 'not excerpts from the paid pack' in text

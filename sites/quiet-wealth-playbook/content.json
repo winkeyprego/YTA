@@ -761,7 +761,8 @@
       "Keep / review / unsure"
     ],
     "heroInvitation": "There is no need to rush. Take a look around first.",
-    "heroHandnote": "Let’s start where you are."
+    "heroHandnote": "Let’s start where you are.",
+    "heroCheckup": "Or take the two-minute money check-up"
   },
   "productSamples": [],
   "conversationJourney": {
@@ -992,5 +993,477 @@
       }
     ],
     "noVideo": "Alicia Invests on YouTube"
+  },
+  "checkup": {
+    "eyebrow": "A free two-minute check-up",
+    "heading": "Where are you right now?",
+    "intro": "Eight quick questions. There are no wrong answers, and nothing you choose leaves this page. At the end you get a short plan you can keep.",
+    "aliciaNote": "Answer the way things are, not the way you wish they were. That’s where a good plan starts.",
+    "start": "Start the check-up",
+    "back": "Back",
+    "progress": "Question {n} of {total}",
+    "resultEyebrow": "Your check-up",
+    "stepsTitle": "Three next steps",
+    "chaptersTitle": "Where I’d start in the Playbook",
+    "lifeTitle": "For your situation",
+    "print": "Print my plan",
+    "retake": "Start again",
+    "toPack": "See what’s in the Playbook",
+    "disclaimer": "A starting point for learning, based on your answers. Not personal financial advice.",
+    "noJs": "The check-up needs JavaScript to work. You can still open the free printable worksheet.",
+    "questions": [
+      {
+        "id": "feel",
+        "q": "When you check your bank balance, how do you usually feel?",
+        "options": [
+          [
+            "avoid",
+            "I’d rather not look"
+          ],
+          [
+            "anxious",
+            "A little anxious"
+          ],
+          [
+            "fine",
+            "Mostly fine"
+          ],
+          [
+            "calm",
+            "Calm. I know what’s there."
+          ]
+        ]
+      },
+      {
+        "id": "bills",
+        "q": "Do you know roughly what your regular bills add up to each month?",
+        "options": [
+          [
+            "no",
+            "Not really"
+          ],
+          [
+            "rough",
+            "Roughly"
+          ],
+          [
+            "exact",
+            "Yes, close to the dollar"
+          ]
+        ]
+      },
+      {
+        "id": "surprise",
+        "q": "If a $500 surprise bill arrived tomorrow, you would…",
+        "options": [
+          [
+            "borrow",
+            "Put it on a card or borrow"
+          ],
+          [
+            "stretch",
+            "Pay it, but it would hurt"
+          ],
+          [
+            "savings",
+            "Take it from money set aside"
+          ],
+          [
+            "easy",
+            "Pay it without much thought"
+          ]
+        ]
+      },
+      {
+        "id": "subs",
+        "q": "How well do you know your subscriptions and memberships?",
+        "options": [
+          [
+            "unknown",
+            "I couldn’t list them all"
+          ],
+          [
+            "most",
+            "I know most of them"
+          ],
+          [
+            "reviewed",
+            "I review them regularly"
+          ]
+        ]
+      },
+      {
+        "id": "debt",
+        "q": "Apart from a mortgage, how does debt feel right now?",
+        "options": [
+          [
+            "heavy",
+            "Heavy"
+          ],
+          [
+            "manageable",
+            "Some, but manageable"
+          ],
+          [
+            "none",
+            "None, or almost none"
+          ]
+        ]
+      },
+      {
+        "id": "payday",
+        "q": "What usually happens on payday?",
+        "options": [
+          [
+            "drift",
+            "It comes in and goes out"
+          ],
+          [
+            "bills",
+            "Bills get paid, the rest drifts"
+          ],
+          [
+            "plan",
+            "Every dollar has a job"
+          ]
+        ]
+      },
+      {
+        "id": "decision",
+        "q": "Is there a big money decision coming in the next year?",
+        "options": [
+          [
+            "car",
+            "A car"
+          ],
+          [
+            "home",
+            "A home"
+          ],
+          [
+            "celebration",
+            "A wedding or big celebration"
+          ],
+          [
+            "raise",
+            "Asking for a raise or a new job"
+          ],
+          [
+            "none",
+            "Nothing big right now"
+          ]
+        ]
+      },
+      {
+        "id": "life",
+        "q": "Which sounds most like your life right now?",
+        "options": [
+          [
+            "0",
+            "Tight budget"
+          ],
+          [
+            "1",
+            "High earner"
+          ],
+          [
+            "2",
+            "Couple or family"
+          ],
+          [
+            "3",
+            "50 and over"
+          ],
+          [
+            "4",
+            "Irregular income"
+          ]
+        ]
+      }
+    ],
+    "stages": {
+      "fog": [
+        "Clearing the fog",
+        "Before any plan, it helps to see clearly. Your first job is simply to know where the money goes. That alone takes a lot of the worry out of it."
+      ],
+      "cushion": [
+        "Building your cushion",
+        "You know your numbers. The next layer is a buffer, so a surprise bill becomes an inconvenience instead of an emergency."
+      ],
+      "rhythm": [
+        "Finding your rhythm",
+        "The basics are there. What would help most now is a simple system, so the right things happen on payday without you having to think about them."
+      ],
+      "ahead": [
+        "Looking further ahead",
+        "Your foundations look steady. This is a good moment to learn the next steps calmly, at your own pace."
+      ]
+    },
+    "steps": {
+      "look": "Look at your balance once this week, just to look. No decisions needed.",
+      "list": "Add up your regular bills for one month. A rough number is fine.",
+      "subs": "List your subscriptions and memberships. The Leak Hunt on this page can help.",
+      "cushion": "Choose a first cushion target, even $500, and give it its own account.",
+      "debt": "Write each debt on one page with its balance, rate and minimum payment.",
+      "payday": "Decide what happens on payday: bills first, then a set amount to savings, then spending.",
+      "car": "Before the car decision, add up the full yearly cost: payment, insurance, fuel and repairs.",
+      "home": "Before the home decision, list the costs beyond the mortgage: taxes, insurance, repairs and upkeep.",
+      "celebration": "Set the number you’re comfortable with before the planning starts.",
+      "raise": "Write down three things you’ve done this year that show the value of your work.",
+      "moneydate": "Set a monthly money date to look at where things stand.",
+      "learn": "Learn the basics of investing before choosing anything. Take it slowly."
+    },
+    "chapterFor": {
+      "list": 1,
+      "subs": 2,
+      "payday": 3,
+      "cushion": 4,
+      "debt": 5,
+      "celebration": 6,
+      "car": 7,
+      "moneydate": 8,
+      "raise": 9,
+      "home": 10,
+      "learn": 11
+    }
+  },
+  "leakHunt": {
+    "heading": "Let’s find the quiet leaks.",
+    "intro": "Tap the costs you pay for, then change the amounts to match your own bills. You’ll see what they add up to in a year, and decide what to keep, ask about or cancel.",
+    "libraryTitle": "Tap what you pay for",
+    "exampleNote": "Example list to start with. Tap any cost to add or remove it, and change the amounts to match your bills.",
+    "amountsNote": "Starting amounts are only examples.",
+    "yourList": "Your list",
+    "addOwn": "Add your own",
+    "ownName": "Something else",
+    "remove": "Remove",
+    "hourly": "Your take-home pay per hour (optional)",
+    "yearTotal": "Across one year",
+    "monthTotal": "About {amount} a month",
+    "hours": "About {hours} hours of work a year",
+    "decisions": [
+      [
+        "keep",
+        "Keep"
+      ],
+      [
+        "call",
+        "Ask about"
+      ],
+      [
+        "cancel",
+        "Cancel"
+      ]
+    ],
+    "callTotal": "Marked to ask about",
+    "cancelTotal": "Marked to cancel",
+    "note": "Amounts to look at, not a promise of savings.",
+    "planTitle": "Your action list",
+    "planEmpty": "Mark a cost as Ask about or Cancel and your action list appears here.",
+    "callLabel": "Ask about",
+    "cancelLabel": "Cancel",
+    "callScript": "Hello. I’m reviewing my {name} bill. Could you explain my current plan, any extra fees and the lower-cost options available? Before I change anything, please confirm the total price, what I would lose and whether there is a contract or cancellation fee.",
+    "cancelSteps": "Check the terms and the last billing date, cancel, and keep the confirmation.",
+    "print": "Print my action list",
+    "download": "Download as a spreadsheet (CSV)",
+    "downloadStatus": "Spreadsheet prepared. Open it in Excel or import it into Google Sheets.",
+    "downloadFile": "quiet-wealth-leak-hunt.csv",
+    "decisionLabel": "Decision",
+    "empty": "Add a cost you recognize and I’ll add up the year with you.",
+    "groups": [
+      [
+        "Watching and listening",
+        [
+          [
+            "Video streaming",
+            16,
+            "monthly"
+          ],
+          [
+            "Second streaming service",
+            12,
+            "monthly"
+          ],
+          [
+            "Music streaming",
+            11,
+            "monthly"
+          ],
+          [
+            "Cable or satellite TV",
+            85,
+            "monthly"
+          ],
+          [
+            "Gaming subscription",
+            15,
+            "monthly"
+          ],
+          [
+            "News or magazine",
+            10,
+            "monthly"
+          ]
+        ]
+      ],
+      [
+        "Phone and tech",
+        [
+          [
+            "Phone plan",
+            65,
+            "monthly"
+          ],
+          [
+            "Home internet",
+            70,
+            "monthly"
+          ],
+          [
+            "Cloud storage",
+            3,
+            "monthly"
+          ],
+          [
+            "Device protection plan",
+            12,
+            "monthly"
+          ],
+          [
+            "App subscriptions",
+            10,
+            "monthly"
+          ],
+          [
+            "Device payment plan",
+            35,
+            "monthly"
+          ]
+        ]
+      ],
+      [
+        "Everyday life",
+        [
+          [
+            "Gym membership",
+            40,
+            "monthly"
+          ],
+          [
+            "Meal kit",
+            60,
+            "weekly"
+          ],
+          [
+            "Food delivery membership",
+            10,
+            "monthly"
+          ],
+          [
+            "Coffee out",
+            20,
+            "weekly"
+          ],
+          [
+            "Lunch out",
+            45,
+            "weekly"
+          ],
+          [
+            "Shopping membership",
+            15,
+            "monthly"
+          ],
+          [
+            "Subscription box",
+            30,
+            "monthly"
+          ]
+        ]
+      ],
+      [
+        "Car",
+        [
+          [
+            "Car payment",
+            450,
+            "monthly"
+          ],
+          [
+            "Car insurance",
+            150,
+            "monthly"
+          ],
+          [
+            "Roadside assistance",
+            10,
+            "monthly"
+          ],
+          [
+            "Car wash membership",
+            25,
+            "monthly"
+          ],
+          [
+            "Parking",
+            80,
+            "monthly"
+          ]
+        ]
+      ],
+      [
+        "Fees and charges",
+        [
+          [
+            "Bank account fee",
+            12,
+            "monthly"
+          ],
+          [
+            "Credit card annual fee",
+            95,
+            "yearly"
+          ],
+          [
+            "ATM fees",
+            6,
+            "monthly"
+          ],
+          [
+            "Overdraft or late fees",
+            35,
+            "monthly"
+          ],
+          [
+            "Buy now, pay later plan",
+            50,
+            "monthly"
+          ]
+        ]
+      ]
+    ],
+    "starter": [
+      [
+        "Video streaming",
+        "keep"
+      ],
+      [
+        "Music streaming",
+        "keep"
+      ],
+      [
+        "Phone plan",
+        "call"
+      ],
+      [
+        "Gym membership",
+        "keep"
+      ],
+      [
+        "Food delivery membership",
+        "cancel"
+      ]
+    ],
+    "noJs": "The Leak Hunt needs JavaScript to work. You can still open the free printable worksheet."
   }
 }

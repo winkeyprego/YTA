@@ -2,7 +2,7 @@
 (() => {
  'use strict';
  const root=document.documentElement;
- // The checkout and worksheet fixtures run this file without a real page; nothing below applies there.
+ // The checkout and tool fixtures run this file without a real page; nothing below applies there.
  if(!root || typeof window.addEventListener!=='function') return;
  const config=JSON.parse(document.querySelector('#site-config')?.textContent||'{}');
  const moving=()=>root.dataset.motion!=='paused' && root.dataset.motion!=='reduced' && !matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -139,32 +139,6 @@
  });
  if(sheets.length) showSheet(0);
 
- // The worksheet: proportional bar and Alicia's running note. Amounts stay on this page.
- const tool=document.querySelector('[data-cost-tool]');
- if(tool){
-  const factors={monthly:12,weekly:52,yearly:1};
-  const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:2});
-  const bars=[...tool.querySelectorAll('[data-ledger-bar] i')];
-  const bubble=document.querySelector('[data-ledger-bubble]');
-  let last='';
-  const paint=()=>{
-   const rows=[...tool.querySelectorAll('[data-cost-row]')].map(row=>{
-    const amount=Number(row.querySelector('[data-cost-amount]').value);
-    const safe=Number.isFinite(amount)?Math.min(10000,Math.max(0,amount)):0;
-    return {annual:safe*(factors[row.querySelector('[data-cost-frequency]').value]||12),review:row.querySelector('[data-cost-review]').checked};
-   });
-   const total=rows.reduce((sum,row)=>sum+row.annual,0);
-   const review=rows.filter(row=>row.review).reduce((sum,row)=>sum+row.annual,0);
-   bars.forEach((bar,i)=>bar.style.setProperty('--w',total>0?rows[i].annual/total*100:1));
-   const text=total<=0?'Add a cost you recognize and I’ll add up the year with you.'
-    :review>0?`Together, these come to ${money.format(total)} a year. You’ve marked ${money.format(review)} to look at more closely.`
-    :`Together, these come to ${money.format(total)} a year. Tick one you’d like to look at more closely.`;
-   if(bubble && text!==last){bubble.textContent=text;if(last && moving()) replay(bubble,'is-new');last=text;}
-  };
-  tool.addEventListener('input',paint);tool.addEventListener('change',paint);
-  paint();
- }
-
  // Alicia's signature writes itself the first time the letter scrolls into view.
  const sign=document.querySelector('[data-signature]');
  if(sign && moving() && 'IntersectionObserver' in window && sign.getBoundingClientRect().top>innerHeight){
@@ -187,7 +161,7 @@
  }
 
  // Gentle reveals for content below the first screen. Anything already visible stays put.
- const reveal=[...document.querySelectorAll('.section-head,.volume,.tile,.ledger-card,.sheet-stack,.path li,.person,.dial,.chapter-card,.readers-art,.letter,.offer-card,.faq-list,.finale-inner')];
+ const reveal=[...document.querySelectorAll('.section-head,.volume,.tile,.leak-card,.checkup-card,.sheet-stack,.path li,.person,.dial,.chapter-card,.readers-art,.letter,.offer-card,.faq-list,.finale-inner')];
  if(moving() && 'IntersectionObserver' in window){
   const show=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('in');show.unobserve(entry.target);}}),{rootMargin:'0px 0px -8% 0px'});
   reveal.forEach((el,i)=>{

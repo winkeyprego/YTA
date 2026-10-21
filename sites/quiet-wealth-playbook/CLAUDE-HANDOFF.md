@@ -65,7 +65,7 @@ Motion currently moves complete artwork; it is not real head/hand character anim
 | `source/character.js` | Whole-illustration visibility and animation pausing. |
 | `character.py` | Displays the COMPLETE teacup pose from the preserved atlas. |
 | `prepare.py` | Generates HTML, optimized images, local fonts, legal pages, printables and combined JavaScript into `dist/`. |
-| `verify.py`, `verify-client.mjs`, `verify-starter.mjs` | Static/content checks, checkout attribution tests and calculator/CSV tests. |
+| `verify.py`, `verify-client.mjs`, `verify-tools.mjs` | Static/content checks, checkout attribution tests and check-up and Leak Hunt tests. |
 | `source/assets/` | Original reference and generated PNG artwork, fonts and site/share assets. |
 | `qa/` | Screenshots, historical Lighthouse reports and verification notes. |
 | `history/edition-6/` | Recovery material only, not the current implementation. |
@@ -130,7 +130,7 @@ Set-Location 'C:\FrameFact\App\sites\quiet-wealth-playbook'
 & 'C:\FrameFact\App\backend\.venv\Scripts\python.exe' prepare.py
 & 'C:\FrameFact\App\backend\.venv\Scripts\python.exe' verify.py
 & 'C:\FrameFact\App\.runtime\node-v22.23.2-win-x64\node.exe' verify-client.mjs
-& 'C:\FrameFact\App\.runtime\node-v22.23.2-win-x64\node.exe' verify-starter.mjs
+& 'C:\FrameFact\App\.runtime\node-v22.23.2-win-x64\node.exe' verify-tools.mjs
 & 'C:\FrameFact\App\.runtime\node-v22.23.2-win-x64\node.exe' --check dist/site.js
 ```
 

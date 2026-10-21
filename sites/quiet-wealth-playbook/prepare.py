@@ -124,7 +124,8 @@ def main():
     shutil.copy2(ROOT/'source/edition9.css',D/'styles.css')
     shutil.copy2(ROOT/'source/sales.js',D/'site.js')
     with (D/'site.js').open('a',encoding='utf-8') as client:
-        client.write('\n'+(ROOT/'source/edition9.js').read_text(encoding='utf-8'))
+        for name in ('checkup.js','leakhunt.js','edition9.js'):
+            client.write('\n'+(ROOT/'source'/name).read_text(encoding='utf-8'))
     print(f'Ready to preview or deploy: {D}')
 
 

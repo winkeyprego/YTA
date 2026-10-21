@@ -1,4 +1,4 @@
-/* Static sales page enhancements. Entries and worksheets stay on the visitor's device. */
+/* Static sales page enhancements: checkout links, FAQ and chapter events, email form and motion preference. */
 (() => {
  'use strict';
  const config=JSON.parse(document.querySelector('#site-config')?.textContent || '{}');
@@ -30,49 +30,6 @@
   track('Email signup',{state:'submitted'});
   document.querySelector('#newsletter-status').textContent=config.emailSubmitting;
  });
- const tool=document.querySelector('[data-cost-tool]');
- if(tool && config.sales){
-  const s=config.sales;
-  const rows=[...tool.querySelectorAll('[data-cost-row]')];
-  const factors={monthly:12,weekly:52,yearly:1};
-  const format=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2});
-  const entries=()=>rows.map(row=>{
-   const amount=Number(row.querySelector('[data-cost-amount]').value);
-   const frequency=row.querySelector('[data-cost-frequency]').value;
-   return {
-    name:row.querySelector('[data-cost-name]').value.trim(),
-    amount:Number.isFinite(amount)?Math.min(10000,Math.max(0,amount)):0,
-    frequency:Object.hasOwn(factors,frequency)?frequency:'monthly',
-    review:row.querySelector('[data-cost-review]').checked
-   };
-  });
-  const annual=row=>Math.round(row.amount*factors[row.frequency]*100)/100;
-  const update=()=>{
-   const data=entries();
-   tool.querySelector('[data-cost-total]').value=format.format(data.reduce((sum,row)=>sum+annual(row),0));
-   tool.querySelector('[data-review-total]').value=format.format(data.filter(row=>row.review).reduce((sum,row)=>sum+annual(row),0));
-  };
-  tool.addEventListener('input',update); tool.addEventListener('change',update);
-  const csv=value=>{
-   let text=String(value);
-   // Prevent user-entered spreadsheet formulas from being evaluated when opened.
-   if(/^[\s]*[=+@-]/.test(text)) text="'"+text;
-   return '"'+text.replaceAll('"','""')+'"';
-  };
-  tool.querySelector('[data-download-costs]').addEventListener('click',()=>{
-   if(rows.some(row=>{const field=row.querySelector('[data-cost-amount]');return typeof field.reportValidity==='function' && !field.reportValidity();})) return;
-   const data=entries();
-   const records=[[s.csvBrand],[s.sampleDisclosure],[],[s.expenseLabel,s.costLabel,s.frequencyLabel,s.annualCsvLabel,s.reviewLabel],...data.map(row=>[row.name,row.amount,s.frequencyLabels[row.frequency],annual(row),row.review?s.yesLabel:s.noLabel]),[],[s.annualTotal,data.reduce((sum,row)=>sum+annual(row),0)],[s.reviewTotal,data.filter(row=>row.review).reduce((sum,row)=>sum+annual(row),0)],[s.reviewNote]];
-   const content='\uFEFF'+records.map(row=>row.map(csv).join(',')).join('\r\n');
-   const url=URL.createObjectURL(new Blob([content],{type:'text/csv;charset=utf-8'}));
-   const link=document.createElement('a'); link.href=url;link.download=s.downloadFile;
-   document.body.append(link);link.click();link.remove();
-   setTimeout(()=>URL.revokeObjectURL(url),60000);
-   tool.querySelector('[data-tool-status]').textContent=s.downloadStatus;
-   track('Starter worksheet downloaded',{source:'website'});
-  });
-  update();
- }
  const motion=document.querySelector('[data-motion-toggle]');
  if(motion){
   const media=matchMedia('(prefers-reduced-motion: reduce)');let paused=false;
@@ -87,11 +44,228 @@
  }
 })();
 
+/* Money check-up: eight questions, one at a time, then a short personal plan. Answers never leave the page. */
+(() => {
+ 'use strict';
+ const config=JSON.parse(document.querySelector('#site-config')?.textContent||'{}');
+ const cfg=config.checkup;
+
+ // Pure scoring, shared with verify-tools.mjs: answers {questionId: optionValue} -> stage, steps, chapters.
+ const result=(answers,setup)=>{
+  const a=answers;const needs=[];const add=key=>{if(!needs.includes(key)) needs.push(key);};
+  if(a.feel==='avoid') add('look');
+  if(a.bills==='no'||a.bills==='rough') add('list');
+  if(a.subs==='unknown') add('subs');
+  if(a.surprise==='borrow'||a.surprise==='stretch') add('cushion');
+  if(a.debt==='heavy') add('debt');
+  if(a.payday==='drift'||a.payday==='bills') add('payday');
+  if(a.debt==='manageable') add('debt');
+  const decision=a.decision&&a.decision!=='none'?a.decision:null;
+  const stage=a.feel==='avoid'||a.bills==='no'?'fog'
+   :a.surprise==='borrow'||a.surprise==='stretch'?'cushion'
+   :a.payday==='drift'||a.payday==='bills'||a.debt==='heavy'||a.debt==='manageable'||a.subs==='unknown'?'rhythm':'ahead';
+  // The step that matches the result comes first, so the plan and the stage agree.
+  const lead={fog:needs[0],cushion:'cushion',rhythm:['payday','debt','subs'].find(key=>needs.includes(key))}[stage];
+  if(lead) needs.splice(needs.indexOf(lead),1),needs.unshift(lead);
+  let steps=needs.slice(0,3);
+  if(decision&&!steps.includes(decision)) steps=[...steps.slice(0,2),decision];
+  for(const filler of ['moneydate','learn','subs']) if(steps.length<3&&!steps.includes(filler)) steps.push(filler);
+  let chapters=[...needs,...(decision?[decision]:[])].map(key=>setup.chapterFor[key]).filter(Boolean);
+  chapters=[...new Set(chapters)].slice(0,3);
+  const decisionChapter=decision&&setup.chapterFor[decision];
+  if(decisionChapter&&!chapters.includes(decisionChapter)) chapters=[...chapters.slice(0,2),decisionChapter];
+  for(const filler of [8,11,12]) if(chapters.length<3&&!chapters.includes(filler)) chapters.push(filler);
+  chapters.sort((x,y)=>x-y);
+  return {stage,steps,chapters,life:Number(a.life??0)};
+ };
+ window.quietWealthCheckup={result};
+
+ const root=document.querySelector('[data-checkup]');
+ if(!root||!cfg) return;
+ const form=root.querySelector('form');
+ const sets=[...form.querySelectorAll('[data-question]')];
+ const intro=root.querySelector('[data-checkup-intro]');
+ const bar=root.querySelector('[data-checkup-bar]');
+ const count=root.querySelector('[data-checkup-count]');
+ const back=root.querySelector('[data-checkup-back]');
+ const next=root.querySelector('[data-checkup-next]');
+ const out=root.querySelector('[data-checkup-result]');
+ let index=-1;
+ const esc=text=>String(text).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[ch]);
+
+ const show=i=>{
+  index=i;
+  root.classList.toggle('is-asking',i>=0&&i<sets.length);
+  root.classList.toggle('is-done',i>=sets.length);
+  intro.hidden=i>=0;
+  sets.forEach((set,n)=>{set.hidden=n!==i;});
+  back.hidden=i<=0||i>=sets.length;
+  // Going back to an answered question: re-picking the same answer fires no change event, so offer Next.
+  next.hidden=!(i>=0&&i<sets.length&&sets[i].querySelector('input:checked'));
+  bar.style.setProperty('--done',Math.max(0,Math.min(i,sets.length))/sets.length);
+  count.textContent=i>=0&&i<sets.length?cfg.progress.replace('{n}',i+1).replace('{total}',sets.length):'';
+  if(i>=0&&i<sets.length) (sets[i].querySelector('input:checked')||sets[i].querySelector('input')).focus({preventScroll:true});
+ };
+
+ const finish=()=>{
+  const answers=Object.fromEntries(new FormData(form));
+  const r=result(answers,cfg);
+  const [name,body]=cfg.stages[r.stage];
+  const chapters=config.chapters||[];
+  out.innerHTML=`<p class="eyebrow">${esc(cfg.resultEyebrow)}</p><h3>${esc(name)}</h3><p class="checkup-stage-body">${esc(body)}</p>
+<div class="checkup-plan"><section><h4>${esc(cfg.stepsTitle)}</h4><ol>${r.steps.map(key=>`<li>${esc(cfg.steps[key])}</li>`).join('')}</ol></section>
+<section><h4>${esc(cfg.chaptersTitle)}</h4><ul class="checkup-chapters">${r.chapters.map(n=>`<li><span>${String(n).padStart(2,'0')}</span><div><strong>${esc(chapters[n-1]?.title||'')}</strong><small>${esc(chapters[n-1]?.body||'')}</small></div></li>`).join('')}</ul></section></div>
+<p class="checkup-life"><strong>${esc(cfg.lifeTitle)}:</strong> ${esc(config.readerDescriptions?.[r.life]||'')}</p>
+<div class="checkup-actions"><button class="button" type="button" data-checkup-print>${esc(cfg.print)}</button><a class="text-link" href="#the-pack">${esc(cfg.toPack)}</a><button class="checkup-retake" type="button" data-checkup-retake>${esc(cfg.retake)}</button></div>
+<p class="fine-print">${esc(cfg.disclaimer)}</p>`;
+  out.hidden=false;
+  show(sets.length);
+  out.querySelector('h3').setAttribute('tabindex','-1');
+  out.querySelector('h3').focus({preventScroll:true});
+  root.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+  window.dispatchEvent(new CustomEvent('quietwealth:analytics',{detail:{name:'Check-up finished',props:{stage:r.stage}}}));
+ };
+
+ root.querySelector('[data-checkup-start]').addEventListener('click',()=>show(0));
+ back.addEventListener('click',()=>show(Math.max(0,index-1)));
+ next.addEventListener('click',()=>index>=sets.length-1?finish():show(index+1));
+ form.addEventListener('change',event=>{
+  if(!event.target.matches('input[type="radio"]')) return;
+  // A short pause lets the chosen answer register visually before the next question.
+  setTimeout(()=>index>=sets.length-1?finish():show(index+1),260);
+ });
+ form.addEventListener('submit',event=>{event.preventDefault();finish();});
+ out.addEventListener('click',event=>{
+  if(event.target.closest('[data-checkup-retake]')){form.reset();out.hidden=true;show(0);}
+  if(event.target.closest('[data-checkup-print]')){
+   document.documentElement.dataset.print='checkup';
+   window.print();
+   setTimeout(()=>delete document.documentElement.dataset.print,500);
+  }
+ });
+ root.classList.add('is-ready');
+ show(-1);
+})();
+
+/* Leak Hunt: pick recurring costs, see the year, decide keep / ask about / cancel, keep an action list. All local. */
+(() => {
+ 'use strict';
+ const config=JSON.parse(document.querySelector('#site-config')?.textContent||'{}');
+ const L=config.leakHunt;
+
+ // Pure helpers, shared with verify-tools.mjs.
+ const factors={monthly:12,weekly:52,yearly:1};
+ const clean=value=>{const n=Number(value);return Number.isFinite(n)?Math.min(10000,Math.max(0,n)):0;};
+ const annual=row=>Math.round(clean(row.amount)*(factors[row.frequency]||12)*100)/100;
+ const summarize=(rows,hourly)=>{
+  const sum=list=>Math.round(list.reduce((total,row)=>total+annual(row),0)*100)/100;
+  const total=sum(rows);const rate=clean(hourly);
+  return {total,monthly:Math.round(total/12*100)/100,call:sum(rows.filter(row=>row.decision==='call')),cancel:sum(rows.filter(row=>row.decision==='cancel')),
+   keep:sum(rows.filter(row=>row.decision!=='call'&&row.decision!=='cancel')),hours:rate>0?Math.round(total/rate):null};
+ };
+ const cell=value=>{
+  let text=String(value);
+  // Prevent user-entered spreadsheet formulas from being evaluated when opened.
+  if(/^[\s]*[=+@-]/.test(text)) text="'"+text;
+  return '"'+text.replaceAll('"','""')+'"';
+ };
+ const toCsv=(rows,labels,hourly)=>{
+  const s=summarize(rows,hourly);const decision=Object.fromEntries(labels.decisions);
+  const records=[[labels.csvBrand],[labels.disclosure],[],[labels.nameLabel,labels.amountLabel,labels.frequencyLabel,labels.annualLabel,labels.decisionLabel],
+   ...rows.map(row=>[row.name,clean(row.amount),labels.frequencyLabels[row.frequency]||row.frequency,annual(row),decision[row.decision]||decision.keep]),
+   [],[labels.yearTotal,s.total],[labels.callTotal,s.call],[labels.cancelTotal,s.cancel],[labels.note]];
+  return '﻿'+records.map(record=>record.map(cell).join(',')).join('\r\n');
+ };
+ const script=(template,name)=>template.replace('{name}',name.trim()||'this');
+ window.quietWealthLeakHunt={annual,summarize,toCsv,script,clean};
+
+ const root=document.querySelector('[data-leak-hunt]');
+ if(!root||!L) return;
+ const s=config.sales||{};
+ const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:2});
+ const list=root.querySelector('[data-leak-list]');
+ const chips=[...root.querySelectorAll('[data-leak-item]')];
+ const hourly=root.querySelector('[data-leak-hourly]');
+ const plan=root.querySelector('[data-leak-plan]');
+ const bubble=document.querySelector('[data-leak-bubble]');
+ const status=root.querySelector('[data-leak-status]');
+ const labels={...L,csvBrand:s.csvBrand,disclosure:s.sampleDisclosure,nameLabel:s.expenseLabel,amountLabel:s.costLabel,frequencyLabel:s.frequencyLabel,annualLabel:s.annualCsvLabel,frequencyLabels:s.frequencyLabels};
+ let uid=0;
+ const esc=text=>String(text).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[ch]);
+
+ const rowMarkup=(name,amount,frequency,decision)=>{
+  const id=++uid;
+  const freq=Object.entries(s.frequencyLabels||{monthly:'Monthly',weekly:'Weekly',yearly:'Yearly'}).map(([key,label])=>`<option value="${key}"${key===frequency?' selected':''}>${esc(label)}</option>`).join('');
+  const choices=L.decisions.map(([key,label])=>`<label class="leak-choice leak-${key}"><input type="radio" name="leak-decision-${id}" value="${key}"${key===decision?' checked':''}><span>${esc(label)}</span></label>`).join('');
+  return `<li class="leak-row" data-leak-row data-source="${esc(name)}"><div class="leak-name"><label class="sr-only" for="leak-name-${id}">${esc(s.expenseLabel||'Cost')}</label><input id="leak-name-${id}" data-leak-name value="${esc(name)}" maxlength="60"></div>
+<div class="leak-amount"><label class="sr-only" for="leak-amount-${id}">${esc(s.costLabel||'Amount')}</label><span aria-hidden="true">$</span><input id="leak-amount-${id}" data-leak-amount type="number" min="0" max="10000" step="0.01" inputmode="decimal" value="${amount}"></div>
+<div class="leak-frequency"><label class="sr-only" for="leak-frequency-${id}">${esc(s.frequencyLabel||'Frequency')}</label><select id="leak-frequency-${id}" data-leak-frequency>${freq}</select></div>
+<fieldset class="leak-decision"><legend class="sr-only">${esc(L.decisionLabel)}</legend>${choices}</fieldset>
+<button class="leak-remove" type="button" data-leak-remove aria-label="${esc(L.remove)} ${esc(name)}">×</button><span class="leak-annual" data-leak-annual></span></li>`;
+ };
+ const rows=()=>[...list.querySelectorAll('[data-leak-row]')].map(row=>({
+  el:row,source:row.dataset.source,name:row.querySelector('[data-leak-name]').value,amount:row.querySelector('[data-leak-amount]').value,
+  frequency:row.querySelector('[data-leak-frequency]').value,decision:row.querySelector('input[type="radio"]:checked')?.value||'keep'}));
+ const add=(name,amount,frequency,decision='keep',focus=false)=>{
+  list.insertAdjacentHTML('beforeend',rowMarkup(name,amount,frequency,decision));
+  if(focus) list.lastElementChild.querySelector(name===L.ownName?'[data-leak-name]':'[data-leak-amount]').select();
+ };
+ const syncChips=()=>{const picked=new Set(rows().map(row=>row.source));chips.forEach(chip=>chip.setAttribute('aria-pressed',String(picked.has(chip.dataset.name))));};
+
+ let lastBubble='';
+ const paint=()=>{
+  const data=rows();const sum=summarize(data,hourly.value);
+  data.forEach(row=>{row.el.querySelector('[data-leak-annual]').textContent=money.format(annual(row))+' / yr';row.el.dataset.decision=row.decision;});
+  root.querySelector('[data-leak-total]').value=money.format(sum.total);
+  root.querySelector('[data-leak-monthly]').textContent=L.monthTotal.replace('{amount}',money.format(sum.monthly));
+  root.querySelector('[data-leak-hours]').textContent=sum.hours?L.hours.replace('{hours}',sum.hours.toLocaleString('en-US')):'';
+  root.querySelector('[data-leak-call]').value=money.format(sum.call);
+  root.querySelector('[data-leak-cancel]').value=money.format(sum.cancel);
+  const bar=root.querySelector('[data-leak-bar]');
+  ['keep','call','cancel'].forEach(key=>bar.querySelector(`.bar-${key}`).style.setProperty('--w',sum.total>0?sum[key]/sum.total*100:0));
+  const actions=data.filter(row=>row.decision==='call'||row.decision==='cancel');
+  plan.innerHTML=actions.length?actions.map(row=>row.decision==='call'
+   ?`<li class="plan-call"><p class="plan-tag">${esc(L.callLabel)}</p><h5>${esc(row.name||L.ownName)} <span>${money.format(annual(row))} / yr</span></h5><blockquote>${esc(script(L.callScript,row.name.toLowerCase()))}</blockquote></li>`
+   :`<li class="plan-cancel"><p class="plan-tag">${esc(L.cancelLabel)}</p><h5>${esc(row.name||L.ownName)} <span>${money.format(annual(row))} / yr</span></h5><p>${esc(L.cancelSteps)}</p></li>`).join('')
+   :`<li class="plan-empty">${esc(L.planEmpty)}</li>`;
+  const text=sum.total<=0?L.empty
+   :`Together, these come to ${money.format(sum.total)} a year.`+(sum.hours?` That’s about ${sum.hours.toLocaleString('en-US')} hours of work.`:'')+(sum.call+sum.cancel>0?` You’ve marked ${money.format(sum.call+sum.cancel)} to look at.`:' Mark any you’d like to look at.');
+  if(bubble&&text!==lastBubble){bubble.textContent=text;lastBubble=text;}
+  syncChips();
+ };
+
+ chips.forEach(chip=>chip.addEventListener('click',()=>{
+  const existing=rows().find(row=>row.source===chip.dataset.name);
+  if(existing) existing.el.remove(); else add(chip.dataset.name,chip.dataset.amount,chip.dataset.frequency,'keep',true);
+  paint();
+ }));
+ root.querySelector('[data-leak-add]').addEventListener('click',()=>{add(L.ownName,'','monthly','keep',true);paint();});
+ list.addEventListener('click',event=>{const remove=event.target.closest('[data-leak-remove]');if(remove){remove.closest('[data-leak-row]').remove();paint();}});
+ root.addEventListener('input',paint);root.addEventListener('change',paint);
+ root.querySelector('[data-leak-print]').addEventListener('click',()=>{
+  document.documentElement.dataset.print='leaks';window.print();setTimeout(()=>delete document.documentElement.dataset.print,500);
+ });
+ root.querySelector('[data-leak-download]').addEventListener('click',()=>{
+  const fields=[...list.querySelectorAll('[data-leak-amount]'),hourly];
+  if(fields.some(field=>typeof field.reportValidity==='function'&&!field.reportValidity())) return;
+  const url=URL.createObjectURL(new Blob([toCsv(rows(),labels,hourly.value)],{type:'text/csv;charset=utf-8'}));
+  const link=document.createElement('a');link.href=url;link.download=L.downloadFile;document.body.append(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  status.textContent=L.downloadStatus;
+  window.dispatchEvent(new CustomEvent('quietwealth:analytics',{detail:{name:'Leak hunt downloaded',props:{source:'website'}}}));
+ });
+
+ const library=Object.fromEntries(L.groups.flatMap(([,items])=>items.map(item=>[item[0],item])));
+ L.starter.forEach(([name,decision])=>{const item=library[name];if(item) add(item[0],item[1],item[2],decision);});
+ root.classList.add('is-ready');
+ paint();
+})();
+
 /* Edition 9 interactions. Nothing here intercepts scrolling or sends what visitors type. */
 (() => {
  'use strict';
  const root=document.documentElement;
- // The checkout and worksheet fixtures run this file without a real page; nothing below applies there.
+ // The checkout and tool fixtures run this file without a real page; nothing below applies there.
  if(!root || typeof window.addEventListener!=='function') return;
  const config=JSON.parse(document.querySelector('#site-config')?.textContent||'{}');
  const moving=()=>root.dataset.motion!=='paused' && root.dataset.motion!=='reduced' && !matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -228,32 +402,6 @@
  });
  if(sheets.length) showSheet(0);
 
- // The worksheet: proportional bar and Alicia's running note. Amounts stay on this page.
- const tool=document.querySelector('[data-cost-tool]');
- if(tool){
-  const factors={monthly:12,weekly:52,yearly:1};
-  const money=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:2});
-  const bars=[...tool.querySelectorAll('[data-ledger-bar] i')];
-  const bubble=document.querySelector('[data-ledger-bubble]');
-  let last='';
-  const paint=()=>{
-   const rows=[...tool.querySelectorAll('[data-cost-row]')].map(row=>{
-    const amount=Number(row.querySelector('[data-cost-amount]').value);
-    const safe=Number.isFinite(amount)?Math.min(10000,Math.max(0,amount)):0;
-    return {annual:safe*(factors[row.querySelector('[data-cost-frequency]').value]||12),review:row.querySelector('[data-cost-review]').checked};
-   });
-   const total=rows.reduce((sum,row)=>sum+row.annual,0);
-   const review=rows.filter(row=>row.review).reduce((sum,row)=>sum+row.annual,0);
-   bars.forEach((bar,i)=>bar.style.setProperty('--w',total>0?rows[i].annual/total*100:1));
-   const text=total<=0?'Add a cost you recognize and I’ll add up the year with you.'
-    :review>0?`Together, these come to ${money.format(total)} a year. You’ve marked ${money.format(review)} to look at more closely.`
-    :`Together, these come to ${money.format(total)} a year. Tick one you’d like to look at more closely.`;
-   if(bubble && text!==last){bubble.textContent=text;if(last && moving()) replay(bubble,'is-new');last=text;}
-  };
-  tool.addEventListener('input',paint);tool.addEventListener('change',paint);
-  paint();
- }
-
  // Alicia's signature writes itself the first time the letter scrolls into view.
  const sign=document.querySelector('[data-signature]');
  if(sign && moving() && 'IntersectionObserver' in window && sign.getBoundingClientRect().top>innerHeight){
@@ -276,7 +424,7 @@
  }
 
  // Gentle reveals for content below the first screen. Anything already visible stays put.
- const reveal=[...document.querySelectorAll('.section-head,.volume,.tile,.ledger-card,.sheet-stack,.path li,.person,.dial,.chapter-card,.readers-art,.letter,.offer-card,.faq-list,.finale-inner')];
+ const reveal=[...document.querySelectorAll('.section-head,.volume,.tile,.leak-card,.checkup-card,.sheet-stack,.path li,.person,.dial,.chapter-card,.readers-art,.letter,.offer-card,.faq-list,.finale-inner')];
  if(moving() && 'IntersectionObserver' in window){
   const show=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('in');show.unobserve(entry.target);}}),{rootMargin:'0px 0px -8% 0px'});
   reveal.forEach((el,i)=>{

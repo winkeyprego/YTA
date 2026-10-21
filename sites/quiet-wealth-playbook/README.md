@@ -16,6 +16,13 @@ The free-worksheet invitation now sits inside the closing section unless an emai
 
 New artwork from the owner (October 2026) is in place: Alicia waving full-length opens the conversation, presents the collection and the worksheet, sits with a laptop beside "Where I'd begin", thinks through the reader situations, holds the Playbook in the offer (the concept cover is laid over the plain book in CSS, so a final cover can replace it), and walks into the closing section. The letter sits over the morning kitchen scene and is signed with `source/assets/site/alicia-signature.svg`, which writes itself once when motion is allowed. Standalone signature files in four colours are in `source/assets/site/signature/`.
 
+### Free tools
+
+- **Money check-up** (`#check-up`, `source/checkup.js`, copy under `checkup` in `content.json`). Eight questions, one at a time, then a result: a stage (Clearing the fog, Building your cushion, Finding your rhythm, Looking further ahead), three next steps, three chapters to start with, a line for the reader's situation, and a printable plan. The step that matches the stage always comes first. Scoring is the pure `result()` function, tested in `verify-tools.mjs`. Only the stage name goes to analytics.
+- **Leak Hunt** (`#try-it`, `source/leakhunt.js`, copy under `leakHunt`). Replaces the old three-row worksheet. A library of 29 common recurring costs with editable example amounts, a personal list with keep / ask about / cancel, yearly and monthly totals, optional hours of work from take-home pay, a decision bar, an action list with a call script for each cost marked "ask about", print and CSV. Amounts are clamped to 0 to 10,000; CSV escapes formulas and carries the disclosure. Nothing leaves the browser.
+
+Printing uses `html[data-print]` so only the chosen plan prints. The claude.ai preview blocks printing and downloads; both work on a normal host.
+
 ### Viewer comments
 
 The "What viewers say about the videos" section appears only when `comments.items` in `content.json` has entries. Each entry:
@@ -88,4 +95,4 @@ Optional analytics receives only event names and action locations, never workshe
 
 ## Checks
 
-Run `python verify.py`, `node verify-client.mjs`, `node verify-starter.mjs` and `node --check dist/site.js` after preparing. Browser and performance evidence is in `qa/REPORT.md`. Before accepting payments, complete `LAUNCH-CHECKLIST.md`.
+Run `python verify.py`, `node verify-client.mjs`, `node verify-tools.mjs` and `node --check dist/site.js` after preparing. Browser and performance evidence is in `qa/REPORT.md`. Before accepting payments, complete `LAUNCH-CHECKLIST.md`.
