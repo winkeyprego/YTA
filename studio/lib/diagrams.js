@@ -130,10 +130,22 @@ function drawLine(x1, y1, x2, y2, t, at, { dur = 0.4, color = P.ink, width = 4, 
 }
 
 // ---------- camera helper ----------
+// `focus` may carry a third element: the tight zoom for that diagram (from fitFocus), so a wide build
+// (5 portraits, 8 notes) is never cropped while it lands.
 function buildCamera(t, dur, focus = [640, 360], { tight = 1.14, end = 0.95, back = 2.6 } = {}) {
+  if (focus[2] != null) tight = focus[2];
   const startBack = Math.max(0.4, dur - back);
   const k = M.ease.inOut(M.prog(t, startBack, Math.max(0.5, dur - startBack - 0.15)));
   return { zoom: M.lerp(tight, end, k), fx: M.lerp(focus[0], 640, k), fy: M.lerp(focus[1], 380, k) };
+}
+
+// Focus for a build whose elements span the box [x0..x1, y0..y1]: centre of the box plus the tightest zoom
+// (<= max) that still shows the whole box with `pad` to spare. Returns [fx, fy, zoom] for buildCamera.
+function fitFocus(x0, x1, y0, y1, { max = 1.14, pad = 26 } = {}) {
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  const z = Math.min(max, cx / Math.max(1, cx - x0 + pad), (W - cx) / Math.max(1, x1 + pad - cx),
+    cy / Math.max(1, cy - y0 + pad), (H - cy) / Math.max(1, y1 + pad - cy));
+  return [cx, cy, Math.max(1, z)];
 }
 
 // ---------- equation ----------

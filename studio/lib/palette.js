@@ -42,6 +42,37 @@ module.exports = {
   windowDark: '#3a4659',
   moon: '#f4efd8',
 
+  // skin tones, light -> deep (warm, natural). Use as spec.skin; hands follow it. Deep tones get blushDeep automatically.
+  skin1: '#f6e2cc',
+  skin2: '#ebc8a2',
+  skin3: '#d6a67c',
+  skin4: '#b98559',
+  skin5: '#94613f',
+  skin6: '#6a4330',
+  blushDeep: '#a85b48',  // blush for skin4..skin6
+
+  // uniforms & work clothes (lib/characters.js)
+  olive: '#6b6f47',      // military uniform, service cap
+  oliveDark: '#4f5236',
+  policeNavy: '#2e3a4f', // police shirt and cap
+  turnout: '#b59c66',    // firefighter turnout coat (tan)
+  reflective: '#d9d77a', // reflective bands (muted hi-vis)
+  flight: '#7d8a6a',     // flight suit (sage green)
+  labWhite: '#f2f0ea',   // lab coat
+  ivory: '#f7f2e6',      // wedding dress, veil
+  silhouette: '#35302c', // the not-yet-revealed person (all-dark figure)
+
+  // objects (lib/props-extra.js)
+  water: '#6f8e96',      // sea / pool surface
+  waterDark: '#587780',
+  felt: '#3f6b4f',       // card table felt
+  feltDark: '#33583f',
+  scope: '#7fbf86',      // radar sweep / blips (phosphor green)
+  scopeDark: '#17261d',  // radar screen background
+  flightOrange: '#d27a3c', // flight recorder ("black box") orange
+  vanWhite: '#ebe8df',   // plain white van, jet fuselage
+  steel: '#8e979a',      // machines, breaker panels
+
   board: '#2f3a34',      // chalkboard / dark device backgrounds
   boardDark: '#232b27',
 };
