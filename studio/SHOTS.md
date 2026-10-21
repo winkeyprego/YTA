@@ -63,17 +63,28 @@ Starters: `episodes/finance-starter` (money topics) and `episodes/template-start
   "chars": [ { "who": "banker", "spot": "center", "mood": "smug", "pose": "pointLeft", "poseOn": "idea" } ],
   "frame": "wide", "speaker": "banker", "line": "House prices never fall.", "lineOn": "house" }
 ```
-- `set`: `office`, `boardroom`, `tradingFloor`, `bankExterior`, `towerNight`, `streetDay`, `home`, `hall`, `courtroom`, `factory`, `studioNews`.
-  Options go in `setOpts`:
-  - `office`: `{chart, hour}`
-  - `boardroom` / `studioNews`: `{screen, headline}`
-  - `bankExterior` / `towerNight`: `{name}`; `towerNight` also takes `{darkFrom, darkTo}` (seconds over which the windows go dark)
-  - `streetDay`: `{signs: [a, b, c]}`
-  - `home`: `{tvContent}`
-  - `courtroom`: `{judge}`
+- `set` (33 sets; contact sheets: `episodes/test-sets*`). Options go in `setOpts`.
+  **Money world** (`lib/sets.js`):
+  - `office` `{chart, hour, night}` · `boardroom` `{screen, headline}` · `tradingFloor` · `factory` · `courtroom` `{judge}`
+  - `bankExterior` / `towerNight` `{name}`; `towerNight` also `{darkFrom, darkTo}` (seconds over which the windows go dark)
+  - `streetDay` `{signs: [a, b, c]}` · `hall` `{neutral}` (wall lamps instead of flags and seal)
+  - `home` / `studioNews` `{tvContent | screen, finance, tvHeadline}`: the screen shows `tvContent`/`screen`, else the red
+    falling bars when `finance: true`, else a headline, else a neutral picture
+  - `stage` `{banner, panel, podium:false}` (keynote/conference; with `panel` the table covers right/farRight)
+  - `weddingGarden` `{dusk}` · `resort` `{laptop:false}` · `dataCenter` · `carNight` `{speed}` (center only: back-seat passenger)
+  - `classroom` `{board: "chalk text\nline two"}` · `podcast` `{headphones, onAir:false}` (left/center/right)
+  - `airportGate` `{flights, gate}` · `prisonExterior` `{name}`
+  **History and places** (`lib/sets-history.js`; calm establishing places, never damage):
+  - `skylineWTC` `{towers:true|false, dusk, night, light}` (`towers:false` = only the empty sky; `light` = the memorial beams, night only)
+  - `memorial` `{night, light}` · `fieldPA` · `pentagon` (aerial, **no cast**) · `capitol` · `courthouse` `{name}` · `embassy` `{name, flagColor}`
+  - `controlRoom` `{mapLabel}` (left/center/right = seated operators) · `ovalOffice` (center = behind the desk)
+  - `cinema` `{title, festival}` (festival front at night) · `cinemaInside` `{title}` (screening room, stage spots)
+  - `balcony` `{skyline: 'generic'|'wtc', time: 'day'|'dusk'|'night', towers, light}` · `gulfSkyline`
+  Exteriors (`towerNight`, `bankExterior`, `skylineWTC`, `memorial`, `fieldPA`, `pentagon`, `capitol`, `courthouse`, `embassy`,
+  `gulfSkyline`, `prisonExterior`) default to the full frame.
 - `chars[]`: `who` (a cast key, see below), `spot` (`left`, `center`, `right`, `farLeft`, `farRight`), `mood`, `pose`, `poseOn`,
   `mood2` + `mood2On` (change of expression), `pose2` + `pose2On` (second gesture), `holding` (`phone`, `paper`, `money`, `mic`,
-  `briefcase`, `sign`), `carry: "box"`, `walk: "in"|"out"`.
+  `briefcase`, `sign`, `glass`, `camera`, `laptop`, `book`), `carry: "box"`, `walk: "in"|"out"`.
 - `frame`: `wide` (default) or `close` (head and shoulders of `focus` or `speaker`).
 - `speaker` + `line`: the speaker says a line while the mouth moves. In finance it's a floating handwritten line; in war, a speech bubble. Add `"bubble": true` to force a bubble.
 - `lines: [{ "who", "text", "on" }]`: a conversation. Each line replaces the previous one. With `"frame": "reverse"`, the camera cuts close to whoever is speaking (shot / reverse shot).
@@ -96,6 +107,8 @@ Starters: `episodes/finance-starter` (money topics) and `episodes/template-start
   "stamp": { "text": "$613 BILLION IN DEBT", "on": "billion" } }
 ```
 
+Also: `redact: ["phrase", ...]` (black bars), `unredactOn` (the bars lift on that word), `classified: "TOP SECRET"` (a red band).
+
 ### `chart`: a line that rises (and optionally falls)
 ```json
 { "template": "chart", "vo": "...", "title": "U.S. HOME PRICES", "data": [[2000, 100], [2006.5, 184], [2012, 134]],
@@ -116,7 +129,38 @@ A numeric `value` counts up. A text `value` just pops. Without `set`, the backgr
   "stops": [ { "year": "2003", "title": "RATES AT 1%", "lines": ["Money gets cheap"], "on": "2003" } ],
   "end": { "label": "LEHMAN", "sub": "SEPT 2008", "on": "lehman" }, "tallyLabel": "CHANCES TO CUT IT" }
 ```
-Up to 5 stops. The spark reaches each stop on its word.
+Up to 5 stops. The spark reaches each stop on its word. `endStyle`: `bomb` (default), `card`, `flag`; `rope`: `fuse` (default) or
+`thread` (a red string; defaults the heading to THE RECORD). For tragedies use `"endStyle":"card","rope":"thread"`, or `case`.
+
+### `case`: the investigation board (mysteries, disputed claims, tragedies)
+```json
+{ "template": "case", "vo": "...", "heading": "THE CLAIMS", "sub": "and what the record shows",
+  "cards": [ { "title": "THE CLAIM", "lines": ["short line", "short line"], "verdict": "FALSE", "on": "claim", "verdictOn": "false" } ] }
+```
+Up to 6 cards pin up in order, joined by red thread; each verdict stamp lands on its own word.
+Verdicts: `FALSE`, `UNPROVEN`, `STILL OPEN`, `TRUE`, `MISLEADING` (or any text, with `verdictColor`).
+
+### `compose`: free placement (metaphors, one-off scenes)
+```json
+{ "template": "compose", "vo": "...", "bg": "board",
+  "items": [ { "prop": "balanceScale", "x": 640, "y": 600, "tip": 1, "left": "RISK", "right": "REWARD", "on": "risk" },
+             { "who": "leo", "x": 300, "y": 640, "mood": "worried", "on": "leo" },
+             { "text": "Words", "x": 640, "y": 140, "size": 60, "on": "words" },
+             { "sticker": "KEY PHRASE", "x": 900, "y": 300, "on": "key" } ] }
+```
+`bg`: `board`, `paper`, `wall`, `desk`, `night`, or any set name (with `setOpts`); `front: true` draws that set's foreground.
+Anchors are bottom-centre (people and props; `jet` is centred). Items pop in on their cue. Props:
+- Money: `cashStack` (height, w), `moneyBag` (label), `coinPile` (count), `goldBars` (rows), `banknote` (value, rot), `piggyBank` (shake),
+  `vault` (opens from its cue), `moneyRain`
+- Furniture: `desk`, `clock` (hour), `wallClock` (time "9:30"), `paperStack` (label), `phone`, `monitor` (kind bars|line|text),
+  `chair`, `plant`, `bookshelf`, `flagPole` (kind us|plain), `podium` (seal), `couch`, `tv`, `column`, `machine`
+- Moving objects: `balanceScale` (tip -1..1, left, right), `bell` (ringAt), `countdownClock` (from, to, unit, rate, label),
+  `invitation` (title, date), `doorsRow` (count, every), `sharkFins` (count, speed), `circuitBreaker` (tripAfter),
+  `weather` (kind sun|storm|hurricane), `photocopier` (pages, every), `badge` (name, role), `van` (dir, drive),
+  `radarScope` (blips, ring), `blackBox` (ping), `jet` (kind business|fighter, dir, fly; open sky only), `thermometer` (value, max, unit, label),
+  `pokerTable` (cards), `puzzle` (cols, rows, missing), `coffeeCup` (color), `clipboard` (title, count <= 10),
+  `evidenceTray` (items), `houseOfCards` (levels, fallAt), `rocket` (launch)
+One-line descriptions of every prop: `DOCS` at the bottom of `lib/propkit.js`.
 
 ### `map`: real geography
 ```json
@@ -124,6 +168,9 @@ Up to 5 stops. The spark reaches each stop on its word.
   "highlight": { "United States of America": "#4f6f8f" }, "cities": [ { "name": "New York", "lon": -74, "lat": 40.7, "on": "york" } ],
   "arrows": [ { "from": [-74, 40.7], "to": [-0.1, 51.5], "on": "london", "label": "CONTAGION" } ] } }
 ```
+`view.rings: [{ lon, lat, miles | km, label, on }]` draws dashed range circles. `view.fit: ["Germany", "Poland"]` frames countries.
+Places too small for the world map (a few blocks, a town, a field): `"city": { "name": "LOWER MANHATTAN", "sub": "...", "water": ["left", "bottom"],
+"grid": true, "pins": [{ "label": "...", "x": 0.6, "y": 0.4, "on": "word" }] }` draws a generic, labelled-illustrative city plate.
 See the top of `lib/maps.js` for every option.
 
 ### `money`: money graphics (`lib/money.js`)
@@ -145,9 +192,22 @@ The full field lists are at the top of `lib/screens.js`, `lib/datakit.js` and `l
 
 | template | kinds |
 |---|---|
-| `screen` | `socialPost`, `phoneNotification`, `browserArticle`, `appPage`, `newsLive`, `terminal`, `chatThread` |
-| `data` | `stockChart`, `rankingBoard`, `winnersLosers`, `calendarFlip`, `cheque`, `countUp`, `tickerChip` |
-| `diagram` | `equation`, `loop`, `funnel`, `orgTree`, `portraits`, `steps` (`style: "book"` or `"notes"`), `split`, `montage` |
+| `screen` | `socialPost`, `phoneNotification`, `browserArticle`, `appPage`, `newsLive`, `terminal`, `chatThread`, `email`, `videoPage`, `cctv` (scene hallway/doorway), `radar` |
+| `data` | `stockChart`, `rankingBoard`, `winnersLosers`, `calendarFlip`, `cheque`, `countUp`, `countDown`, `ledger`, `donut`, `dualChart`, `leverage`, `tickerChip` |
+| `diagram` | `equation`, `loop`, `funnel`, `orgTree`, `portraits`, `steps` (`style: "book"` or `"notes"`), `section` (abstract structural schematic), `split`, `montage` |
+
+**Field names come from the kit file headers** and `--plan` checks them (also one level down: `rows[]`, `slices[]`, `a`/`b`...).
+A misspelled field is a warning ("dualChart a has no field "points" (a takes label, data, color)"), and `--qa` flags any frame
+that renders almost empty, so a wrong field never reaches the render unnoticed. The new kinds at a glance:
+- `countDown {from, to, prefix, suffix, caption}` red count with a down arrow; lands on its cue like `countUp`
+- `ledger {title, rows: [{date, name, amount, note, on}], total}` handwritten book; negative amounts in red
+- `donut {title, slices: [{label, value, color, on}], center, centerSub, unit, hole}` (hole: false = pie)
+- `dualChart {title, a: {label, data, color}, b: {...}, splitOn, splitLabel, rebase}` two lines from 100, the split lands on its cue
+- `leverage {own, borrowed, move, moveOn, prefix}` own money + borrowed bricks, then the move wipes it out (or gains)
+- `calendarFlip {from: "JULY 24", to: "JULY 29"}` flips day by day and circles the last (month/year mode as before)
+- `email {from, to, subject, body, sendOn, fly}` typed, sent, SENT lands on it · `videoPage {title, channel, views, viewsFrom, viewsOn, emblem}`
+- `cctv {label, time: "08:46:00", scene: "hallway"|"doorway"}` grey security frame, ticking clock
+- `radar {blips: [{x, y} | {angle, dist}], ring, inner, innerLabel, label}` (ring: true = only the rim is covered)
 
 `split` panels and `montage` frames can hold a whole shot: `{ "label": "2007", "on": "2007", "shot": { "template": "talk", ... } }`.
 Montage frames without `at`/`on` spread evenly over the shot. Diagram builds hold tight on the first element and pull back at the end automatically.
@@ -165,7 +225,11 @@ Words in `[brackets]` turn gold. Keep the `vo` on a title short (under 5s).
 **Built in:**
 - Money and business: `banker`, `oldBanker`, `robberBaron`, `ceo`, `founder`, `founderTurtle`, `investor`, `trader`, `analyst`
 - Officials: `regulator`, `regulatorWoman`, `politician`, `judge`, `reporter`
-- Ordinary people: `homeowner`, `homeownerWoman`, `worker`, `child`, `elderly`, `elderlyWoman`, `crowdA`, `crowdB`, `crowdC`
+- Uniforms and jobs: `officer` (military), `pilot`, `fighterPilot`, `controller` (headset), `policeOfficer`, `firefighter`,
+  `scientist`, `engineer`
+- Ordinary people: `homeowner`, `homeownerWoman`, `worker`, `child`, `elderly`, `elderlyWoman`, `student`, `shopkeeper`, `passerby`,
+  `neighbor`, `groom`, `bride`, `crowdA`, `crowdB`, `crowdC`
+- `unknown`: a dark faceless silhouette (someone not yet revealed, or a person we shouldn't draw)
 
 **The finance host:** `host` (detailed face, from the owner's illustration) or `hostHouse` (the same person in house style).
 She is an occasional character, not a presenter on every shot. See RECIPES.md, "The host".
@@ -175,9 +239,12 @@ She is an occasional character, not a presenter on every shot. See RECIPES.md, "
 "cast": { "musk": { "base": "founder", "hair": "side", "hairColor": "#3a2d25" } }
 ```
 - Hair: `slick`, `side`, `bald`, `bob`, `curly`, `bun`, `long`, `spiky`, `ponytail`
-- Extras: `glasses`, `moustache` (`brush`, `walrus`, `thin`), `hat` (`tophat`, `fedora`, `cap`), `cigar`, `pin`, `badge`, `lanyard`
-- Outfits: `suit`, `shirt`, `dress`, `coat`, `hoodie`, `turtleneck`, `vest`, `robe`, `overalls`
-- Colours: `suit`, `shirt`, `tie`, `hairColor`
+- Extras: `glasses`, `moustache` (`brush`, `walrus`, `thin`), `beard` (`short`, `full`), `hat` (`tophat`, `fedora`, `cap`, `service`,
+  `police`, `hardhat`, `helmet`, `pilotHelmet`), `cigar`, `pin`, `badge`, `lanyard`, `headset`, `veil`
+- Outfits: `suit`, `shirt`, `dress`, `coat`, `hoodie`, `turtleneck`, `vest`, `robe`, `overalls`, `blazer`, `uniform`, `police`,
+  `firefighter`, `flightsuit`, `labcoat`, `tuxedo`, `weddingDress`, `tshirt` (+ `print`: 1-3 letters on the chest)
+- Colours (palette names or hex): `suit`, `shirt`, `tie`, `hairColor`, `beardColor`, `printColor`, `skin` (`skin1` light … `skin6` deep)
+- `--plan` lists every valid value and suggests the nearest one for a typo.
 
 ## Pacing rules (checked by `node render.js episodes/<ep> --plan`)
 - War: shots about 3.5s, with anything over 8s split. Finance: story shots about 3s, split over 7s.

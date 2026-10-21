@@ -230,7 +230,7 @@ function talk(shot, ctx) {
   const closeFrame = shot.frame === 'close' || shot.frame === 'reverse';
   // "wide" (default) frames the cast at a medium size like the references; "full" shows the whole set.
   // Establishing sets (exteriors, the night tower) default to full.
-  const ESTABLISHING = ['towerNight', 'bankExterior'];
+  const ESTABLISHING = ['towerNight', 'bankExterior', 'skylineWTC', 'memorial', 'fieldPA', 'pentagon', 'capitol', 'courthouse', 'embassy', 'gulfSkyline', 'prisonExterior'];
   const fitCast = () => {
     if (shot.frame === 'full' || (!shot.frame && ESTABLISHING.includes(shot.set)) || !chars.length) return { zoom: 1, fx: 640, fy: 360 };
     const boxes = chars.map((ch) => { const [x, y, s] = spotOf(ch); return { x0: x - 110 * s, x1: x + 110 * s, y0: y - 330 * s, y1: y + 10 }; });
@@ -489,12 +489,22 @@ function fuse(shot, ctx) {
     const cards = stopDefs.map((s, i) => ui.indexCard({ x: s.x - 105, y: 236, w: 210, h: 124, title: s.title, lines: s.lines || [], rot: i % 2 ? 2 : -2 }, t, arrive[i])).join('');
     const board = `<rect width="${W}" height="${H}" fill="${P.woodDark}"/>
       <rect x="22" y="22" width="${W - 44}" height="${H - 44}" fill="${P.board}" stroke="${P.ink}" stroke-width="5"/>
-      ${text(shot.heading || 'THE FUSE', 640, 110, { size: 54, font: 'display', fill: P.paper, anchor: 'middle', opacity: 0.9 })}
-      ${text(shot.sub || 'every point where someone could have cut it', 640, 150, { size: 28, fill: P.paperDim, anchor: 'middle' })}`;
-    return cam(board + dev.fuse({ x0, x1, base: 470, stops: stopDefs, end: shot.end, k, t }) + cards, { zoom: cameraZoom(shot.camera || 'locked', t, ctx) })
-      + dev.tally(shot.tallyLabel || 'CHANCES TO CUT IT', reached, 930, 48, { w: 290 })
+      ${text(shot.heading || (shot.rope === 'thread' ? 'THE RECORD' : 'THE FUSE'), 640, 110, { size: 54, font: 'display', fill: P.paper, anchor: 'middle', opacity: 0.9 })}
+      ${text(shot.sub ?? (shot.rope === 'thread' ? '' : 'every point where someone could have cut it'), 640, 150, { size: 28, fill: P.paperDim, anchor: 'middle' })}`;
+    return cam(board + dev.fuse({ x0, x1, base: 470, stops: stopDefs, end: shot.end ? { ...shot.end, at: endAt } : undefined, endStyle: shot.endStyle, rope: shot.rope, k, t }) + cards, { zoom: cameraZoom(shot.camera || 'locked', t, ctx) })
+      + dev.tally(shot.tallyLabel || (shot.rope === 'thread' ? 'MISSED CHANCES' : 'CHANCES TO CUT IT'), reached, 930, 48, { w: 290 })
       + overlays(shot, t, ctx, { side: 'left' });
   };
+}
+
+// ---------- case: the investigation board (no fire; suits tragedies, mysteries, debates) ----------
+// { template: 'case', heading, sub, cards: [{ title, lines, verdict: 'FALSE'|'UNPROVEN'|'STILL OPEN'|..., verdictColor, on, verdictOn }] }
+// Cards pin up in order with red thread drawing between them; each verdict stamp slams on its own cue. Up to 6 cards.
+function caseShot(shot, ctx) {
+  const raw = shot.cards || [];
+  const cards = raw.map((c, i) => ({ ...c, at: ctx.cue(c.on, c.at ?? 0.5 + i * 1.6), verdictAt: c.verdict ? ctx.cue(c.verdictOn, c.verdictAt ?? (c.on ? ctx.cue(c.on, 0.5 + i * 1.6) + 0.9 : 1.4 + i * 1.6)) : undefined }));
+  return (t) => cam(dev.caseBoard({ heading: shot.heading, sub: shot.sub, cards, t }), { zoom: cameraZoom(shot.camera || 'locked', t, ctx) })
+    + overlays(shot, t, ctx, { side: 'left' });
 }
 
 // ---------- map: real geography (lib/maps.js) ----------
@@ -515,10 +525,15 @@ function mapShot(shot, ctx) {
   const v = shot.view || {};
   const frameView = v.fit ? maps.fitTo(v.fit, { padding: v.padding ?? 90 }) : { center: v.center || [0, 20], zoom: v.zoom || 1 };
   const view = { ...v, ...frameView, highlight: cueMap(v.highlight), hatch: cueMap(v.hatch),
-    labels: cueAll(v.labels), cities: cueAll(v.cities), arrows: cueAll(v.arrows) };
+    labels: cueAll(v.labels), cities: cueAll(v.cities), arrows: cueAll(v.arrows), rings: cueAll(v.rings) };
   delete view.fit;
   const [fx, fy] = shot.focus ? maps.project(shot.focus[0], shot.focus[1], view) : [640, 360];
   const legend = (shot.legend || []).map((l) => ({ ...l, color: color(l.color) }));
+  // "city": a stylised city-scale inset (illustrative, not a real street map) for places too small for the world map
+  if (shot.city) {
+    const city = { ...shot.city, pins: cueAll(shot.city.pins), at: ctx.cue(shot.city.on, shot.city.at ?? 0.3) };
+    return (t) => cam(maps.cityPlate({ ...city, t }), { zoom: cameraZoom(shot.camera || 'creep', t, ctx) }) + overlays(shot, t, ctx, { side: 'right' });
+  }
   return (t) => cam(maps.mapView({ ...view, t }), { zoom: cameraZoom(shot.camera || { mode: 'push' }, t, ctx), fx, fy })
     + (legend.length ? maps.legend(legend, t, ctx.cue(shot.legendOn, 0.3)) : '')
     + overlays(shot, t, ctx, { side: 'right' });
@@ -607,9 +622,9 @@ function resolveCues(obj, ctx) {
 const KIT_FILES = { screen: './screens', data: './datakit', diagram: './diagrams' };
 // The kinds each kit offers (other exports are helpers).
 const KIT_KINDS = {
-  screen: ['socialPost', 'phoneNotification', 'browserArticle', 'appPage', 'newsLive', 'terminal', 'chatThread'],
-  data: ['stockChart', 'rankingBoard', 'winnersLosers', 'calendarFlip', 'cheque', 'countUp', 'tickerChip'],
-  diagram: ['equation', 'loop', 'funnel', 'orgTree', 'portraits', 'steps', 'split', 'montage'],
+  screen: ['socialPost', 'phoneNotification', 'browserArticle', 'appPage', 'newsLive', 'terminal', 'chatThread', 'email', 'videoPage', 'cctv', 'radar'],
+  data: ['stockChart', 'rankingBoard', 'winnersLosers', 'calendarFlip', 'cheque', 'countUp', 'tickerChip', 'countDown', 'ledger', 'donut', 'dualChart', 'leverage'],
+  diagram: ['equation', 'loop', 'funnel', 'orgTree', 'portraits', 'steps', 'split', 'montage', 'section'],
 };
 const KIT_SKIP = ['template', 'kind', 'vo', 'dur', 'minDur', 'tail', 'id', 'vignette', 'fill', 'stamp', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
 
@@ -641,6 +656,8 @@ function kitTemplate(which) {
         spec.value = Math.round((spec.value / big[0]) * 10) / 10;
         spec.suffix = big[1];
       }
+    }
+    if (shot.kind === 'countUp' || shot.kind === 'countDown') {
       const land = spec.at;
       spec.at = Math.min(land, 0.25);
       if (shot.dur == null && land > 0.8) spec.dur = Math.max(1.2, land - spec.at + 0.3);
@@ -711,7 +728,7 @@ function compose(shot, ctx) {
   };
 }
 
-const TEMPLATES = { compose, talk, versus, document: documentShot, chart, stat, fuse, map: mapShot, money, title, chapter, card,
+const TEMPLATES = { case: caseShot, compose, talk, versus, document: documentShot, chart, stat, fuse, map: mapShot, money, title, chapter, card,
   screen: kitTemplate('screen'), data: kitTemplate('data'), diagram: kitTemplate('diagram') };
 
 module.exports = { TEMPLATES, MOODS, POSES, KIT_KINDS, wrap };

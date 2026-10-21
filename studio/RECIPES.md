@@ -159,7 +159,7 @@ close-up with a single sticker. Simple is not empty: it's one clear idea, big, w
 - **Black cards** suit both presets: about 1 per 10–12 shots (finance) or 1 per 12–15 (history), on pivot lines.
 - **House formats are a default, not a rule.** "Why X Was COMPLETELY Avoidable" and the fuse fit "avoidable disaster" stories.
   For a biography, a mystery or a debate, use the story's own shape (its own title format, a different device:
-  `caseBoard`, a ledger, a scale).
+  the `case` template, a `data:ledger`, a `balanceScale` in `compose`).
 
 ## Kit limits (so nothing gets cut off)
 | Kit | Limit |
@@ -170,7 +170,11 @@ close-up with a single sticker. Simple is not empty: it's one clear idea, big, w
 | `diagram:orgTree` | 2 levels, 6 leaves |
 | `diagram:loop` | 3–5 nodes |
 | `diagram:split` | 3 panels |
-| `talk` | up to 5 people (spots) |
+| `talk` | up to 5 people (spots); `carNight` 1, `podcast` 3, `pentagon` none |
+| `case` | 6 cards |
+| `data:ledger` | ~8 rows |
+| `data:donut` | ~6 slices |
+| `compose` `clipboard` | 10 signatures |
 | stickers | 3 per shot, ~22 characters each |
 Over a limit? Split the beat into two shots.
 
@@ -190,7 +194,10 @@ Over a limit? Split the beat into two shots.
   the narration. Never use ethnic or religious symbols, stereotyped features or "evidence" visuals that make them look credible,
   and never give them a realistic broadcast look.
 - **Maps on tragedy topics:** no arrows tracing the attackers' routes into targets. Use pins and neutral labels.
-- **The fuse on tragedies:** its default end is a lit bomb, so don't use it. Use the `caseBoard` device, or the fuse with a
+- **The fuse on tragedies:** its default end is a lit bomb, so don't use it. Use the `case` template, or the fuse with a
   card end and thread (`"endStyle":"card","rope":"thread"`).
+- **Skylines and memorials:** `skylineWTC` with `towers:false` shows only absence (empty sky); the light beams only at night.
+  Never add smoke, glow or damage to a set. Aircraft (`jet`) only in open sky, never near a building. A structural point is a
+  `diagram:section` schematic, never a picture of the real building. Small places are a `map` with `city` (labelled illustrative).
 - **Real people:** caricature only through the cast's signature features. Never show them doing something the narration
   doesn't say they did, and never put invented quotes in their mouths. Quotes on screen must be the narration's own words.

@@ -20,10 +20,27 @@
 //       dark terminal window; each line types at ~40 cps from its at; blinking cursor.
 //   chatThread({ messages: [{ from: 'left'|'right', text, at }], title })
 //       phone chat; a typing indicator shows 0.6s before each left message, then the bubble pops.
+//   email({ from, to, subject, body: [lines] | 'text', at, sendAt, fly })
+//       mail-client compose window; From/To/Subject shown, the body types in at ~32 cps from at + 0.4. At sendAt
+//       (default: 0.5s after the typing ends) the SEND button presses, the window swooshes off to the top right and a
+//       "SENT" chip pops.
+//   videoPage({ title, channel, views, viewsFrom, length, progress, emblem, at, viewsAt })
+//       video-site watch page: player with an abstract thumbnail (channel emblem, falling line, coins; no real logos), play
+//       bar creeping forward, title, channel row, and the view counter counting up from viewsFrom (0) at viewsAt
+//       (default at + 0.8). views: number (counted, comma-formatted) or string. length: '12:08'. progress 0..1.
+//   cctv({ label, time, frame, frames, scene, at })
+//       grainy grey security-camera still of an EMPTY scene: scene 'hallway' (default) or 'doorway'. Overlay: REC dot,
+//       label ('CAM 03 · LOBBY'), timestamp whose trailing HH:MM:SS ticks with t ('07/24/2026 02:14:07'), and
+//       'FRAME 1/5' (frame: '1/5', or frame: 1 + frames: 5). Static burst at `at`. No people, no incidents.
+//   radar({ blips: [{ x, y } | { angle, dist }, label, at, ghost], ring, inner, innerLabel, label, period, at })
+//       round green radar scope in a console, with a rotating sweep (period 2.6s); blips glow as the sweep passes.
+//       x, y in -1..1 (y down) or angle (deg, 0 = up, clockwise) + dist 0..1. ring: true = coverage only on the rim:
+//       the middle (inner radius, default 0.55) is dark and labelled innerLabel ('NO COVERAGE'); blips there stay
+//       unseen (ghost: true draws them as faint dashed outlines). label: plate under the scope.
 
 const P = require('./palette');
 const { n, text, textWidth, esc } = require('./svg');
-const { typed, ease, prog, clamp } = require('./motion');
+const { typed, ease, prog, clamp, lerp } = require('./motion');
 
 // UI chrome colours (derived, finance pack only).
 const C = {
@@ -41,6 +58,11 @@ const C = {
   screenDark: '#1f2a33', // phone lock screen / terminal
   termText: '#a8dcb4',
   tvBlue: '#24344d',
+  cctvText: '#eef0ea',   // security-camera on-screen display
+  radar: '#163625',      // radar scope
+  radarDeep: '#0e2318',
+  radarLine: '#5fbf8a',
+  radarBright: '#b4f2c8',
 };
 
 // Real glyph advance widths (per 100px, ASCII 32-126) measured in Chromium for the two UI fonts,
@@ -403,4 +425,299 @@ function chatThread(spec, t) {
   return backdrop() + phone(cx, top, w, h, `<rect x="${cx - w / 2 + 14}" y="${top + 190}" width="${w - 28}" height="${h - 204}" rx="0" fill="${C.card}"/>${header}${out.join('')}`, { color: '#2c3a44' });
 }
 
-module.exports = { measure, socialPost, phoneNotification, browserArticle, appPage, newsLive, terminal, chatThread, emblem, avatar, SCREEN_COLORS: C };
+// ---------- shared: tagged text for the layout checker ----------
+const qa = (name, inner) => `<g data-qa="text" data-qn="${esc(String(name).slice(0, 28))}">${inner}</g>`;
+const fitSize = (str, maxW, size, font = 'hand') => Math.min(size, maxW / Math.max(1, measure(str, 1, font)));
+const commas = (v) => Math.round(v).toLocaleString('en-US');
+
+function windowChrome(x, y, w, h, { title = '', bar = 56, fill = C.card } = {}) {
+  return `<g filter="url(#softShadow)"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="20" fill="${fill}" ${ink(3)}/></g>
+    <path d="M${x + 20} ${y} h${w - 40} a20 20 0 0 1 20 20 v${bar - 20} H${x} v-${bar - 20} a20 20 0 0 1 20 -20 Z" fill="${C.chrome}"/>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="20" fill="none" ${ink(3)}/>
+    <path d="M${x} ${y + bar} H${x + w}" stroke="${P.ink}" stroke-width="2.5"/>
+    ${[0, 1, 2].map((i) => `<circle cx="${x + 32 + i * 28}" cy="${y + bar / 2}" r="8" fill="${[P.red, P.gold, P.green][i]}" ${ink(1.5)}/>`).join('')}
+    ${title ? text(title, x + w / 2, y + bar / 2 + 9, { size: 26, font: 'hand', fill: C.muted, anchor: 'middle' }) : ''}`;
+}
+
+// ---------- email ----------
+function email(spec, t) {
+  const at = spec.at ?? 0.2;
+  const x = 170, y = 46, w = 940, h = 590;
+  const size = 32, lh = size * 1.32;
+  const raw = Array.isArray(spec.body) ? spec.body : [spec.body || ''];
+  const lines = raw.flatMap((l) => (String(l).trim() ? wrap(l, w - 110, size) : [''])).slice(0, 7);
+  const typeAt = at + 0.4, cps = 32;
+  const typeEnd = typeAt + lines.join('\n').length / cps;
+  const sendAt = spec.sendAt ?? typeEnd + 0.5;
+  const field = (label, val, yy, bold) => `${text(label, x + 40, yy, { size: 26, font: 'hand', fill: C.muted })}
+    ${qa(`email ${label}`, text(val, x + 150, yy, { size: n(fitSize(val, w - 200, 30, bold ? 'display' : 'hand')), font: bold ? 'display' : 'hand' }))}
+    <path d="M${x + 30} ${yy + 20} H${x + w - 30}" stroke="${C.line}" stroke-width="2"/>`;
+  const press = prog(t, sendAt, 0.18);
+  const bs = 1 - 0.1 * Math.sin(Math.PI * press);
+  const bx = x + 40, by = y + h - 84, bw = 190, bh = 58;
+  const button = `<g transform="translate(${n(bx + bw / 2)} ${n(by + bh / 2)}) scale(${n(bs)}) translate(${n(-bx - bw / 2)} ${n(-by - bh / 2)})">
+      <rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="29" fill="${press > 0 && press < 1 ? P.greenDark : C.teal}" ${ink(2.5)}/>
+      <path d="M${bx + 30} ${by + 30} l34 -14 l-10 30 l-7 -10 Z" fill="${P.paper}" ${ink(1.5)}/>
+      ${text('SEND', bx + 120, by + 40, { size: 30, font: 'display', fill: P.paper, anchor: 'middle' })}</g>`;
+  const cursorOn = t >= typeAt && t < sendAt && Math.floor(t * 2.5) % 2 === 0;
+  let cur = '';
+  if (cursorOn) {
+    let left = Math.max(0, Math.floor((t - typeAt) * cps));
+    let li = 0;
+    while (li < lines.length - 1 && left > lines[li].length) { left -= lines[li].length + 1; li++; }
+    const cx = x + 50 + measure(lines[li].slice(0, left), size);
+    cur = `<rect x="${n(cx + 3)}" y="${n(y + 300 + li * lh - size * 0.8)}" width="3" height="${size}" fill="${P.ink}"/>`;
+  }
+  const win = `${windowChrome(x, y, w, h, { title: 'New Message' })}
+    ${field('From', spec.from || 'me@mail.com', y + 110)}
+    ${field('To', spec.to || 'everyone@mail.com', y + 168)}
+    ${field('Subject', spec.subject || '(no subject)', y + 226, true)}
+    ${qa('email body', typedLines(lines, x + 50, y + 300, lh, t, typeAt, cps, { size, font: 'hand' }) || '')}${cur}
+    <path d="M${x + 30} ${y + h - 106} H${x + w - 30}" stroke="${C.line}" stroke-width="2"/>
+    ${button}
+    <path d="M${x + 270} ${y + h - 72} l-10 18 a10 10 0 0 0 16 10 l16 -26" stroke="${C.muted}" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <rect x="${x + 310}" y="${y + h - 72}" width="28" height="30" rx="4" fill="none" stroke="${C.muted}" stroke-width="3"/>`;
+  // swoosh: shrink and fly to the top right, with speed lines
+  // by default the message stays on screen and SENT lands on it (an empty frame after the swoosh reads as a mistake);
+  // fly: true sends it off to the top right instead, for a short shot that ends right after
+  const sw = spec.fly ? ease.in(prog(t, sendAt + 0.2, 0.5)) : 0;
+  const ccx = x + w / 2, ccy = y + h / 2;
+  const flown = sw >= 1 ? '' : `<g opacity="${n(1 - sw * sw)}" transform="translate(${n(sw * 760)} ${n(-sw * 520)}) translate(${ccx} ${ccy}) rotate(${n(-10 * sw)}) scale(${n(1 - 0.75 * sw)}) translate(${-ccx} ${-ccy})">${win}</g>`;
+  const streaks = sw > 0 && sw < 1 ? [0, 1, 2].map((i) => {
+    const sx = ccx + sw * 760 - 260 - i * 50, sy = ccy - sw * 520 + 90 + i * 60;
+    return `<path d="M${n(sx - 220 * (1 - sw * 0.5))} ${n(sy + 150)} L${n(sx)} ${n(sy)}" stroke="${C.muted}" stroke-width="${6 - i}" stroke-linecap="round" opacity="${n(0.6 * (1 - sw))}"/>`;
+  }).join('') : '';
+  const sentPop = popAt(t, sendAt + (spec.fly ? 0.6 : 0.25), 640, 360, `<rect x="490" y="318" width="300" height="84" rx="42" fill="${C.teal}" ${ink(3)}/>
+    <path d="M532 362 l14 14 l28 -30" stroke="${P.paper}" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    ${qa('sent', text('SENT', 670, 373, { size: 40, font: 'display', fill: P.paper, anchor: 'middle' }))}`, 0.22);
+  const sent = spec.fly || !sentPop ? sentPop : `<g transform="translate(${x + w - 360 - 490} ${y + h - 84 - 318 - 14})">${sentPop}</g>`;
+  return backdrop({ desk: false }) + rise(t, at, flown + streaks, { dy: 30 }) + sent;
+}
+
+// ---------- videoPage ----------
+function videoPage(spec, t) {
+  const at = spec.at ?? 0.2;
+  const viewsAt = spec.viewsAt ?? at + 0.8;
+  const x = 70, y = 28, w = 1140, h = 664;
+  const vx = 100, vy = 112, vw = 740, vh = 416;
+  const channel = spec.channel || 'Money Channel';
+  const letters = spec.emblem || initials(channel);
+  const playing = t >= at + 0.6;
+  const zoom = 1 + 0.03 * clamp((t - at) / 6);
+  const thumb = `<defs><clipPath id="vpClip"><rect x="${vx}" y="${vy}" width="${vw}" height="${vh}" rx="12"/></clipPath></defs>
+    <g clip-path="url(#vpClip)"><g transform="translate(${vx + vw / 2} ${vy + vh / 2}) scale(${n(zoom)}) translate(${-vx - vw / 2} ${-vy - vh / 2})">
+      <rect x="${vx}" y="${vy}" width="${vw}" height="${vh}" fill="${C.tvBlue}"/>
+      <circle cx="${vx + 560}" cy="${vy + 170}" r="250" fill="#2b3d59"/>
+      <path d="M${vx + 40} ${vy + 120} L${vx + 200} ${vy + 160} L${vx + 300} ${vy + 140} L${vx + 420} ${vy + 260} L${vx + 500} ${vy + 240} L${vx + 600} ${vy + 307}" stroke="${P.red}" stroke-width="14" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+      <path d="M14 0 L-26 -22 L-26 22 Z" transform="translate(${vx + 610} ${vy + 314}) rotate(33.7)" fill="${P.red}" stroke-linejoin="round"/>
+      ${[0, 1, 2, 3].map((i) => `<ellipse cx="${vx + 150}" cy="${vy + 320 - i * 22}" rx="62" ry="18" fill="${P.gold}" ${ink(3)}/>`).join('')}
+      ${emblem(vx + 120, vy + 92, 96, letters, { color: P.redDark, round: true })}
+    </g></g>`;
+  const playBtn = playing ? '' : `<circle cx="${vx + vw / 2}" cy="${vy + vh / 2}" r="54" fill="${P.ink}" opacity=".75"/><path d="M${vx + vw / 2 - 16} ${vy + vh / 2 - 26} l44 26 l-44 26 Z" fill="${P.paper}"/>`;
+  const progress = clamp((spec.progress ?? 0.12) + Math.max(0, t - at) * 0.012);
+  const len = spec.length || '12:08';
+  const [lm, ls] = len.split(':').map(Number);
+  const secs = Math.floor(((lm || 0) * 60 + (ls || 0)) * progress);
+  const elapsed = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+  const bar = `<rect x="${vx}" y="${vy + vh - 52}" width="${vw}" height="52" fill="${P.ink}" opacity=".55" clip-path="url(#vpClip)"/>
+    <rect x="${vx + 20}" y="${vy + vh - 60}" width="${vw - 40}" height="8" rx="4" fill="${P.greyLight}" opacity=".6"/>
+    <rect x="${vx + 20}" y="${vy + vh - 60}" width="${n((vw - 40) * progress)}" height="8" rx="4" fill="${P.red}"/>
+    <circle cx="${n(vx + 20 + (vw - 40) * progress)}" cy="${vy + vh - 56}" r="10" fill="${P.red}" stroke="${P.paper}" stroke-width="2"/>
+    ${playing ? `<rect x="${vx + 24}" y="${vy + vh - 38}" width="7" height="22" fill="${P.paper}"/><rect x="${vx + 37}" y="${vy + vh - 38}" width="7" height="22" fill="${P.paper}"/>`
+      : `<path d="M${vx + 24} ${vy + vh - 38} l20 11 l-20 11 Z" fill="${P.paper}"/>`}
+    ${text(`${elapsed} / ${len}`, vx + 62, vy + vh - 18, { size: 22, font: 'hand', fill: P.paper })}`;
+  const title = String(spec.title || 'Untitled video');
+  const tl = wrap(title, vw, 34, 'display').slice(0, 2);
+  const tsize = tl.length > 1 ? 30 : 34;
+  const titleSvg = qa('video title', wrap(title, vw, tsize, 'display').slice(0, 2).map((l, i) => text(l, vx, vy + vh + 44 + i * 36, { size: tsize, font: 'display' })).join(''));
+  const rowY = vy + vh + (tl.length > 1 ? 112 : 92);
+  const views = spec.views;
+  const shownViews = typeof views === 'number' ? (t >= viewsAt ? commas(lerp(spec.viewsFrom || 0, views, ease.out(prog(t, viewsAt, 1.4)))) : commas(spec.viewsFrom || 0)) : String(views || '');
+  const viewsTxt = `${shownViews} views`;
+  const counting = typeof views === 'number' && t >= viewsAt && t < viewsAt + 1.4;
+  const chRow = `${emblem(vx + 24, rowY - 8, 46, letters.slice(0, 2), { color: P.redDark, round: true })}
+    ${qa('channel', text(channel, vx + 60, rowY + 2, { size: n(fitSize(channel, 230, 30)), font: 'hand' }))}
+    <rect x="${vx + 300}" y="${rowY - 30}" width="150" height="44" rx="22" fill="${P.ink}"/>
+    ${text('SUBSCRIBE', vx + 375, rowY + 0, { size: 22, font: 'display', fill: P.paper, anchor: 'middle' })}
+    ${qa('views', text(viewsTxt, vx + vw, rowY + 4, { size: n(fitSize(viewsTxt, 270, 34, 'display')), font: 'display', anchor: 'end', fill: counting ? P.greenDark : P.ink }))}`;
+  const side = [0, 1, 2, 3].map((i) => {
+    const sy = vy + 40 + i * 118;
+    return `<rect x="866" y="${sy}" width="150" height="86" rx="8" fill="${[C.tealLight, '#e3e5e0', C.tealLight, '#e3e5e0'][i]}" ${ink(2)}/>
+      <rect x="1030" y="${sy + 10}" width="150" height="14" rx="7" fill="${C.line}"/><rect x="1030" y="${sy + 34}" width="110" height="14" rx="7" fill="${C.line}"/>
+      <rect x="1030" y="${sy + 60}" width="80" height="12" rx="6" fill="${C.line}" opacity=".7"/>`;
+  }).join('');
+  const page = `${windowChrome(x, y, w, h, { bar: 62 })}
+    <rect x="${x + 150}" y="${y + 12}" width="${w - 300}" height="38" rx="19" fill="${C.card}" ${ink(2)}/>
+    ${text('videos.example/watch', x + 176, y + 39, { size: 22, font: 'hand', fill: C.muted })}
+    ${thumb}${playBtn}${bar}
+    <rect x="${vx}" y="${vy}" width="${vw}" height="${vh}" rx="12" fill="none" ${ink(3)}/>
+    ${titleSvg}${chRow}
+    ${text('Up next', 866, vy + 24, { size: 24, font: 'hand', fill: C.muted })}${side}`;
+  return backdrop({ desk: false }) + rise(t, at, page, { dy: 24 });
+}
+
+// ---------- cctv ----------
+function tickClock(str, add) {
+  const m = String(str).match(/(\d{1,2}):(\d{2}):(\d{2})\s*$/);
+  if (!m) return String(str);
+  let s = Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3]) + add;
+  s %= 86400;
+  const p2 = (v) => String(v).padStart(2, '0');
+  return str.slice(0, m.index) + `${p2(Math.floor(s / 3600))}:${p2(Math.floor(s / 60) % 60)}:${p2(s % 60)}`;
+}
+
+function cctvHallway() {
+  const vx = 640, vy = 320; // vanishing point
+  const bw = { x0: 520, x1: 760, y0: 230, y1: 430 }; // back wall
+  const persp = (fx, fy, k) => [lerp(fx, vx, k), lerp(fy, vy, k)];
+  const tiles = [];
+  for (let i = -6; i <= 6; i++) tiles.push(`<path d="M${n(640 + i * 230)} 720 L${n(lerp(bw.x0, bw.x1, (i + 6) / 12))} ${bw.y1}" stroke="#55595a" stroke-width="2"/>`);
+  [0.12, 0.3, 0.48, 0.64, 0.78].forEach((k) => { const y = lerp(720, bw.y1, k); const xl = lerp(0, bw.x0, k), xr = lerp(1280, bw.x1, k); tiles.push(`<path d="M${n(xl)} ${n(y)} H${n(xr)}" stroke="#55595a" stroke-width="2"/>`); });
+  const lights = [0.15, 0.45, 0.7].map((k) => {
+    const a = persp(470, 0, k), b = persp(810, 0, k), c = persp(810, 0, k + 0.12), d = persp(470, 0, k + 0.12);
+    return `<path d="M${n(a[0])} ${n(Math.max(a[1], 8))} L${n(b[0])} ${n(Math.max(b[1], 8))} L${n(c[0])} ${n(c[1])} L${n(d[0])} ${n(d[1])} Z" fill="#e9ebe6" stroke="#7d8180" stroke-width="2"/>`;
+  }).join('');
+  const sideDoor = (side, k0, k1) => {
+    const xA = side < 0 ? lerp(0, bw.x0, k0) : lerp(1280, bw.x1, k0), xB = side < 0 ? lerp(0, bw.x0, k1) : lerp(1280, bw.x1, k1);
+    const topA = lerp(110, bw.y0 + 40, k0), topB = lerp(110, bw.y0 + 40, k1);
+    const botA = lerp(720, bw.y1, k0), botB = lerp(720, bw.y1, k1);
+    return `<path d="M${n(xA)} ${n(topA)} L${n(xB)} ${n(topB)} L${n(xB)} ${n(botB)} L${n(xA)} ${n(botA)} Z" fill="#6f7372" stroke="#3e4142" stroke-width="3"/>
+      <circle cx="${n(lerp(xA, xB, 0.8))}" cy="${n(lerp((topA + botA) / 2, (topB + botB) / 2, 0.8))}" r="${n(lerp(8, 4, k0))}" fill="#c9cccb"/>`;
+  };
+  return `<rect width="1280" height="720" fill="#8f9392"/>
+    <path d="M0 0 H1280 L${bw.x1} ${bw.y0} H${bw.x0} Z" fill="#b5b8b6"/>
+    <path d="M0 0 L${bw.x0} ${bw.y0} V${bw.y1} L0 720 Z" fill="#9a9e9c"/>
+    <path d="M1280 0 L${bw.x1} ${bw.y0} V${bw.y1} L1280 720 Z" fill="#8a8e8d"/>
+    <path d="M0 720 L${bw.x0} ${bw.y1} H${bw.x1} L1280 720 Z" fill="#6c706f"/>
+    <defs><clipPath id="cctvFloor"><path d="M0 720 L${bw.x0} ${bw.y1} H${bw.x1} L1280 720 Z"/></clipPath></defs>
+    <g clip-path="url(#cctvFloor)">${tiles.join('')}</g>${lights}
+    <rect x="${bw.x0}" y="${bw.y0}" width="${bw.x1 - bw.x0}" height="${bw.y1 - bw.y0}" fill="#a9acaa" stroke="#555958" stroke-width="2"/>
+    <rect x="596" y="282" width="88" height="148" fill="#3f4243" stroke="#2c2e2f" stroke-width="4"/>
+    <rect x="602" y="288" width="76" height="142" fill="#56595a"/>
+    <rect x="610" y="252" width="60" height="22" fill="#d9dcda" stroke="#555958" stroke-width="2"/>
+    ${text('EXIT', 640, 270, { size: 18, font: 'display', fill: '#3f4243', anchor: 'middle' })}
+    ${sideDoor(-1, 0.18, 0.36)}${sideDoor(-1, 0.6, 0.72)}${sideDoor(1, 0.3, 0.48)}
+    <path d="M0 640 L${bw.x0} ${bw.y1 - 8}" stroke="#7a7e7d" stroke-width="6"/><path d="M1280 640 L${bw.x1} ${bw.y1 - 8}" stroke="#727675" stroke-width="6"/>`;
+}
+
+function cctvDoorway() {
+  const bricks = [];
+  for (let r = 0; r < 16; r++) for (let c = -1; c < 22; c++) bricks.push(`<rect x="${c * 64 + (r % 2) * 32}" y="${r * 32}" width="62" height="30" fill="${(r * 7 + c * 3) % 5 ? '#8d9190' : '#858988'}"/>`);
+  return `<rect width="1280" height="720" fill="#6d7170"/>${bricks.join('')}
+    <rect y="510" width="1280" height="210" fill="#6a6e6d"/><path d="M0 510 H1280" stroke="#4c4f50" stroke-width="4"/>
+    <rect x="470" y="470" width="340" height="44" fill="#9da09e" stroke="#4c4f50" stroke-width="3"/>
+    <rect x="500" y="120" width="280" height="352" fill="#5b5e5f" stroke="#2f3132" stroke-width="6"/>
+    <rect x="516" y="136" width="248" height="336" fill="#4a4d4e"/>
+    <rect x="546" y="168" width="188" height="120" fill="#55585a" stroke="#3a3c3d" stroke-width="3"/>
+    <rect x="546" y="314" width="188" height="130" fill="#55585a" stroke="#3a3c3d" stroke-width="3"/>
+    <circle cx="738" cy="320" r="9" fill="#c9cccb"/>
+    <rect x="590" y="72" width="100" height="34" fill="#c4c7c5" stroke="#4c4f50" stroke-width="2"/>
+    ${text('12', 640, 98, { size: 26, font: 'display', fill: '#3f4243', anchor: 'middle' })}
+    <rect x="846" y="190" width="30" height="50" rx="6" fill="#c7cac8" stroke="#3a3c3d" stroke-width="3"/>
+    <path d="M846 240 L760 520 H1000 L876 240 Z" fill="#fff" opacity=".1"/>
+    <rect x="530" y="540" width="220" height="44" rx="6" fill="#585b5c"/>`;
+}
+
+function cctv(spec, t) {
+  const at = spec.at ?? 0.1;
+  const seed = Math.floor(t * 12) % 30;
+  const scene = spec.scene === 'doorway' ? cctvDoorway() : cctvHallway();
+  const live = Math.max(0, t - at);
+  const burst = t < at ? 1 : clamp(1 - (t - at) / 0.25);
+  const band = (t * 90) % 820 - 100;
+  const frameStr = spec.frame == null ? '' : typeof spec.frame === 'number' ? `FRAME ${spec.frame}/${spec.frames || spec.frame}` : `FRAME ${String(spec.frame).replace(/^FRAME\s*/i, '')}`;
+  const time = tickClock(spec.time || '07/24/2026 02:14:07', Math.floor(live));
+  const osd = (s, x, y, anchor = 'start', name = s) => qa(name, text(s, x, y, { size: 30, font: 'type', fill: C.cctvText, anchor }));
+  const rec = Math.floor(t * 1.6) % 2 === 0;
+  return `<defs>
+      <filter id="cctvGray"><feColorMatrix type="saturate" values="0"/></filter>
+      <filter id="cctvNoise" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="${seed}"/>
+        <feColorMatrix type="saturate" values="0"/>
+      </filter>
+      <pattern id="cctvScan" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="2" fill="#000" opacity=".16"/></pattern>
+      <radialGradient id="cctvVig" cx="50%" cy="50%" r="72%"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></radialGradient>
+      <filter id="cctvSoft"><feGaussianBlur stdDeviation="1.1"/></filter>
+    </defs>
+    <g filter="url(#cctvGray)"><g filter="url(#cctvSoft)">${scene}</g></g>
+    <rect width="1280" height="720" filter="url(#cctvNoise)" opacity="${n(0.2 + 0.7 * burst)}"/>
+    <rect y="${n(band)}" width="1280" height="70" fill="#fff" opacity=".06"/>
+    <rect width="1280" height="720" fill="url(#cctvScan)"/>
+    <rect width="1280" height="720" fill="url(#cctvVig)"/>
+    <g opacity="${n(1 - burst * 0.7)}">
+      ${rec ? `<circle cx="52" cy="54" r="11" fill="${P.red}"/>` : ''}
+      ${osd('REC', 74, 64)}
+      ${osd(spec.label || 'CAM 03 · HALLWAY', 160, 64, 'start', 'cctv label')}
+      ${osd(time, 1240, 64, 'end', 'cctv time')}
+      ${frameStr ? osd(frameStr, 1240, 686, 'end', 'cctv frame') : ''}
+      <path d="M30 100 V30 H100 M1180 30 H1250 V100 M30 620 V690 H100 M1250 620 V690 H1180" stroke="${C.cctvText}" stroke-width="3" fill="none" opacity=".7"/>
+    </g>`;
+}
+
+// ---------- radar ----------
+function radar(spec, t) {
+  const at = spec.at ?? 0.2;
+  const cx = 640, cy = 330, R = 250;
+  const period = spec.period ?? 2.6;
+  const on = clamp((t - at) * 4);
+  const sweeping = t >= at;
+  const th = sweeping ? (((t - at) / period) * Math.PI * 2) % (Math.PI * 2) : 0; // 0 = up, clockwise
+  const ring = !!spec.ring;
+  const rIn = ring ? R * (spec.inner ?? 0.55) : 0;
+  const polar = (a, r) => [cx + Math.sin(a) * r, cy - Math.cos(a) * r];
+  const wedge = (a0, a1, r0, r1) => {
+    const p1 = polar(a0, r1), p2 = polar(a1, r1);
+    if (r0 <= 0) return `M${cx} ${cy} L${n(p1[0])} ${n(p1[1])} A${r1} ${r1} 0 0 1 ${n(p2[0])} ${n(p2[1])} Z`;
+    const q1 = polar(a1, r0), q2 = polar(a0, r0);
+    return `M${n(p1[0])} ${n(p1[1])} A${r1} ${r1} 0 0 1 ${n(p2[0])} ${n(p2[1])} L${n(q1[0])} ${n(q1[1])} A${r0} ${r0} 0 0 0 ${n(q2[0])} ${n(q2[1])} Z`;
+  };
+  const trail = sweeping ? Array.from({ length: 16 }, (_, i) => {
+    const a1 = th - i * 0.05, a0 = a1 - 0.05;
+    return `<path d="${wedge(a0, a1, rIn, R)}" fill="${C.radarLine}" opacity="${n(0.42 * (1 - i / 16))}"/>`;
+  }).join('') : '';
+  const sp0 = polar(th, rIn), sp1 = polar(th, R);
+  const sweepLine = sweeping ? `<path d="M${n(sp0[0])} ${n(sp0[1])} L${n(sp1[0])} ${n(sp1[1])}" stroke="${C.radarBright}" stroke-width="4" stroke-linecap="round"/>` : '';
+  const grid = [0.25, 0.5, 0.75, 1].map((k) => `<circle cx="${cx}" cy="${cy}" r="${R * k}" fill="none" stroke="${C.radarLine}" stroke-width="2" opacity=".45"/>`).join('')
+    + `<path d="M${cx - R} ${cy} H${cx + R} M${cx} ${cy - R} V${cy + R}" stroke="${C.radarLine}" stroke-width="2" opacity=".35"/>`
+    + Array.from({ length: 36 }, (_, i) => { const a = (i * Math.PI) / 18; const p = polar(a, R), q = polar(a, R - (i % 3 ? 8 : 16)); return `<path d="M${n(p[0])} ${n(p[1])} L${n(q[0])} ${n(q[1])}" stroke="${C.radarLine}" stroke-width="2" opacity=".6"/>`; }).join('');
+  const hole = ring ? `<circle cx="${cx}" cy="${cy}" r="${n(rIn)}" fill="${C.radarDeep}"/>
+      <circle cx="${cx}" cy="${cy}" r="${n(rIn)}" fill="none" stroke="${C.radarLine}" stroke-width="3" stroke-dasharray="10 9" opacity=".8"/>
+      ${qa('radar hole', text(spec.innerLabel || 'NO COVERAGE', cx, cy + 10, { size: n(fitSize(spec.innerLabel || 'NO COVERAGE', rIn * 1.6, 30)), font: 'hand', fill: C.radarLine, anchor: 'middle', spacing: 1 }))}` : '';
+  const blips = (spec.blips || []).map((b, i) => {
+    const ba = b.at ?? at;
+    if (t < ba) return '';
+    let a, d;
+    if (b.angle != null) { a = (b.angle * Math.PI) / 180; d = b.dist ?? 0.6; } else { a = Math.atan2(b.x ?? 0, -(b.y ?? 0)); d = Math.hypot(b.x ?? 0, b.y ?? 0); }
+    d = clamp(d, 0, 0.97);
+    const [bx, by] = polar(a, d * R);
+    const seen = !ring || d * R >= rIn;
+    if (!seen) return b.ghost ? `<circle cx="${n(bx)}" cy="${n(by)}" r="12" fill="none" stroke="${C.radarLine}" stroke-width="2" stroke-dasharray="4 4" opacity=".55"/>` : '';
+    // brightness: 1 just after the sweep passes, fading over one turn; dimly visible otherwise
+    const since = (((th - a) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    const passed = (t - at) / period * Math.PI * 2 >= (((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2));
+    const br = sweeping && passed ? Math.max(0.25, 1 - (since / (Math.PI * 2)) * 1.1) : 0;
+    if (br <= 0) return '';
+    return `<g opacity="${n(br)}"><circle cx="${n(bx)}" cy="${n(by)}" r="16" fill="${C.radarBright}" opacity=".35" filter="url(#glow)"/>
+      <circle cx="${n(bx)}" cy="${n(by)}" r="9" fill="${C.radarBright}"/>
+      ${b.label ? qa(`blip ${i}`, text(b.label, bx + 18, by - 12, { size: 26, font: 'hand', fill: C.radarBright })) : ''}</g>`;
+  }).join('');
+  const label = spec.label ? (() => {
+    const lw = Math.min(520, measure(spec.label, 28, 'hand') + 60);
+    return `<rect x="${n(cx - lw / 2)}" y="${cy + R + 34}" width="${n(lw)}" height="46" rx="8" fill="${P.paperDim}" ${ink(2.5)}/>
+      ${qa('radar label', text(spec.label, cx, cy + R + 66, { size: n(fitSize(spec.label, lw - 30, 28)), font: 'hand', anchor: 'middle' }))}`;
+  })() : '';
+  const scope = `<defs><clipPath id="radarClip"><circle cx="${cx}" cy="${cy}" r="${R}"/></clipPath></defs>
+    <circle cx="${cx}" cy="${cy}" r="${R + 18}" fill="${P.greyDark}" ${ink(4)}/>
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="${C.radar}" ${ink(3)}/>
+    <g opacity="${n(on)}" clip-path="url(#radarClip)">
+      ${ring ? `<path d="${wedge(0, Math.PI * 2 - 1e-3, rIn, R)}" fill="${C.radarLine}" opacity=".08"/>` : ''}
+      ${grid}${trail}${hole}${sweepLine}${blips}
+    </g>
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" ${ink(3)}/>`;
+  const console_ = `<g filter="url(#softShadow)"><rect x="300" y="30" width="680" height="${R * 2 + 140}" rx="36" fill="${P.charcoal}" ${ink(4)}/></g>
+    ${[[350, 640], [930, 640]].map(([kx, ky]) => `<circle cx="${kx}" cy="${ky}" r="22" fill="${P.greyDark}" ${ink(3)}/><path d="M${kx} ${ky} L${kx + 10} ${ky - 16}" stroke="${P.ink}" stroke-width="4" stroke-linecap="round"/>`).join('')}
+    ${[0, 1, 2].map((i) => `<circle cx="${350}" cy="${90 + i * 40}" r="8" fill="${i === 0 ? C.radarLine : P.greyDark}" ${ink(2)}/>`).join('')}`;
+  return backdrop() + console_ + scope + label;
+}
+
+module.exports = { measure, socialPost, phoneNotification, browserArticle, appPage, newsLive, terminal, chatThread, email, videoPage, cctv, radar, emblem, avatar, SCREEN_COLORS: C };

@@ -12,17 +12,25 @@
 //       stacked bands narrowing downward; numeric values count up.
 //   D.orgTree({ title, root: { label, sub, who, at }, children: [{ label, sub, who, at, children: [...] }] }, t)
 //       circle portraits joined by lines that draw on; up to 2 levels, up to 6 leaves.
-//   D.portraits({ title, people: [{ who, label, sub, at }] }, t)
-//       a row of 2-5 circle portraits with name cards ("FOUNDERS OF ..." / "former CEO").
-//   D.steps({ title, steps: [{ label, at }], style: 'book' | 'notes' }, t)
-//       an open notebook with "STEP 1: ..." handwritten page by page, or numbered sticky notes on a board.
+//   D.portraits({ title, people: [{ who | emblem: 'SC' | silhouette: true, color, label, sub, at }] }, t)
+//       a row of 1-5 circle portraits with name cards ("FOUNDERS OF ..." / "former CEO"). People we don't draw get
+//       an initials disc (emblem, or the label's initials when there's no who) or a faceless silhouette.
+//   D.steps({ title, steps: [{ label, at }], style: 'book' | 'notes', prefix: 'STEP' | 'THEORY' | '', numbered }, t)
+//       an open notebook with "STEP 1: ..." handwritten page by page (up to 4), or sticky notes on a board
+//       (up to 8; two rows when more than 4).
+//   D.section({ title, columns, floors, highlight: [col], labels: ['TEXT' | { text, col | floor, at }], sagAt, sag, at }, t)
+//       an ABSTRACT structural cross-section schematic: columns and floor lines draw on, highlighted columns turn red,
+//       floor lines bow downward around them after sagAt. A diagram of load, never a picture of a real building.
 //   D.split({ panels: [{ svg, label, bg, at }], dir: 'h' | 'v' }, t)
 //       2-3 panels sliding in (0.35s) from the right (h) or bottom (v). `svg` is any full-frame world markup
 //       (e.g. another diagram's output); it is scaled to cover its panel and clipped.
 //   D.montage({ frames: [{ svg, at }], flash: 0.3 }, t)
 //       flash montage: each frame shows from its `at` (default i * flash) with a quick white flash on the cut.
 //
-// Camera: each build export has a `.focus(spec)` giving the first element's centre. In the template:
+// Icons (D.ICONS): cash chartUp chartDown house bank chip fire rocket people bubble question server power pylon
+//   building lock scales clock phone document plane radar shield eye.
+//
+// Camera: each build export has a `.focus(spec)` giving the first element's centre (or [x, y, zoom] for wide builds). In the template:
 //   const c = D.buildCamera(t, dur, D.equation.focus(spec));       // { zoom, fx, fy }
 //   camera(D.equation(spec, t), c)
 // It holds a gentle 1.14x on the first element, then eases back to 0.95x (centred) over the last 2.6s.
@@ -95,6 +103,19 @@ const ICONS = {
   people: (cx, cy) => `<g transform="translate(${cx} ${cy})">${[-24, 24, 0].map((x, i) => `<circle cx="${x}" cy="${i === 2 ? -10 : -4}" r="16" fill="${P.skin}" stroke="${P.ink}" stroke-width="3"/><path d="M${x - 22} ${i === 2 ? 36 : 40} Q${x} ${i === 2 ? 4 : 10} ${x + 22} ${i === 2 ? 36 : 40} Z" fill="${i === 2 ? C.teal : P.slate || C.slate}" stroke="${P.ink}" stroke-width="3"/>`).join('')}</g>`,
   bubble: (cx, cy) => `<g transform="translate(${cx} ${cy})"><circle r="40" fill="${P.paper}" stroke="${P.ink}" stroke-width="3.5"/><path d="M-22 -18 Q-30 -38 -10 -36" stroke="${P.ink}" stroke-width="2.5" fill="none" opacity=".4"/><circle cx="20" cy="40" r="5" fill="${P.ink}"/></g>`,
   question: (cx, cy) => `<g transform="translate(${cx} ${cy})"><circle r="40" fill="${P.gold}" stroke="${P.ink}" stroke-width="3.5"/>${text('?', 0, 22, { size: 60, font: 'display', anchor: 'middle', fill: P.ink })}</g>`,
+  server: (cx, cy) => `<g transform="translate(${cx} ${cy})"><rect x="-32" y="-44" width="64" height="88" rx="5" fill="${P.charcoal}" stroke="${P.ink}" stroke-width="3.5"/>${[-30, -6, 18].map((y) => `<rect x="-24" y="${y}" width="48" height="18" rx="2" fill="${P.greyLight}" stroke="${P.ink}" stroke-width="2.5"/><circle cx="-14" cy="${y + 9}" r="3.5" fill="${P.green}"/><circle cx="-4" cy="${y + 9}" r="3.5" fill="${P.gold}"/><path d="M6 ${y + 9} H18" stroke="${P.ink}" stroke-width="2.5" stroke-linecap="round"/>`).join('')}</g>`,
+  power: (cx, cy) => `<g transform="translate(${cx} ${cy})"><circle r="42" fill="${P.paper}" stroke="${P.ink}" stroke-width="3.5"/><path d="M6 -34 L-20 6 L-2 6 L-8 34 L20 -8 L2 -8 Z" fill="${P.gold}" stroke="${P.ink}" stroke-width="3.5" stroke-linejoin="round"/></g>`,
+  pylon: (cx, cy) => `<g transform="translate(${cx} ${cy})" fill="none" stroke="${P.ink}" stroke-linejoin="round" stroke-linecap="round"><path d="M-26 42 L-6 -40 L6 -40 L26 42" stroke-width="4"/><path d="M-20 18 L16 0 M20 18 L-16 0 M-14 -4 L10 -22 M14 -4 L-10 -22 M-22 26 H22 M-15 -4 H15" stroke-width="2.5"/><path d="M-40 -26 H40 M-30 -10 H30" stroke-width="4"/><path d="M-40 -26 V-18 M40 -26 V-18 M-30 -10 V-3 M30 -10 V-3" stroke="${P.greyDark}" stroke-width="3"/></g>`,
+  building: (cx, cy) => `<g transform="translate(${cx} ${cy})"><rect x="-34" y="-44" width="40" height="86" fill="${P.paperDim}" stroke="${P.ink}" stroke-width="3.5"/><rect x="6" y="-12" width="30" height="54" fill="${P.greyLight}" stroke="${P.ink}" stroke-width="3.5"/>${[-34, -20, -6, 8, 22].map((y) => `<rect x="-27" y="${y}" width="9" height="8" fill="${C.slate}"/><rect x="-11" y="${y}" width="9" height="8" fill="${C.slate}"/>`).join('')}${[-2, 12, 26].map((y) => `<rect x="13" y="${y}" width="16" height="7" fill="${C.slate}"/>`).join('')}<path d="M-46 42 H46" stroke="${P.ink}" stroke-width="3.5" stroke-linecap="round"/></g>`,
+  lock: (cx, cy) => `<g transform="translate(${cx} ${cy})"><path d="M-20 -6 V-20 Q-20 -42 0 -42 Q20 -42 20 -20 V-6" fill="none" stroke="${P.ink}" stroke-width="9" stroke-linecap="round"/><path d="M-20 -6 V-20 Q-20 -42 0 -42 Q20 -42 20 -20 V-6" fill="none" stroke="${P.greyLight}" stroke-width="3.5" stroke-linecap="round"/><rect x="-34" y="-8" width="68" height="52" rx="7" fill="${P.gold}" stroke="${P.ink}" stroke-width="3.5"/><circle cx="0" cy="12" r="7" fill="${P.ink}"/><path d="M0 14 V30" stroke="${P.ink}" stroke-width="6" stroke-linecap="round"/></g>`,
+  scales: (cx, cy) => `<g transform="translate(${cx} ${cy})" stroke="${P.ink}" stroke-linejoin="round" stroke-linecap="round"><path d="M0 -36 V36 M-22 40 H22" stroke-width="5" fill="none"/><path d="M-40 -28 H40" stroke-width="5"/><circle cx="0" cy="-38" r="6" fill="${P.gold}" stroke-width="3"/><path d="M-40 -28 L-52 4 M-40 -28 L-28 4 M40 -28 L28 4 M40 -28 L52 4" stroke-width="2" fill="none"/><path d="M-56 4 H-24 Q-28 18 -40 18 Q-52 18 -56 4 Z M24 4 H56 Q52 18 40 18 Q28 18 24 4 Z" fill="${P.gold}" stroke-width="3"/></g>`,
+  clock: (cx, cy) => `<g transform="translate(${cx} ${cy})"><circle r="42" fill="${P.paper}" stroke="${P.ink}" stroke-width="4"/>${Array.from({ length: 12 }, (_, i) => { const a = (i / 12) * Math.PI * 2; const r0 = i % 3 ? 33 : 29; return `<path d="M${n(Math.sin(a) * r0)} ${n(-Math.cos(a) * r0)} L${n(Math.sin(a) * 37)} ${n(-Math.cos(a) * 37)}" stroke="${P.ink}" stroke-width="${i % 3 ? 2 : 3.5}" stroke-linecap="round"/>`; }).join('')}<path d="M0 0 V-26 M0 0 L17 9" stroke="${P.ink}" stroke-width="4.5" stroke-linecap="round"/><circle r="4" fill="${P.red}"/></g>`,
+  phone: (cx, cy) => `<g transform="translate(${cx} ${cy})"><rect x="-26" y="-44" width="52" height="88" rx="9" fill="${P.charcoal}" stroke="${P.ink}" stroke-width="3.5"/><rect x="-20" y="-34" width="40" height="62" rx="3" fill="${C.tealLight}"/><path d="M-13 -22 H13 M-13 -12 H7 M-13 -2 H11" stroke="${P.paper}" stroke-width="3.5" stroke-linecap="round"/><circle cx="0" cy="36" r="3.5" fill="${P.greyLight}"/></g>`,
+  document: (cx, cy) => `<g transform="translate(${cx} ${cy})"><path d="M-32 -44 H16 L34 -26 V44 H-32 Z" fill="${P.paper}" stroke="${P.ink}" stroke-width="3.5" stroke-linejoin="round"/><path d="M16 -44 V-26 H34" fill="${P.paperShade}" stroke="${P.ink}" stroke-width="3" stroke-linejoin="round"/><path d="M-22 -24 H6 M-22 -10 H22 M-22 4 H22 M-22 18 H22 M-22 32 H8" stroke="${P.greyDark}" stroke-width="3.5" stroke-linecap="round"/></g>`,
+  plane: (cx, cy) => `<g transform="translate(${cx} ${cy})" stroke="${P.ink}" stroke-linejoin="round"><path d="M-30 -4 L-40 -30 L-30 -30 L-14 -6 Z" fill="${P.greyLight}" stroke-width="3"/><path d="M-46 -6 Q-46 -12 -36 -12 L30 -12 Q48 -12 50 0 Q48 10 30 10 L-36 10 Q-46 10 -46 4 Z" fill="${P.paper}" stroke-width="3.5"/><path d="M-6 2 L-24 30 L-12 30 L16 2 Z" fill="${P.greyLight}" stroke-width="3"/>${[-26, -16, -6, 4, 14, 24].map((x) => `<circle cx="${x}" cy="-3" r="2.6" fill="${C.slate}" stroke="none"/>`).join('')}<path d="M36 -8 Q44 -8 46 -2 L36 -2 Z" fill="${C.slate}" stroke-width="2"/></g>`,
+  radar: (cx, cy) => `<g transform="translate(${cx} ${cy})"><circle r="42" fill="${P.board}" stroke="${P.ink}" stroke-width="4"/><circle r="28" fill="none" stroke="${P.green}" stroke-width="2" opacity=".7"/><circle r="14" fill="none" stroke="${P.green}" stroke-width="2" opacity=".7"/><path d="M-38 0 H38 M0 -38 V38" stroke="${P.green}" stroke-width="1.5" opacity=".5"/><path d="M0 0 L0 -38 A38 38 0 0 1 33 -19 Z" fill="${P.green}" opacity=".55"/><path d="M0 0 L33 -19" stroke="${P.greyLight}" stroke-width="3" stroke-linecap="round"/><circle cx="14" cy="-24" r="4" fill="${P.gold}"/><circle cx="-18" cy="16" r="3.5" fill="${P.gold}" opacity=".7"/></g>`,
+  shield: (cx, cy) => `<g transform="translate(${cx} ${cy})"><path d="M0 -44 L36 -30 Q38 14 0 44 Q-38 14 -36 -30 Z" fill="${P.blue}" stroke="${P.ink}" stroke-width="3.5" stroke-linejoin="round"/><path d="M0 -32 L25 -22 Q26 8 0 31 Z" fill="${P.paper}" opacity=".25"/><path d="M-15 0 L-4 12 L17 -12" fill="none" stroke="${P.paper}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>`,
+  eye: (cx, cy) => `<g transform="translate(${cx} ${cy})"><path d="M-46 0 Q0 -40 46 0 Q0 40 -46 0 Z" fill="${P.paper}" stroke="${P.ink}" stroke-width="3.5" stroke-linejoin="round"/><circle r="17" fill="${C.teal}" stroke="${P.ink}" stroke-width="3"/><circle r="8" fill="${P.ink}"/><circle cx="-5" cy="-6" r="3.5" fill="${P.paper}"/></g>`,
 };
 
 function badge(item, cx, cy, r) {
@@ -296,45 +317,115 @@ function orgTree(spec, t) {
 orgTree.focus = (spec) => treeLayout(spec).root;
 
 // ---------- portraits ----------
-function portraits(spec, t) {
+// Initials from a label: "Sarah Connor" -> "SC", "The host" -> "TH", "FBI" -> "FBI".
+function initials(label) {
+  const words = String(label || '').replace(/[^A-Za-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+  if (!words.length) return '?';
+  if (words.length === 1) return words[0].slice(0, words[0].length <= 3 ? 3 : 2).toUpperCase();
+  return words.slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+}
+
+// Faceless stand-in: a flat head-and-shoulders silhouette in a disc (for people we don't caricature).
+function silhouette(cx, cy, r, { ring = P.ink, bg = C.tealLight, color = C.slate } = {}) {
+  const id = `ps${(clipSeq = (clipSeq + 1) % 100000)}`;
+  const s = r / 100;
+  return `<clipPath id="${id}"><circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r)}"/></clipPath>
+    <circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r)}" fill="${bg}"/>
+    <g clip-path="url(#${id})"><g transform="translate(${n(cx)} ${n(cy)}) scale(${n(s)})">
+      <path d="M-82 110 Q-80 34 -30 24 L30 24 Q80 34 82 110 Z" fill="${color}" stroke="${P.ink}" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M-16 24 V8 H16 V24" fill="${color}" stroke="${P.ink}" stroke-width="5" stroke-linejoin="round"/>
+      <circle cx="0" cy="-22" r="38" fill="${color}" stroke="${P.ink}" stroke-width="5"/>
+    </g></g>
+    <circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r)}" fill="none" stroke="${ring}" stroke-width="${n(Math.max(3, r * 0.06))}"/>`;
+}
+
+// One person's disc: who (cast face) | silhouette: true | emblem: 'SC' | nothing -> initials of the label.
+function personDisc(p, x, y, r) {
+  if (p.who) return portrait(p.who, x, y, r, { state: p.state || {} });
+  if (p.silhouette) return silhouette(x, y, r, { color: p.color || C.slate });
+  return `<circle cx="${n(x)}" cy="${n(y)}" r="${n(r + 8)}" fill="${P.paper}" stroke="${P.ink}" stroke-width="3"/>`
+    + emblem(p.emblem || initials(p.label), x, y, r, p.color || C.teal);
+}
+
+function portraitsLayout(spec) {
   const people = (spec.people || []).slice(0, 5);
-  const r = people.length > 4 ? 88 : people.length > 3 ? 96 : 108;
-  const gap = 1180 / people.length;
+  const k = people.length || 1;
+  const r = k > 4 ? 88 : k > 3 ? 96 : 108;
+  const gap = 1180 / k;
+  const w = Math.min(gap - 20, 250);
+  const hasSub = people.some((p) => p.sub);
+  return { people, r, gap, w, y: 330, k, hasSub };
+}
+function portraits(spec, t) {
+  const L = portraitsLayout(spec);
   let out = background(spec.title, t);
-  people.forEach((p, i) => {
-    const x = 50 + gap * (i + 0.5), y = 330;
+  L.people.forEach((p, i) => {
+    const x = 50 + L.gap * (i + 0.5), y = L.y, r = L.r, w = L.w;
     const at = p.at ?? 0.4 + i * 1.5;
-    const w = Math.min(gap - 20, 250);
-    const inner = portrait(p.who || 'banker', x, y, r, { state: p.state || {} })
+    const label = String(p.label || '').toUpperCase();
+    const size = label.length * 27 * 0.47 > w - 16 ? Math.max(19, Math.floor((w - 16) / (label.length * 0.47))) : 27;
+    const inner = personDisc(p, x, y, r)
       + `<rect x="${n(x - w / 2)}" y="${n(y + r + 22)}" width="${n(w)}" height="${p.sub ? 86 : 50}" rx="8" fill="${P.paper}" stroke="${P.ink}" stroke-width="3" filter="url(#shadow)"/>`
-      + text(String(p.label || '').toUpperCase(), x, y + r + 56, { size: 27, font: 'hand', anchor: 'middle' })
+      + text(label, x, y + r + 56, { size, font: 'hand', anchor: 'middle' })
       + (p.sub ? text(p.sub, x, y + r + 92, { size: 28, font: 'script', anchor: 'middle', fill: C.teal }) : '');
     out += popIn(x, y + 40, t, at, inner, i % 2 ? 1.5 : -1.5);
   });
   return out;
 }
-portraits.focus = (spec) => { const k = (spec.people || []).length || 1; return [50 + (1180 / k) * 0.5, 380]; };
+// Frames the whole row (centre + the tightest zoom that keeps every name card on screen).
+portraits.focus = (spec) => {
+  const L = portraitsLayout(spec);
+  const x0 = 50 + L.gap * 0.5 - L.w / 2, x1 = 50 + L.gap * (L.k - 0.5) + L.w / 2;
+  return fitFocus(x0, x1, L.y - L.r - 10, L.y + L.r + 22 + (L.hasSub ? 86 : 50) + 8);
+};
 
 // ---------- steps ----------
+// Header for step i: prefix 'STEP' (default) | 'THEORY' | 'CLUE' | '' (none); numbered: false drops the number.
+function stepHead(spec, i) {
+  const prefix = spec.prefix == null ? 'STEP' : String(spec.prefix);
+  const num = spec.numbered === false ? '' : String(i + 1);
+  return [prefix, num].filter(Boolean).join(' ');
+}
+function notesLayout(spec) {
+  const list = (spec.steps || []).slice(0, 8);
+  const rows = list.length > 4 ? 2 : 1;
+  const cols = Math.ceil(list.length / rows) || 1;
+  const gap = 1160 / cols;
+  const w = Math.min(230, gap - 24), h = rows > 1 ? 222 : 260;
+  const pos = list.map((_, i) => {
+    const row = rows > 1 ? Math.floor(i / cols) : 0, col = rows > 1 ? i % cols : i;
+    // a short second row is centred under the first
+    const inRow = rows > 1 && row === 1 ? list.length - cols : cols;
+    const off = (cols - inRow) * gap / 2;
+    return [60 + off + gap * (col + 0.5), rows > 1 ? 262 + row * 252 : 380];
+  });
+  return { list, rows, cols, gap, w, h, pos };
+}
 function steps(spec, t) {
-  const list = (spec.steps || []).slice(0, spec.style === 'notes' ? 5 : 4);
   if (spec.style === 'notes') {
+    const L = notesLayout(spec);
     let out = background(spec.title, t);
-    const colors = ['#f2dc8a', '#bcd9c9', '#f0b9a8', '#c7d3e6', '#f2dc8a'];
-    const gap = 1160 / list.length;
-    list.forEach((s, i) => {
+    const colors = ['#f2dc8a', '#bcd9c9', '#f0b9a8', '#c7d3e6'];
+    L.list.forEach((s, i) => {
       const at = s.at ?? 0.4 + i * 1.7;
-      const x = 60 + gap * (i + 0.5), y = 380, w = Math.min(230, gap - 24);
-      const lines = wrapWords(s.label, 14);
-      const inner = `<g transform="rotate(${i % 2 ? 2.5 : -2.5} ${x} ${y})"><rect x="${n(x - w / 2)}" y="${y - 130}" width="${n(w)}" height="260" fill="${colors[i]}" stroke="${P.ink}" stroke-width="2.5" filter="url(#shadow)"/>
-        <rect x="${n(x - 34)}" y="${y - 144}" width="68" height="26" fill="${P.tape}" opacity=".85"/>
-        ${text(`STEP ${i + 1}`, x, y - 70, { size: 34, font: 'display', anchor: 'middle', fill: P.red })}
-        ${lines.map((ln, k) => text(ln, x, y - 18 + k * 40, { size: 38, font: 'script', anchor: 'middle' })).join('')}</g>`;
+      const [x, y] = L.pos[i];
+      const w = L.w, h = L.h;
+      const head = stepHead(spec, i);
+      const small = L.rows > 1;
+      const lines = wrapWords(s.label, small ? 13 : 14).slice(0, head ? (small ? 3 : 4) : (small ? 4 : 5));
+      const lh = small ? 34 : 40;
+      const top = y - h / 2;
+      const body0 = head ? top + (small ? 102 : 112) : y - ((lines.length - 1) * lh) / 2 + 10;
+      const inner = `<g transform="rotate(${i % 2 ? 2.5 : -2.5} ${x} ${y})"><rect x="${n(x - w / 2)}" y="${n(top)}" width="${n(w)}" height="${h}" fill="${colors[i % 4]}" stroke="${P.ink}" stroke-width="2.5" filter="url(#shadow)"/>
+        <rect x="${n(x - 34)}" y="${n(top - 14)}" width="68" height="26" fill="${P.tape}" opacity=".85"/>
+        ${head ? text(head, x, top + (small ? 52 : 60), { size: head.length > 8 ? 26 : small ? 30 : 34, font: 'display', anchor: 'middle', fill: P.red }) : ''}
+        ${lines.map((ln, k) => text(ln, x, body0 + k * lh, { size: small ? 33 : 38, font: 'script', anchor: 'middle' })).join('')}</g>`;
       out += popIn(x, y, t, at, inner);
     });
     return out;
   }
   // open notebook on a desk: two steps per page
+  const list = (spec.steps || []).slice(0, 4);
   const wood = `<rect x="-200" y="-200" width="${W + 400}" height="${H + 400}" fill="#8a6044"/>${[0, 1, 2, 3, 4, 5, 6, 7].map((i) => `<path d="M-200 ${i * 110 - 60} Q640 ${i * 110 - 40} ${W + 200} ${i * 110 - 70}" stroke="#7a5238" stroke-width="3" fill="none" opacity=".6"/>`).join('')}`;
   const book = `<g filter="url(#softShadow)"><path d="M120 120 Q380 96 640 132 Q900 96 1160 120 L1160 660 Q900 640 640 672 Q380 640 120 660 Z" fill="${P.paper}" stroke="${P.ink}" stroke-width="4"/></g>
     <path d="M640 132 V672" stroke="${P.paperShade}" stroke-width="6"/><path d="M640 132 V672" stroke="${P.ink}" stroke-width="2"/>
@@ -347,15 +438,26 @@ function steps(spec, t) {
     const page = i % 2 ? 1 : 0;
     const slot = Math.floor(i / 2);
     const x = page ? 700 : 170, y = 240 + slot * 210;
-    const head = `STEP ${i + 1}:`;
-    const full = `${head} ${s.label}`;
+    const head = stepHead(spec, i);
+    const full = head ? `${head}: ${s.label}` : String(s.label);
     const shown = M.typed(full, t, at, 30);
     const lines = wrapWords(shown, 22);
-    words += lines.map((ln, k) => text(ln, x, y + k * 50, { size: 46, font: 'script', fill: k === 0 && ln.startsWith('STEP') ? P.red : P.ink })).join('');
+    // the header part of the first line is red, the rest ink
+    words += lines.map((ln, k) => {
+      const hl = k === 0 && head ? Math.min(ln.length, head.length + 1) : 0;
+      if (!hl) return text(ln, x, y + k * 50, { size: 46, font: 'script' });
+      return `<text x="${x}" y="${y + k * 50}" class="t-script" font-size="46" fill="${P.ink}"><tspan fill="${P.red}">${esc(ln.slice(0, hl))}</tspan>${esc(ln.slice(hl))}</text>`;
+    }).join('');
   });
   return wood + book + (spec.title ? text(spec.title, 380, 182, { size: 40, font: 'script', anchor: 'middle', fill: C.teal }) : '') + words;
 }
-steps.focus = () => [380, 300];
+steps.focus = (spec) => {
+  if (spec.style !== 'notes') return [380, 300];
+  const L = notesLayout(spec);
+  if (L.list.length <= 3) return [380, 300];
+  const xs = L.pos.map((p) => p[0]), ys = L.pos.map((p) => p[1]);
+  return fitFocus(Math.min(...xs) - L.w / 2 - 8, Math.max(...xs) + L.w / 2 + 8, Math.min(...ys) - L.h / 2 - 16, Math.max(...ys) + L.h / 2 + 8);
+};
 
 function wrapWords(str, max) {
   const out = [];
@@ -366,6 +468,102 @@ function wrapWords(str, max) {
   if (cur) out.push(cur);
   return out;
 }
+
+// ---------- section: abstract structural cross-section ----------
+// A schematic (NOT a drawing of a real building): ground, a grid of columns and floor lines that draw on,
+// highlighted columns in red, labels with leader lines, and (after sagAt) floor lines that bow downward
+// around the highlighted columns as plain abstract lines.
+//   labels: ['TEXT'] (attach to highlighted columns in order) | [{ text, col, floor, at, side: 'left'|'right' }]
+function sectionLayout(spec) {
+  const cols = Math.max(2, Math.min(12, spec.columns || 5));
+  const floors = Math.max(1, Math.min(16, spec.floors || 6));
+  const x0 = 290, x1 = 910, ground = 610, roof = 200;
+  const xs = Array.from({ length: cols }, (_, i) => x0 + (i / (cols - 1)) * (x1 - x0));
+  const ys = Array.from({ length: floors + 1 }, (_, i) => ground - (i / floors) * (ground - roof));
+  return { cols, floors, x0, x1, ground, roof, xs, ys, spacing: (x1 - x0) / (cols - 1) };
+}
+function section(spec, t) {
+  const L = sectionLayout(spec);
+  const at = spec.at ?? 0.4;
+  const hi = (spec.highlight || []).filter((i) => i >= 0 && i < L.cols);
+  const hiAt = spec.highlightAt ?? at + 1.2 + L.floors * 0.12;
+  const sagK = spec.sagAt == null ? 0 : M.ease.inOut(M.prog(t, spec.sagAt, spec.sagDur ?? 1.6));
+  const sagAmp = (spec.sag ?? 46) * sagK;
+  // sag profile: 0 at the ground, deepest at the roof, centred on the highlighted columns
+  const bump = (x) => hi.reduce((m, c) => { const u = Math.abs(x - L.xs[c]) / (L.spacing * 1.7); return Math.max(m, u < 1 ? 0.5 + 0.5 * Math.cos(Math.PI * u) : 0); }, 0);
+  const yAt = (x, f) => L.ys[f] + (f > 0 ? sagAmp * bump(x) * (0.55 + 0.45 * (f / L.floors)) : 0);
+  let out = background(spec.title, t);
+  // drafting sheet
+  out += popIn(640, 400, t, Math.max(0, at - 0.3), `<rect x="170" y="130" width="940" height="540" rx="6" fill="${P.paper}" stroke="${P.ink}" stroke-width="3" filter="url(#shadow)"/>
+    <rect x="182" y="142" width="916" height="516" fill="none" stroke="${P.paperShade}" stroke-width="2"/>`);
+  if (t < at) return out;
+  // ground strip with hatching
+  const gk = M.ease.out(M.prog(t, at, 0.4));
+  const gx0 = L.x0 - 80, gx1 = L.x0 - 80 + (L.x1 - L.x0 + 160) * gk;
+  out += `<rect x="${n(gx0)}" y="${L.ground}" width="${n(gx1 - gx0)}" height="30" fill="${P.paperShade}"/>`
+    + `<path d="${Array.from({ length: 34 }, (_, i) => gx0 + i * 24).filter((x) => x < gx1 - 10).map((x) => `M${n(x)} ${L.ground + 30} L${n(x + 16)} ${L.ground}`).join(' ')}" stroke="${P.greyDark}" stroke-width="2"/>`
+    + `<path d="M${n(gx0)} ${L.ground} H${n(gx1)}" stroke="${P.ink}" stroke-width="5" stroke-linecap="round"/>`;
+  // columns grow up storey by storey; each segment follows the (sagging) floors at its x
+  let cols = '';
+  L.xs.forEach((x, c) => {
+    const ck = M.ease.out(M.prog(t, at + 0.3 + c * 0.06, 0.7));
+    if (ck <= 0) return;
+    const isHi = hi.includes(c) && t >= hiAt;
+    const top = ck * L.floors;
+    let d = '';
+    for (let f = 0; f < Math.ceil(top); f++) {
+      const ya = yAt(x, f), yb = yAt(x, f + 1);
+      const part = Math.min(1, top - f);
+      d += `M${n(x)} ${n(ya)} L${n(x)} ${n(ya + (yb - ya) * part)} `;
+    }
+    cols += `<path d="${d}" stroke="${P.ink}" stroke-width="${isHi ? 16 : 12}" stroke-linecap="butt"/>`
+      + `<path d="${d}" stroke="${isHi ? P.red : P.greyLight}" stroke-width="${isHi ? 9 : 6}" stroke-linecap="butt"/>`;
+  });
+  // floor lines draw left to right, bottom to top
+  let floors = '';
+  for (let f = 1; f <= L.floors; f++) {
+    const fk = M.ease.inOut(M.prog(t, at + 0.6 + (f - 1) * 0.12, 0.5));
+    if (fk <= 0) continue;
+    const xa = L.x0 - 22, xb = xa + (L.x1 - L.x0 + 44) * fk;
+    let d = '';
+    for (let x = xa; x <= xb + 0.01; x += 8) d += `${d ? 'L' : 'M'}${n(Math.min(x, xb))} ${n(yAt(Math.min(x, xb), f))} `;
+    floors += `<path d="${d}" stroke="${P.ink}" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }
+  out += cols + floors;
+  // highlight ring pulse on the highlighted columns
+  hi.forEach((c) => {
+    const pk = M.prog(t, hiAt, 0.6);
+    if (pk > 0 && pk < 1) out += `<rect x="${n(L.xs[c] - 24)}" y="${n(L.roof - 14)}" width="48" height="${n(L.ground - L.roof + 28)}" rx="24" fill="none" stroke="${P.red}" stroke-width="4" opacity="${n(1 - pk)}"/>`;
+  });
+  // labels with leader lines
+  const labels = (spec.labels || []).map((l, i) => (typeof l === 'string' ? { text: l, col: hi[i] ?? hi[0] } : l));
+  labels.forEach((l, i) => {
+    const lat = l.at ?? hiAt + 0.4 + i * 0.6;
+    const k = M.ease.out(M.prog(t, lat, 0.3));
+    if (k <= 0) return;
+    const str = String(l.text || '').toUpperCase();
+    const w = Math.max(120, str.length * 24 * 0.47 + 28);
+    let ax, ay, lx, ly;
+    if (l.floor != null) {
+      const f = Math.max(0, Math.min(L.floors, l.floor));
+      ax = L.x1 + 22; ay = yAt(L.x1 + 22, f); lx = Math.min(1094 - w / 2, ax + 26 + w / 2); ly = ay;
+      if (l.side === 'left') { ax = L.x0 - 22; ay = yAt(ax, f); lx = Math.max(186 + w / 2, ax - 26 - w / 2); ly = ay; }
+    } else {
+      const c = l.col ?? hi[0] ?? 0;
+      const f = Math.max(1, Math.min(L.floors, l.atFloor ?? Math.ceil(L.floors * 0.66)));
+      ax = L.xs[c]; ay = (yAt(ax, f) + yAt(ax, f - 1)) / 2;
+      const right = l.side ? l.side === 'right' : ax < 640;
+      lx = right ? Math.min(1094 - w / 2, ax + 110 + w / 2) : Math.max(186 + w / 2, ax - 110 - w / 2);
+      ly = L.roof - 38;
+    }
+    out += `<g opacity="${n(k)}"><path d="M${n(ax)} ${n(ay)} L${n(lx)} ${n(ly)}" stroke="${P.ink}" stroke-width="2.5" stroke-dasharray="6 5"/><circle cx="${n(ax)}" cy="${n(ay)}" r="5" fill="${P.ink}"/>
+      <rect x="${n(lx - w / 2)}" y="${n(ly - 20)}" width="${n(w)}" height="40" rx="6" fill="${P.paper}" stroke="${P.ink}" stroke-width="2.5"/>
+      ${text(str, lx, ly + 9, { size: 24, font: 'hand', anchor: 'middle', fill: l.color || P.ink })}</g>`;
+  });
+  out += text(spec.note || 'SCHEMATIC · NOT TO SCALE', 1094, 652, { size: 18, font: 'hand', anchor: 'end', fill: P.inkSoft, opacity: 0.8 });
+  return out;
+}
+section.focus = () => [640, 400, 1.04];
 
 // ---------- split ----------
 function split(spec, t) {
@@ -413,4 +611,4 @@ function montage(spec, t) {
     + (white > 0 ? `<rect x="-200" y="-200" width="${W + 400}" height="${H + 400}" fill="#fff" opacity="${n(white)}"/>` : '');
 }
 
-module.exports = { equation, loop, funnel, orgTree, portraits, steps, split, montage, buildCamera, portrait, emblem, ICONS, countUp, C: C };
+module.exports = { equation, loop, funnel, orgTree, portraits, steps, section, split, montage, buildCamera, fitFocus, portrait, silhouette, emblem, initials, ICONS, countUp, C: C };

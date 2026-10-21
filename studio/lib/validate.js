@@ -16,8 +16,9 @@ const FIELDS = {
   document: ['lines', 'highlight', 'highlightOn', 'pencil', 'pencilOn', 'stamp', 'redact', 'unredactOn', 'classified'],
   chart: ['title', 'data', 'turn', 'turnLabel', 'riseOn', 'fallOn', 'change', 'xLabels', 'color', 'rising', 'drawDur'],
   stat: ['value', 'prefix', 'suffix', 'caption', 'on', 'at', 'set', 'setOpts', 'size', 'countDur'],
-  fuse: ['heading', 'sub', 'stops', 'end', 'tallyLabel'],
-  map: ['view', 'legend', 'legendOn', 'focus', 'fx', 'fy'],
+  fuse: ['heading', 'sub', 'stops', 'end', 'tallyLabel', 'endStyle', 'rope'],
+  case: ['heading', 'sub', 'cards'],
+  map: ['view', 'legend', 'legendOn', 'focus', 'fx', 'fy', 'city'],
   money: ['items', 'set', 'setOpts'],
   title: ['text', 'set', 'setOpts', 'size'],
   chapter: ['label', 'sub', 'style'],
@@ -25,13 +26,45 @@ const FIELDS = {
   compose: ['bg', 'setOpts', 'items', 'front', 'light'],
   screen: null, data: null, diagram: null, // kit templates: fields depend on `kind` (see the kit file's header)
 };
+// Kit fields come from each kit file's header, where every kind is documented as `//   name({ field, field: ..., })`
+// (diagrams: `//   D.name({ ... }, t)`), so the docs and the check can't drift apart.
+const KIT_FILE = { screen: './screens', data: './datakit', diagram: './diagrams' };
+const kitCache = {};
+function kitFields(tpl) {
+  if (kitCache[tpl]) return kitCache[tpl];
+  const out = {};
+  const src = require('fs').readFileSync(require.resolve(KIT_FILE[tpl]), 'utf8');
+  src.split('\n').forEach((line) => {
+    const m = line.match(/^\/\/\s+(?:D\.)?(\w+)\(\{(.*)\}/);
+    if (!m) return;
+    const keys = [];
+    let depth = 0, cur = '';
+    for (const ch of m[2]) {
+      if ('{['.includes(ch)) depth++;
+      if ('}]'.includes(ch)) depth--;
+      if (ch === ',' && depth === 0) { keys.push(cur); cur = ''; } else cur += ch;
+    }
+    keys.push(cur);
+    const fields = keys.map((k) => (k.trim().match(/^(\w+)/) || [])[1]).filter(Boolean);
+    // nested shapes documented as `rows: [{ date, name }]` or `a: { label, data }` are checked one level down
+    fields.nested = {};
+    keys.forEach((k) => {
+      const n = k.trim().match(/^(\w+)\??:\s*(\[?\s*\{.*)$/);
+      if (!n) return;
+      const body = n[2].replace(/'[^']*'/g, '');
+      fields.nested[n[1]] = [...new Set([...body.matchAll(/[{,|]\s*(\w+)\??(?=\s*[,}:|])/g)].map((x) => x[1]))];
+    });
+    out[m[1]] = fields;
+  });
+  return (kitCache[tpl] = out);
+}
 const REQUIRED = {
   talk: ['chars'], versus: ['left', 'right'], document: ['lines'], chart: ['data'], stat: ['value'],
-  fuse: ['stops'], map: ['view'], money: ['items'], title: ['text'], chapter: ['label'], compose: ['items'],
+  fuse: ['stops'], case: ['cards'], map: [], money: ['items'], title: ['text'], chapter: ['label'], compose: ['items'],
 };
 const CHAR_FIELDS = ['who', 'spot', 'mood', 'mood2', 'mood2On', 'mood2At', 'pose', 'poseOn', 'poseAt', 'pose2', 'pose2On', 'pose2At',
   'holding', 'carry', 'walk', 'walkAt', 'walkDur', 'look', 'tilt', 'seed'];
-const HOLDING = ['phone', 'paper', 'money', 'mic', 'briefcase', 'sign'];
+const HOLDING = require('./characters').FEATURES.holding || ['phone', 'paper', 'money', 'mic', 'briefcase', 'sign'];
 const STICKER_FIELDS = ['text', 'on', 'at', 'x', 'y', 'rot', 'size', 'color', 'font'];
 
 function lev(a, b) {
@@ -56,7 +89,7 @@ function validate(spec) {
   // cast first, so a header-only storyboard (director's pass) can be validated on its own
   const { FEATURES } = require('./characters');
   const P = require('./palette');
-  const castKeysAllowed = ['base', 'outfit', 'hair', 'hat', 'moustache', 'beard', ...FEATURES.colors, ...FEATURES.flags, ...FEATURES.numbers];
+  const castKeysAllowed = ['base', 'outfit', 'hair', 'hat', 'moustache', 'beard', ...FEATURES.colors, ...FEATURES.flags, ...FEATURES.numbers, ...(FEATURES.strings || [])];
   Object.entries(spec.cast || {}).forEach(([k, c]) => {
     if (!c || typeof c !== 'object') { errors.push(`cast "${k}": must be an object like { "base": "ceo", "glasses": true }`); return; }
     if (c.base && !CAST[c.base]) errors.push(`cast "${k}": unknown base "${c.base}"${suggest(c.base, Object.keys(CAST))}`);
@@ -88,9 +121,23 @@ function validate(spec) {
       if (!shot.kind) errors.push(`${at}: missing "kind" (${kinds.join(', ')})`);
       else if (shot.kind === 'tickerChip') warnings.push(`${at}: tickerChip is a small overlay; on its own it leaves an almost empty frame. Use stockChart, or a montage of fuller frames`);
       if (shot.kind && !kinds.includes(shot.kind)) errors.push(`${at}: unknown kind "${shot.kind}"${suggest(shot.kind, kinds)} (${kinds.join(', ')})`);
+      const sig = kitFields(tpl)[shot.kind];
+      if (sig) {
+        const allowed = [...COMMON, 'kind', 'panels', 'frames', 'on', ...sig, ...sig.filter((k) => k.endsWith('At')).map((k) => k.slice(0, -2) + 'On')];
+        Object.keys(shot).forEach((k) => { if (!allowed.includes(k)) warnings.push(`${at}: ${shot.kind} has no field "${k}"${suggest(k, sig)} (it takes ${sig.join(', ')}). It will be ignored`); });
+        Object.entries(sig.nested).forEach(([key, sub]) => {
+          const okSub = [...sub, 'on', ...(key === 'frames' || key === 'panels' ? ['shot'] : []), ...sub.filter((k) => k.endsWith('At')).map((k) => k.slice(0, -2) + 'On')];
+          const list = Array.isArray(shot[key]) ? shot[key] : shot[key] && typeof shot[key] === 'object' ? [shot[key]] : [];
+          const bad = new Set();
+          list.forEach((o) => o && typeof o === 'object' && !Array.isArray(o) && Object.keys(o).forEach((k) => { if (!okSub.includes(k)) bad.add(k); }));
+          bad.forEach((k) => warnings.push(`${at}: ${shot.kind} ${key} has no field "${k}"${suggest(k, sub)} (${key} takes ${sub.join(', ')}). It will be ignored`));
+        });
+      }
     }
     (REQUIRED[tpl] || []).forEach((k) => { if (shot[k] == null) errors.push(`${at}: missing "${k}"`); });
 
+    if (shot.set === 'pentagon' && (shot.chars || []).length) warnings.push(`${at}: "pentagon" is an aerial view; people would be out of scale. Use it with no chars (add a tag or plate instead)`);
+    if (shot.set === 'carNight' && (shot.chars || []).some((c) => c.spot && c.spot !== 'center')) warnings.push(`${at}: "carNight" only has the center spot (the back-seat passenger)`);
     const voToks = tokens(shot.vo);
     if (tpl !== 'chapter' && !shot.vo && !shot.dur && !shot.fill) warnings.push(`${at}: no "vo" and no "dur". It will last 2s with the narration paused`);
     if (tpl === 'card' && !shot.text && !shot.lines) errors.push(`${at}: card needs "text" or "lines"`);
@@ -164,6 +211,10 @@ function validate(spec) {
         ['pose', 'pose2'].forEach((f) => { if (it[f] && !POSES[it[f]]) errors.push(`${at} items[${k}]: unknown ${f} "${it[f]}"${suggest(it[f], Object.keys(POSES))}`); });
       });
     }
+    if (tpl === 'map' && !shot.view && !shot.city) errors.push(`${at}: map needs "view" (world map) or "city" (city inset)`);
+    if (tpl === 'case' && (shot.cards || []).length > 6) errors.push(`${at}: the case board fits at most 6 cards`);
+    if (tpl === 'fuse' && shot.endStyle && !['bomb', 'card', 'flag'].includes(shot.endStyle)) errors.push(`${at}: endStyle must be bomb, card or flag`);
+    if (tpl === 'fuse' && shot.rope && !['fuse', 'thread'].includes(shot.rope)) errors.push(`${at}: rope must be fuse or thread`);
     if (tpl === 'fuse' && (shot.stops || []).length > 5) errors.push(`${at}: the fuse fits at most 5 stops`);
     if (tpl === 'chart' && (!Array.isArray(shot.data) || shot.data.length < 2)) errors.push(`${at}: chart needs at least 2 data points`);
     if (tpl === 'money') (shot.items || []).forEach((it, k) => { if (!money[it.kind]) errors.push(`${at} items[${k}]: unknown money kind "${it.kind}"${suggest(it.kind, Object.keys(money))}`); });

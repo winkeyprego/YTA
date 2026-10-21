@@ -90,8 +90,8 @@ Built the same way every time:
 | Money | `lib/money.js` | cash stack, bag, coins, gold bars, banknote, piggy bank, vault, ticker, stock bars, money rain |
 | Maps | `lib/maps.js` | paper-blue ocean `#a3b6ba`, `paperDim` land, ink borders, flat highlight colours, hatching, cities, growing arrows, legend |
 
-**Still to build** (seen in the references): calendars, a balance scale, a ledger, a scoreboard variant,
-a progress row for chapters, and historical borders for maps.
+**Built since:** calendars (`data:calendarFlip`), a balance scale (`compose` prop), a ledger (`data:ledger`), a case board (`case`).
+**Still to build** (seen in the references): a scoreboard variant, a progress row for chapters, and historical borders for maps.
 
 ## 8. The house device: THE FUSE
 The references each carry a whole episode with one metaphor: exits on a road, a scale, an evidence desk.

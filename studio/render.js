@@ -95,6 +95,10 @@ async function insertGaps(audio, gaps, tmp) {
 
 // ---- layout QA: measure where faces and on-screen text land; report overlaps and text off-frame ----
 // Elements opt in with data-qa="face" | "text" (lib/ui.js, characters.js, host.js). No screenshots: fast.
+// chapter/title/card shots are meant to be sparse; everything else should never hold an (almost) empty frame
+const EMPTY_OK = new Set(['chapter', 'card', 'title']);
+const EMPTY_EDGES = Number(process.env.QA_EMPTY || 0.02);
+
 async function runQA(browser, tl, fps, name, outDir) {
   const page = await openStage(browser, 1);
   const issues = [];
@@ -133,6 +137,25 @@ async function runQA(browser, tl, fps, name, outDir) {
         }
         return out;
       }, svg);
+      // nearly empty frame (a misspelled field, a kit with no data, a screen that left): count edges in a tiny render
+      if (lt > 0.8 && !EMPTY_OK.has(s.template)) {
+        const edges = await page.evaluate(async (m) => {
+          const img = new Image();
+          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(m);
+          await img.decode().catch(() => null);
+          const c = document.createElement('canvas'); c.width = 128; c.height = 72;
+          const g = c.getContext('2d'); g.drawImage(img, 0, 0, 128, 72);
+          const d = g.getImageData(0, 0, 128, 72).data;
+          let e = 0;
+          for (let y = 0; y < 71; y++) for (let x = 0; x < 127; x++) {
+            const k = (y * 128 + x) * 4, r = k + 4, b = k + 512;
+            if (Math.abs(d[k] - d[r]) + Math.abs(d[k + 1] - d[r + 1]) + Math.abs(d[k + 2] - d[r + 2]) > 40
+              || Math.abs(d[k] - d[b]) + Math.abs(d[k + 1] - d[b + 1]) + Math.abs(d[k + 2] - d[b + 2]) > 40) e++;
+          }
+          return e / (127 * 71);
+        }, frame(s.render(lt, { dur: s.dur, global: s.start + lt, fps }), s.start + lt, { grain: false, vignette: false }));
+        if (edges < EMPTY_EDGES) found.push(`frame is almost empty (check field names against the kit header in SHOTS.md, or the cue times)`);
+      }
       found.forEach((f) => { if (!seen.has(f)) { seen.add(f); issues.push({ shot: i + 1, name: s.name, t: s.start + lt, msg: f }); } });
     }
   }

@@ -16,10 +16,15 @@
 //     labels: [{ text: 'GERMANY', lon: 10.4, lat: 51.2, at: 0.6 }],
 //     cities: [{ name: 'Berlin', lon: 13.4, lat: 52.5, at: 0.8 }],
 //     arrows: [{ from: [13.4, 52.5], to: [21, 52.2], at: 1.5, dur: 0.8, label: 'INVASION' }],
+//     rings: [{ lon: 13.4, lat: 52.5, miles: 200 | km: 300, label: '200 MILES', at: 2.0, color: P.blue }],  // dashed range circles
 //   });
 //   const [x, y] = maps.project(13.4, 52.5, view);   // pin a sticker to Berlin
 //   return camera(world, { zoom: M.punch(t, 2.5, { rate: 0.08, dur: 2.5 }), fx: x, fy: y })
 //     + maps.legend([{ color: P.charcoal, label: 'GERMANY' }, { color: P.red, label: 'POLAND' }], t, 0.3);
+//
+//   maps.cityPlate({ name, sub, water: 'left' | ['left', 'bottom'] | 'none', grid: true, pins: [{ label, x, y, at }], at, t })
+//       a stylised city-scale inset (blocks, street grid, water, pins, name plate) for places too small for Natural
+//       Earth (a few blocks, a small town, a field: grid: false). Generic and labelled ILLUSTRATIVE, never a real street map.
 //
 // View: center = [lon, lat] (screen centre), zoom = 1 shows 360° of longitude across 1280 px
 // (whole world); zoom 4 ≈ a continent, 10 ≈ a country the size of Germany.
@@ -27,8 +32,8 @@
 // per view, so a static view costs almost nothing per frame.
 
 const P = require('./palette');
-const { W, H, n, text } = require('./svg');
-const { pop, prog, ease, clamp } = require('./motion');
+const { W, H, n, text, textWidth } = require('./svg');
+const { pop, prog, ease, clamp, rng } = require('./motion');
 
 // Map-only colours, derived from the palette (candidates for palette.js: ocean, oceanLine, land, landDim).
 const C = {
@@ -220,6 +225,36 @@ function legend(items, t, at = 0, { x = 26, y = 86 } = {}) {
   return `<g opacity="${n(p.o)}" filter="url(#shadow)"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${P.paper}" stroke="${P.ink}" stroke-width="2.5"/>${rows}</g>`;
 }
 
+// Dashed distance ring (a true geodesic circle, so it stretches correctly with Mercator), drawing on clockwise
+// from north over `dur`, with a centre dot and a label at the top. ring = { lon, lat, miles | km, label, at, dur, color }.
+const EARTH_KM = 6371.0088, KM_PER_MILE = 1.609344;
+function ringPoints(lon, lat, km, steps = 96) {
+  const d = km / EARTH_KM, p1 = lat * RAD, l1 = lon * RAD;
+  return Array.from({ length: steps + 1 }, (_, i) => {
+    const b = (i / steps) * Math.PI * 2;
+    const p2 = Math.asin(Math.sin(p1) * Math.cos(d) + Math.cos(p1) * Math.sin(d) * Math.cos(b));
+    const l2 = l1 + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(p1), Math.cos(d) - Math.sin(p1) * Math.sin(p2));
+    return [l2 / RAD, p2 / RAD];
+  });
+}
+function mapRing(r, view, t) {
+  const at = r.at ?? 0, k = ease.inOut(prog(t, at, r.dur ?? 0.9));
+  if (k <= 0) return '';
+  const km = r.km != null ? r.km : (r.miles || 0) * KM_PER_MILE;
+  const color = r.color || P.red;
+  const pts = ringPoints(r.lon, r.lat, km).map(([lo, la]) => project(lo, la, view));
+  const end = Math.max(1, Math.round((pts.length - 1) * k));
+  const d = pts.slice(0, end + 1).map(([x, y], i) => `${i ? 'L' : 'M'}${n(x)} ${n(y)}`).join('');
+  const [cx, cy] = project(r.lon, r.lat, view);
+  const top = pts[0];
+  const label = r.label || (r.miles != null ? `${r.miles} MILES` : `${r.km} KM`);
+  const fill = k >= 1 && r.fill !== false ? `<path d="${d}Z" fill="${color}" opacity=".08"/>` : '';
+  return `${fill}<path d="${d}" fill="none" stroke="${P.paper}" stroke-width="${(r.width || 3.5) + 3}" stroke-linecap="round" stroke-dasharray="14 10" opacity=".7"/>
+    <path d="${d}" fill="none" stroke="${color}" stroke-width="${r.width || 3.5}" stroke-linecap="round" stroke-dasharray="14 10"/>
+    <circle cx="${n(cx)}" cy="${n(cy)}" r="5" fill="${color}" stroke="${P.ink}" stroke-width="2"/>
+    ${k > 0.6 ? haloText(label, top[0], top[1] - 12, { size: r.size || 24, anchor: 'middle', fill: color === P.red ? P.redDark : P.ink, opacity: clamp((k - 0.6) * 4) }) : ''}`;
+}
+
 // ---------- the map ----------
 // highlight / hatch values: a colour string, or { color, at, dur }.
 // coast: soft ocean-coloured band along every coastline. Pretty, but it doubles raster cost
@@ -227,7 +262,7 @@ function legend(items, t, at = 0, { x = 26, y = 86 } = {}) {
 // detail: path simplification in design px (higher = faster, coarser).
 // One mapView per frame (it defines the element id "mapLand").
 function mapView({ t = 0, center = [0, 20], zoom = 1, res, highlight = {}, hatch = {}, dim = false, labels = [], cities = [],
-  arrows = [], graticule = true, coast = false, detail = 1.6, margin = 120 } = {}) {
+  arrows = [], rings = [], graticule = true, coast = false, detail = 1.6, margin = 120 } = {}) {
   const view = { center, zoom };
   const r = res || (zoom < 2.6 ? '110m' : '50m');
   const paths = projectedPaths(view, r, margin, detail);
@@ -291,13 +326,90 @@ function mapView({ t = 0, center = [0, 20], zoom = 1, res, highlight = {}, hatch
       ${haloText(c.name, x + (right ? 14 : -14), y + s * 0.33, { size: s, anchor: right ? 'start' : 'end' })}`);
   }).join('');
   const arrowSvg = arrows.map((a) => mapArrow(project(a.from[0], a.from[1], view), project(a.to[0], a.to[1], view), t, a.at ?? 0, a)).join('');
+  const ringSvg = (rings || []).map((rg) => mapRing(rg, view, t)).join('');
 
   return `<rect width="${W}" height="${H}" fill="${C.ocean}"/>${grat}
     <defs><path id="mapLand" d="${land}"/></defs>
     ${coast ? `<use href="#mapLand" fill="none" stroke="${C.oceanLine}" stroke-width="9" stroke-linejoin="round" opacity=".7"/>` : ''}
     <use href="#mapLand" fill="${base}" fill-rule="evenodd" stroke="${C.border}" stroke-width="${n(sw)}" stroke-linejoin="round" stroke-linecap="round"/>
     ${fills}${hatches}
-    ${arrowSvg}${citySvg}${labelSvg}`;
+    ${ringSvg}${arrowSvg}${citySvg}${labelSvg}`;
 }
 
-module.exports = { mapView, project, fitTo, legend, mapArrow, haloText, findCountry, MAP_COLORS: C };
+// ---------- city plate: a stylised city-scale inset ----------
+// For places Natural Earth can't zoom to (a few city blocks, a small town, a field). Generic and illustrative,
+// NOT a real street map: flat blocks, a street grid, water on the chosen side(s), pins, a name plate.
+//   cityPlate({ name, sub, water: 'left'|'right'|'top'|'bottom'|['left','bottom']|'none', grid: true, angle, parks,
+//               pins: [{ label, x, y, at, color, side }], at, t, seed })
+// Pin x/y: 0..1 fractions of the frame, or design pixels (> 1). grid: false gives open country (fields, one road).
+function cityPlate({ name, sub, water = 'none', pins = [], grid = true, angle = -9, parks = 2, at = 0, t = 0, seed = 3, note = 'ILLUSTRATIVE · NOT TO SCALE' } = {}) {
+  const sides = (Array.isArray(water) ? water : [water]).filter((w) => w && w !== 'none');
+  const r = rng(seed);
+  const k = ease.out(prog(t, at, 0.5));
+  const land = grid ? P.paperShade : '#cdd2a8';
+  let out = `<rect x="-200" y="-200" width="${W + 400}" height="${H + 400}" fill="${land}"/>`;
+  if (grid) {
+    // blocks are the land colour; streets are paper lines over it; every 4th street is an avenue
+    const step = 74, lines = [];
+    for (let i = -14; i <= 14; i++) {
+      const o = i * step;
+      lines.push(`<path d="M${640 + o} -400 V1120" stroke="${P.paper}" stroke-width="${i % 4 ? 9 : 18}"/>`);
+      lines.push(`<path d="M-400 ${360 + o * 0.78} H1680" stroke="${P.paper}" stroke-width="${i % 3 ? 8 : 15}"/>`);
+    }
+    const parkSvg = Array.from({ length: parks }, () => {
+      const cx = 640 + Math.floor(r() * 10 - 5) * step, cy = 360 + Math.floor(r() * 8 - 4) * step * 0.78;
+      return `<rect x="${cx + 6}" y="${n(cy + 5)}" width="${step * (r() < 0.5 ? 2 : 1) - 12}" height="${n(step * 0.78 - 10)}" fill="${P.green}" opacity=".55"/>`;
+    }).join('');
+    // one diagonal avenue for character
+    const diag = `<path d="M${640 - 900} ${360 + 700} L${640 + 900} ${360 - 700}" stroke="${P.paper}" stroke-width="16" transform="rotate(${-angle * 3} 640 360)"/>`;
+    out += `<g opacity="${n(0.35 + 0.65 * k)}" transform="rotate(${angle} 640 360)">${parkSvg}${lines.join('')}${diag}</g>`;
+  } else {
+    const fields = Array.from({ length: 10 }, (_, i) => `<path d="M${-200 + i * 180} -200 L${-60 + i * 180} 920" stroke="${P.greenDark}" stroke-width="2" opacity=".25"/>`).join('');
+    out += `<g opacity="${n(0.35 + 0.65 * k)}">${fields}<path d="M-200 470 Q400 420 700 480 T1480 440" stroke="${P.paper}" stroke-width="16" fill="none"/>
+      <path d="M-200 470 Q400 420 700 480 T1480 440" stroke="${P.paperShade}" stroke-width="2" fill="none" stroke-dasharray="14 12"/></g>`;
+  }
+  // water: a soft wavy shoreline on each chosen side
+  const wave = (u, ph) => Math.sin(u * 0.011 + ph) * 18 + Math.sin(u * 0.027 + ph * 2) * 8;
+  sides.forEach((side, si) => {
+    const ph = si * 1.7 + seed;
+    const depth = { left: 250, right: 250, top: 170, bottom: 170 }[side] || 220;
+    let d = '';
+    if (side === 'left' || side === 'right') {
+      const xs = (y) => (side === 'left' ? depth + wave(y, ph) : W - depth + wave(y, ph));
+      const edge = side === 'left' ? -200 : W + 200;
+      d = `M${edge} -200 ` + Array.from({ length: 30 }, (_, i) => { const y = -200 + i * 40; return `L${n(xs(y))} ${y}`; }).join(' ') + ` L${edge} 1000 Z`;
+    } else {
+      const ys = (x) => (side === 'top' ? depth + wave(x, ph) : H - depth + wave(x, ph));
+      const edge = side === 'top' ? -200 : H + 200;
+      d = `M-200 ${edge} ` + Array.from({ length: 44 }, (_, i) => { const x = -200 + i * 40; return `L${x} ${n(ys(x))}`; }).join(' ') + ` L1680 ${edge} Z`;
+    }
+    out += `<path d="${d}" fill="${C.ocean}" stroke="${C.oceanLine}" stroke-width="14" stroke-linejoin="round" paint-order="stroke"/>
+      <path d="${d}" fill="none" stroke="${P.ink}" stroke-width="3" stroke-linejoin="round"/>`;
+  });
+  // compass + note
+  out += `<g transform="translate(1196 92)" opacity="${n(k)}"><circle r="30" fill="${P.paper}" stroke="${P.ink}" stroke-width="2.5"/><path d="M0 -22 L7 0 L0 22 L-7 0 Z" fill="${P.ink}"/><path d="M0 -22 L7 0 L-7 0 Z" fill="${P.red}"/>${text('N', 0, -36, { size: 20, font: 'hand', anchor: 'middle' })}</g>`
+    + (note ? haloText(note, 1250, 696, { size: 17, anchor: 'end', fill: P.inkSoft }) : '');
+  // pins
+  pins.forEach((p, i) => {
+    const x = p.x <= 1 ? p.x * W : p.x, y = p.y <= 1 ? p.y * H : p.y;
+    const color = p.color || P.red;
+    const right = p.side ? p.side !== 'left' : x < W - 260;
+    const lw = textWidth(String(p.label || ''), 26, 'hand') + 26;
+    const lx = right ? x + 22 : x - 22 - lw;
+    out += popAt(x, y, t, p.at ?? at + 0.5 + i * 0.5, `<ellipse cx="${n(x)}" cy="${n(y + 2)}" rx="11" ry="4" fill="#000" opacity=".25"/>
+      <path d="M${n(x)} ${n(y)} C${n(x - 6)} ${n(y - 16)} ${n(x - 18)} ${n(y - 24)} ${n(x - 18)} ${n(y - 38)} A18 18 0 1 1 ${n(x + 18)} ${n(y - 38)} C${n(x + 18)} ${n(y - 24)} ${n(x + 6)} ${n(y - 16)} ${n(x)} ${n(y)} Z" fill="${color}" stroke="${P.ink}" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="${n(x)}" cy="${n(y - 38)}" r="7" fill="${P.paper}" stroke="${P.ink}" stroke-width="2"/>
+      ${p.label ? `<g filter="url(#shadow)"><rect x="${n(lx)}" y="${n(y - 58)}" width="${n(lw)}" height="38" rx="5" fill="${P.paper}" stroke="${P.ink}" stroke-width="2.5"/></g>${text(p.label, lx + lw / 2, y - 31, { size: 26, font: 'hand', anchor: 'middle' })}` : ''}`);
+  });
+  // name plate, top-left under where a date tag would sit
+  if (name) {
+    const nw = Math.max(textWidth(String(name).toUpperCase(), 40, 'display') * 1.08, sub ? textWidth(sub, 24, 'hand') : 0) + 60;
+    out += popAt(40 + nw / 2, 150, t, at + 0.2, `<g filter="url(#shadow)"><rect x="40" y="${sub ? 104 : 110}" width="${n(nw)}" height="${sub ? 92 : 70}" fill="${P.paper}" stroke="${P.ink}" stroke-width="3"/></g>
+      <rect x="40" y="${sub ? 104 : 110}" width="10" height="${sub ? 92 : 70}" fill="${P.red}"/>
+      ${text(String(name).toUpperCase(), 66, sub ? 150 : 158, { size: 40, font: 'display' })}
+      ${sub ? text(sub, 66, 182, { size: 24, font: 'hand', fill: P.inkSoft }) : ''}`);
+  }
+  return out;
+}
+
+module.exports = { mapView, project, fitTo, legend, mapArrow, mapRing, ringPoints, cityPlate, haloText, findCountry, MAP_COLORS: C };

@@ -7,7 +7,7 @@
 // Position with: g(tr(x, y, scale), character(spec, state))
 
 const P = require('./palette');
-const { n } = require('./svg');
+const { n, text } = require('./svg');
 
 const HEAD_Y = -236;
 const HEAD_R = 66;
@@ -82,6 +82,46 @@ function glasses(on) {
   return `<g fill="none" stroke="${P.ink}" stroke-width="3.2"><circle cx="-24" cy="${y}" r="15"/><circle cx="24" cy="${y}" r="15"/><path d="M-9 ${y - 2} Q0 ${y - 8} 9 ${y - 2}"/><path d="M-39 ${y - 3} L-62 ${y - 10} M39 ${y - 3} L62 ${y - 10}"/></g>`;
 }
 
+// Beards sit on the jaw and leave the mouth clear (draw the moustache separately if wanted).
+function beard(kind, color = '#4a4038') {
+  const o = `fill="${color}" stroke="${P.ink}" stroke-width="3.5" stroke-linejoin="round"`;
+  switch (kind) {
+    case 'short': // a jaw band following the lower edge of the head
+      return `<path d="M-65 -226 A66 66 0 0 0 65 -226 Q60 -206 44 -196 Q24 -186 0 -186 Q-24 -186 -44 -196 Q-60 -206 -65 -226 Z" ${o}/>`;
+    case 'full': // bushy, past the chin onto the collar
+      return `<path d="M-66 -238 Q-74 -176 -40 -150 Q-18 -132 0 -134 Q18 -132 40 -150 Q74 -176 66 -238 Q62 -210 46 -198 Q24 -184 0 -186 Q-24 -184 -46 -198 Q-62 -210 -66 -238 Z" ${o}/>
+        <path d="M-30 -168 Q-24 -160 -16 -164 M18 -164 Q26 -160 32 -170 M-4 -150 Q2 -144 8 -150" stroke="${P.ink}" stroke-width="2" fill="none" opacity=".45"/>`;
+    default:
+      return '';
+  }
+}
+
+// Air-traffic-controller headset: band over the head, ear cups, boom mic to the mouth (screen-left side).
+function headset(on) {
+  if (!on) return '';
+  return `<g stroke="${P.ink}" stroke-linejoin="round">
+    <path d="M-66 -238 Q-70 -318 0 -318 Q70 -318 66 -238" fill="none" stroke-width="8"/>
+    <path d="M-66 -238 Q-70 -318 0 -318 Q70 -318 66 -238" fill="none" stroke="${P.greyDark}" stroke-width="3.5"/>
+    <path d="M-62 -230 Q-50 -196 -18 -200" fill="none" stroke-width="4.5" stroke-linecap="round"/>
+    <rect x="-24" y="-206" width="12" height="9" rx="4" fill="${P.ink}" stroke-width="2"/>
+    <rect x="-80" y="-254" width="22" height="36" rx="9" fill="${P.charcoal}" stroke-width="3.5"/>
+    <rect x="58" y="-254" width="22" height="36" rx="9" fill="${P.charcoal}" stroke-width="3.5"/>
+  </g>`;
+}
+
+// Bridal veil: the part behind the head and shoulders (drawn before the body) and a small comb on top.
+function veilBack(on) {
+  if (!on) return '';
+  return `<path d="M-40 -296 Q-96 -250 -98 -120 Q-100 -70 -84 -40 L84 -40 Q100 -70 98 -120 Q96 -250 40 -296 Z" fill="${P.ivory}" stroke="${P.ink}" stroke-width="3.5" stroke-linejoin="round" opacity=".92"/>
+    <path d="M-70 -200 Q-80 -130 -70 -50 M70 -200 Q80 -130 70 -50 M-40 -230 Q-52 -150 -46 -60 M40 -230 Q52 -150 46 -60" stroke="${P.paperShade}" stroke-width="2.5" fill="none"/>`;
+}
+function veilFront(on) {
+  if (!on) return '';
+  return `<path d="M-34 -298 Q0 -322 34 -298" stroke="${P.ink}" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M-34 -298 Q0 -322 34 -298" stroke="${P.ivory}" stroke-width="4" fill="none" stroke-linecap="round"/>
+    ${[-22, 0, 22].map((x) => `<circle cx="${x}" cy="${x === 0 ? -314 : -306}" r="4" fill="${P.greyLight}" stroke="${P.ink}" stroke-width="1.8"/>`).join('')}`;
+}
+
 // ---------- hair & hats ----------
 function hair(kind, color) {
   const o = `stroke="${P.ink}" stroke-width="3.5" stroke-linejoin="round"`;
@@ -111,6 +151,9 @@ function hair(kind, color) {
   }
 }
 
+// Default colours for hats that have an obvious one (used when the spec gives no hatColor / hatBand).
+const HAT_COLOR = { service: P.olive, police: P.policeNavy, hardhat: P.gold, helmet: P.redDark, pilotHelmet: P.greyLight };
+const HAT_BAND = { service: P.oliveDark, police: P.policeNavy, pilotHelmet: P.red };
 function hat(kind, color = P.charcoal, band = P.redDark) {
   const o = `stroke="${P.ink}" stroke-width="3.5" stroke-linejoin="round"`;
   switch (kind) {
@@ -120,6 +163,36 @@ function hat(kind, color = P.charcoal, band = P.redDark) {
       return `<path d="M-50 -296 Q-48 -352 0 -350 Q48 -352 50 -296 Z" fill="${color}" ${o}/><path d="M-50 -310 H50 V-298 H-50 Z" fill="${band}" ${o}/><ellipse cx="0" cy="-296" rx="84" ry="14" fill="${color}" ${o}/>`;
     case 'cap':
       return `<path d="M-62 -270 Q-60 -330 0 -330 Q60 -330 62 -270 Z" fill="${color}" ${o}/><path d="M-66 -272 Q0 -262 92 -268 Q80 -252 0 -256 Q-60 -258 -66 -272 Z" fill="${color}" ${o}/>`;
+    case 'service': // military peaked cap: wide crown, dark band, black visor, gold badge
+      return `<path d="M-58 -292 Q-92 -324 -60 -342 Q0 -362 60 -342 Q92 -324 58 -292 Z" fill="${color}" ${o}/>
+        <path d="M-58 -296 H58 V-278 Q0 -272 -58 -278 Z" fill="${band}" ${o}/>
+        <path d="M-56 -280 Q0 -266 56 -280 Q44 -256 0 -254 Q-44 -256 -56 -280 Z" fill="${P.ink}" ${o}/>
+        <path d="M-30 -268 Q0 -262 30 -268" stroke="${P.greyDark}" stroke-width="2" fill="none"/>
+        <path d="M-14 -322 Q0 -308 14 -322 M-18 -330 Q0 -316 18 -330" stroke="${P.gold}" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <circle cx="0" cy="-322" r="8" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/>`;
+    case 'police': // peaked cap, flatter crown, chequered band, shield badge
+      return `<path d="M-60 -292 Q-80 -320 -56 -334 Q0 -346 56 -334 Q80 -320 60 -292 Z" fill="${color}" ${o}/>
+        <path d="M-58 -298 H58 V-280 Q0 -274 -58 -280 Z" fill="${P.paper}" ${o}/>
+        ${[-48, -24, 0, 24].map((x) => `<rect x="${x}" y="-298" width="12" height="8" fill="${band}"/><rect x="${x + 12}" y="-290" width="12" height="8" fill="${band}"/>`).join('')}
+        <path d="M-58 -298 H58 V-280 Q0 -274 -58 -280 Z" fill="none" ${o}/>
+        <path d="M-56 -282 Q0 -268 56 -282 Q44 -258 0 -256 Q-44 -258 -56 -282 Z" fill="${P.ink}" ${o}/>
+        <path d="M-10 -330 H10 V-318 Q10 -308 0 -304 Q-10 -308 -10 -318 Z" fill="${P.gold}" stroke="${P.ink}" stroke-width="2.2"/>`;
+    case 'hardhat': // construction helmet with a centre ridge
+      return `<path d="M-62 -280 Q-62 -350 0 -352 Q62 -350 62 -280 Z" fill="${color}" ${o}/>
+        <path d="M-14 -350 Q-16 -320 -12 -282 H12 Q16 -320 14 -350 Q0 -354 -14 -350 Z" fill="${color}" ${o}/>
+        <path d="M-76 -286 Q0 -294 76 -286 Q80 -272 66 -270 Q0 -276 -66 -270 Q-80 -272 -76 -286 Z" fill="${color}" ${o}/>
+        <path d="M-44 -334 Q-54 -316 -54 -296" stroke="#fff" stroke-width="5" opacity=".35" fill="none" stroke-linecap="round"/>`;
+    case 'helmet': // firefighter helmet: domed shell, comb, front shield, long brim
+      return `<path d="M-86 -282 Q-92 -262 -70 -264 Q0 -272 70 -264 Q92 -262 86 -282 Q0 -300 -86 -282 Z" fill="${color}" ${o}/>
+        <path d="M-60 -284 Q-62 -352 0 -354 Q62 -352 60 -284 Z" fill="${color}" ${o}/>
+        <path d="M-6 -354 Q0 -364 6 -354 V-292 H-6 Z" fill="${color}" ${o}/>
+        <path d="M-20 -342 H20 V-316 Q20 -298 0 -292 Q-20 -298 -20 -316 Z" fill="${P.gold}" stroke="${P.ink}" stroke-width="2.8"/>
+        <path d="M-10 -330 H10 M-10 -318 H10" stroke="${P.ink}" stroke-width="2.4"/>`;
+    case 'pilotHelmet': // jet pilot helmet with the tinted visor raised
+      return `<path d="M-72 -220 Q-80 -326 0 -330 Q80 -326 72 -220 Q66 -208 56 -218 Q60 -276 0 -282 Q-60 -276 -56 -218 Q-66 -208 -72 -220 Z" fill="${color}" ${o}/>
+        <path d="M-60 -282 Q0 -310 60 -282 Q58 -264 0 -270 Q-58 -264 -60 -282 Z" fill="${P.charcoal}" ${o}/>
+        <path d="M-36 -284 Q0 -298 30 -288" stroke="${P.greyLight}" stroke-width="3" fill="none" opacity=".6" stroke-linecap="round"/>
+        <rect x="-8" y="-326" width="16" height="22" rx="4" fill="${band}" stroke="${P.ink}" stroke-width="2.5"/>`;
     default:
       return '';
   }
@@ -174,6 +247,86 @@ function body(spec) {
         <path d="M-30 -164 L-4 -112 M30 -164 L4 -112" stroke="${P.ink}" stroke-width="3" fill="none"/>
         <path d="M-27 -140 L-33 -132 L-22 -128 M27 -140 L33 -132 L22 -128" stroke="${P.ink}" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
         <circle cx="-2" cy="-98" r="3" fill="${P.ink}"/>`;
+    case 'uniform': { // military / airline tunic: shoulder boards, brass buttons, ribbons. suit = uniform colour
+      const c = spec.suit || P.olive;
+      return `<path d="${torso}" fill="${c}" ${o}/>
+        <path d="M-14 -168 L0 -136 L14 -168 Z" fill="${spec.shirt || '#efe8d6'}" stroke="${P.ink}" stroke-width="3"/>
+        ${spec.tie === null ? '' : `<path d="M0 -160 L-5 -148 L0 -136 L5 -148 Z" fill="${spec.tie || P.ink}" stroke="${P.ink}" stroke-width="2"/>`}
+        <path d="M-26 -168 L-4 -132 L-20 -126 M26 -168 L4 -132 L20 -126" stroke="${P.ink}" stroke-width="3" fill="none" stroke-linejoin="round"/>
+        <path d="M0 -132 V${HIP_Y + 2}" stroke="${P.ink}" stroke-width="2.5"/>
+        ${[-118, -100, -82].map((y) => `<circle cx="0" cy="${y}" r="3.4" fill="${P.gold}" stroke="${P.ink}" stroke-width="1.5"/>`).join('')}
+        ${[-1, 1].map((sd) => `<g transform="translate(${sd * 34} -164) rotate(${sd * 26})"><rect x="-12" y="-5" width="24" height="10" rx="3" fill="${P.ink}" stroke="${P.ink}" stroke-width="2"/><path d="M${sd * 2} -3 V3 M${sd * 7} -3 V3" stroke="${P.gold}" stroke-width="2.4"/></g>`).join('')}
+        <g transform="translate(12 -126)"><rect width="9" height="5" fill="${P.red}"/><rect x="9" width="9" height="5" fill="${P.blue}"/><rect y="5" width="9" height="5" fill="${P.gold}"/><rect x="9" y="5" width="9" height="5" fill="${P.green}"/><rect width="18" height="10" fill="none" stroke="${P.ink}" stroke-width="1.5"/></g>
+        <path d="M-38 -88 H-14 M14 -88 H38" stroke="${P.ink}" stroke-width="2.5" opacity=".6"/>`;
+    }
+    case 'police': { // police shirt: epaulettes, chest pockets, star badge, dark tie
+      const c = spec.suit || P.policeNavy;
+      return `<path d="${torso}" fill="${c}" ${o}/>
+        <path d="M-16 -168 L0 -150 L16 -168" fill="${spec.skin || P.skin}" stroke="${P.ink}" stroke-width="3"/>
+        <path d="M0 -152 L-5 -140 L0 -112 L5 -140 Z" fill="${spec.tie || P.ink}" stroke="${P.ink}" stroke-width="2"/>
+        <path d="M-44 -166 L-24 -160 M44 -166 L24 -160" stroke="${P.ink}" stroke-width="5" stroke-linecap="round"/>
+        <path d="M-32 -130 H-12 V-110 H-32 Z M12 -130 H32 V-110 H12 Z" fill="none" stroke="${P.ink}" stroke-width="2.5"/>
+        <path d="M-32 -130 H-12 V-124 H-32 Z" fill="${P.ink}" opacity=".35"/>
+        <path d="M22 -146 l3 6 7 1 -5 5 1 7 -6 -3 -6 3 1 -7 -5 -5 7 -1 Z" fill="${P.gold}" stroke="${P.ink}" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="M-40 ${HIP_Y + 4} H40" stroke="${P.ink}" stroke-width="8"/><rect x="-7" y="${HIP_Y - 1}" width="14" height="10" fill="${P.greyLight}" stroke="${P.ink}" stroke-width="2"/>`;
+    }
+    case 'firefighter': { // turnout coat with reflective bands
+      const c = spec.suit || P.turnout;
+      const band = (y) => `<rect x="-46" y="${y}" width="92" height="12" fill="${P.reflective}" stroke="${P.ink}" stroke-width="2.5"/><path d="M-46 ${y + 6} H46" stroke="${P.greyLight}" stroke-width="3"/>`;
+      return `<path d="M-46 ${HIP_Y + 18} Q-50 -150 -28 -170 L28 -170 Q50 -150 46 ${HIP_Y + 18} Z" fill="${c}" ${o}/>
+        <path d="M-22 -172 Q0 -160 22 -172 L18 -184 Q0 -176 -18 -184 Z" fill="${c}" stroke="${P.ink}" stroke-width="3" stroke-linejoin="round"/>
+        ${band(-96)}${band(HIP_Y - 2)}
+        <path d="M-46 ${HIP_Y + 18} Q-50 -150 -28 -170 L28 -170 Q50 -150 46 ${HIP_Y + 18} Z" fill="none" ${o}/>
+        <path d="M4 -170 V${HIP_Y + 18}" stroke="${P.ink}" stroke-width="3"/>
+        ${[-140, -116].map((y) => `<path d="M-2 ${y} H12" stroke="${P.ink}" stroke-width="4" stroke-linecap="round"/>`).join('')}`;
+    }
+    case 'flightsuit': { // one-piece flight suit: zip, chest pockets, name patch, shoulder patch
+      const c = spec.suit || P.flight;
+      return `<path d="M-42 ${HIP_Y + 4} Q-46 -150 -26 -168 L26 -168 Q46 -150 42 ${HIP_Y + 4} Z" fill="${c}" ${o}/>
+        <path d="M-20 -170 L0 -148 L-12 -142 Z M20 -170 L0 -148 L12 -142 Z" fill="${c}" stroke="${P.ink}" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M0 -148 V${HIP_Y + 4}" stroke="${P.ink}" stroke-width="3"/>
+        <circle cx="0" cy="-136" r="3" fill="${P.greyLight}" stroke="${P.ink}" stroke-width="1.5"/>
+        <rect x="-34" y="-132" width="24" height="16" rx="2" fill="${P.paperDim}" stroke="${P.ink}" stroke-width="2"/><path d="M-30 -124 H-14" stroke="${P.inkSoft}" stroke-width="2"/>
+        <path d="M10 -132 H32 V-110 H10 Z" fill="none" stroke="${P.ink}" stroke-width="2.5"/>
+        <path d="M-40 ${HIP_Y - 2} H40" stroke="${P.ink}" stroke-width="3" opacity=".7"/>`;
+    }
+    case 'labcoat': { // long white coat, open over shirt and tie, pens in the pocket
+      const c = spec.suit || P.labWhite;
+      return `<path d="${torso}" fill="${spec.shirt || P.blue}" ${o}/>
+        ${spec.tie === null ? '' : `<path d="M0 -160 L-5 -148 L0 -120 L5 -148 Z" fill="${spec.tie || P.navy}" stroke="${P.ink}" stroke-width="2.2"/>`}
+        <path d="M-46 ${HIP_Y + 34} Q-48 -150 -28 -170 L-10 -170 L-6 -100 L-14 ${HIP_Y + 34} Z" fill="${c}" ${o}/>
+        <path d="M46 ${HIP_Y + 34} Q48 -150 28 -170 L10 -170 L6 -100 L14 ${HIP_Y + 34} Z" fill="${c}" ${o}/>
+        <path d="M-28 -170 L-8 -128 M28 -170 L8 -128" stroke="${P.ink}" stroke-width="2.5" fill="none"/>
+        <path d="M18 -132 H38 V-114 H18 Z" fill="none" stroke="${P.ink}" stroke-width="2.5"/>
+        <path d="M23 -132 V-144 M29 -132 V-142" stroke="${P.blue}" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M23 -132 V-144 M29 -132 V-142" stroke="${P.ink}" stroke-width="1" opacity=".5"/>
+        <path d="M-40 -84 H-20 M20 -84 H40" stroke="${P.ink}" stroke-width="2.5"/>`;
+    }
+    case 'tuxedo': { // black jacket, satin lapels, white shirt, bow tie
+      const c = spec.suit || P.charcoal;
+      return `<path d="${torso}" fill="${c}" ${o}/>
+        <path d="M-16 -168 L0 -112 L16 -168 Z" fill="${spec.shirt || '#f7f5ef'}" stroke="${P.ink}" stroke-width="3"/>
+        <path d="M-26 -168 L-4 -116 L-16 -150 Z M26 -168 L4 -116 L16 -150 Z" fill="${P.ink}" stroke="${P.ink}" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M-15 -168 L-1 -159 L-15 -151 Z M15 -168 L1 -159 L15 -151 Z" fill="${spec.tie || P.ink}" stroke="${P.ink}" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="0" cy="-159" r="3.5" fill="${spec.tie || P.ink}" stroke="${P.ink}" stroke-width="1.5"/>
+        <circle cx="0" cy="-142" r="2" fill="${P.ink}"/><circle cx="0" cy="-130" r="2" fill="${P.ink}"/>
+        <circle cx="0" cy="-102" r="3" fill="${P.ink}" stroke="${P.greyDark}" stroke-width="1"/>
+        <circle cx="-24" cy="-142" r="5" fill="${P.paper}" stroke="${P.ink}" stroke-width="2"/>`;
+    }
+    case 'weddingDress': { // long A-line gown to the floor, sweetheart neckline, waist sash
+      const c = spec.shirt || P.ivory;
+      return `<path d="M-74 -4 Q-58 -60 -34 -104 Q-40 -140 -26 -164 Q-14 -156 0 -162 Q14 -156 26 -164 Q40 -140 34 -104 Q58 -60 74 -4 Q0 8 -74 -4 Z" fill="${c}" ${o}/>
+        <path d="M-34 -104 Q0 -96 34 -104 L32 -92 Q0 -84 -32 -92 Z" fill="${P.paperDim}" stroke="${P.ink}" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M-24 -86 Q-44 -46 -46 -6 M0 -84 V0 M24 -86 Q44 -46 46 -6" stroke="${P.paperShade}" stroke-width="2.5" fill="none"/>`;
+    }
+    case 'tshirt': { // crew-neck tee with short sleeves; spec.print = a letter/short word on the chest
+      const c = spec.shirt || P.blue;
+      const pr = spec.print ? text(String(spec.print).slice(0, 3), 0, -96, { font: 'display', size: String(spec.print).length > 1 ? 26 : 40, fill: spec.printColor || P.paper, anchor: 'middle' }) : '';
+      return `<path d="M-46 -150 L-30 -170 L30 -170 L46 -150 L40 -134 L36 -136 Q38 -100 40 ${HIP_Y} H-40 Q-38 -100 -36 -136 L-40 -134 Z" fill="${c}" ${o}/>
+        <path d="M-16 -170 Q0 -154 16 -170" fill="${spec.skin || P.skin}" stroke="${P.ink}" stroke-width="3"/>
+        <path d="M-36 -136 Q-34 -146 -32 -150 M36 -136 Q34 -146 32 -150" stroke="${P.ink}" stroke-width="2.5" fill="none"/>
+        ${pr}`;
+    }
     default: // suit
       return `<path d="${torso}" fill="${spec.suit || P.navy}" ${o}/>
         <path d="M-14 -168 L0 -120 L14 -168 Z" fill="${spec.shirt || '#f2efe6'}" stroke="${P.ink}" stroke-width="3"/>
@@ -215,6 +368,27 @@ function heldProp(kind, [hx, hy]) {
       return `<g transform="translate(${n(hx)} ${n(hy)})"><path d="M-12 4 V-4 H12 V4" fill="none" stroke="${P.ink}" stroke-width="4"/><rect x="-34" y="4" width="68" height="48" rx="5" fill="${P.woodMid}" ${o}/><path d="M-34 22 H34" stroke="${P.woodDark}" stroke-width="2.5"/><rect x="-6" y="18" width="12" height="9" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/></g>`;
     case 'sign':
       return `<g transform="translate(${n(hx)} ${n(hy)})"><path d="M0 10 V-120" stroke="${P.woodMid}" stroke-width="7"/><rect x="-60" y="-190" width="120" height="76" fill="${P.paper}" ${o}/></g>`;
+    case 'glass': // champagne flute, held by the stem
+      return `<g transform="translate(${n(hx)} ${n(hy)}) rotate(-6)"><path d="M-11 -64 L11 -64 Q12 -28 2 -14 H-2 Q-12 -28 -11 -64 Z" fill="${P.bubble}" opacity=".9"/>
+        <path d="M-10 -50 L10 -50 Q11 -28 2 -16 H-2 Q-11 -28 -10 -50 Z" fill="${P.gold}"/>
+        <circle cx="-3" cy="-36" r="1.8" fill="#fff"/><circle cx="3" cy="-28" r="1.5" fill="#fff"/><circle cx="-1" cy="-43" r="1.3" fill="#fff"/>
+        <path d="M-11 -64 L11 -64 Q12 -28 2 -14 H-2 Q-12 -28 -11 -64 Z" fill="none" stroke="${P.ink}" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M0 -14 V10 M-10 12 Q0 6 10 12" stroke="${P.ink}" stroke-width="3" fill="none" stroke-linecap="round"/></g>`;
+    case 'camera': // compact camera held up, lens facing the viewer
+      return `<g transform="translate(${n(hx)} ${n(hy)}) rotate(-4)"><rect x="-30" y="-44" width="62" height="40" rx="6" fill="${P.charcoal}" ${o}/>
+        <rect x="-22" y="-52" width="18" height="9" rx="2" fill="${P.greyDark}" stroke="${P.ink}" stroke-width="2.5"/>
+        <circle cx="4" cy="-24" r="14" fill="${P.greyDark}" stroke="${P.ink}" stroke-width="3"/><circle cx="4" cy="-24" r="7" fill="${P.nightMid}" stroke="${P.ink}" stroke-width="2"/>
+        <circle cx="1" cy="-27" r="2.2" fill="#fff" opacity=".7"/><rect x="20" y="-39" width="8" height="5" fill="${P.paper}"/></g>`;
+    case 'laptop': // open laptop carried flat, screen facing the viewer
+      return `<g transform="translate(${n(hx)} ${n(hy)})"><path d="M-48 -6 H48 L40 6 H-40 Z" fill="${P.greyLight}" ${o}/>
+        <rect x="-44" y="-62" width="88" height="56" rx="4" fill="${P.greyDark}" ${o}/>
+        <rect x="-37" y="-55" width="74" height="42" rx="2" fill="${P.blue}" opacity=".85"/>
+        <path d="M-30 -46 H10 M-30 -38 H22 M-30 -30 H0" stroke="${P.paper}" stroke-width="3" opacity=".7"/></g>`;
+    case 'book': // hardback book
+      return `<g transform="translate(${n(hx)} ${n(hy)}) rotate(8)"><rect x="-4" y="-62" width="44" height="60" fill="${P.paper}" ${o}/>
+        <rect x="-8" y="-64" width="44" height="60" rx="2" fill="${P.redDark}" ${o}/>
+        <path d="M-1 -64 V-4" stroke="${P.ink}" stroke-width="2.5"/>
+        <rect x="6" y="-52" width="24" height="10" fill="${P.gold}" stroke="${P.ink}" stroke-width="1.5"/></g>`;
     default:
       return '';
   }
@@ -259,7 +433,22 @@ function legs(walk) {
 
 // ---------- assemble ----------
 // spec: identity (constant for a character). state: what they do this frame.
+// Deep skin tones get a deeper blush (pink reads oddly on them).
+function autoBlush(skin) {
+  const m = /^#([0-9a-f]{6})$/i.exec(skin || '');
+  if (!m) return P.blush;
+  const v = parseInt(m[1], 16);
+  const lum = (0.299 * (v >> 16) + 0.587 * ((v >> 8) & 255) + 0.114 * (v & 255)) / 255;
+  return lum < 0.62 ? P.blushDeep : P.blush;
+}
+
 function character(spec = {}, st = {}) {
+  // The not-yet-revealed person: every fill goes dark and the face is left blank (and has no data-qa).
+  if (spec.silhouette) {
+    const S = typeof spec.silhouette === 'string' ? spec.silhouette : P.silhouette;
+    spec = { ...spec, suit: S, shirt: S, tie: spec.tie === undefined ? null : S, skin: S, hairColor: S, hatColor: S, hatBand: S, print: null,
+      drawHead: () => `<circle cx="0" cy="${HEAD_Y}" r="${HEAD_R}" fill="${S}" stroke="${P.ink}" stroke-width="${OUT}"/>${hair(spec.hair, S)}${hat(spec.hat, S, S)}` };
+  }
   const eyesKind = st.blink ? 'closed' : st.eyes || 'dot';
   const mouthKind = st.talk ? (st.talkMouth || 'open') : st.mouth || 'neutral';
   const b = st.breathe || 1;
@@ -274,12 +463,14 @@ function character(spec = {}, st = {}) {
   const head = spec.drawHead ? spec.drawHead(st, spec) : `<circle data-qa="face" cx="0" cy="${HEAD_Y}" r="${HEAD_R}" fill="${skin}" stroke="${P.ink}" stroke-width="${OUT}"/>
     ${hair(spec.hair, spec.hairColor || '#4a4038')}
     ${spec.earrings ? `<circle cx="-64" cy="-212" r="5" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/><circle cx="64" cy="-212" r="5" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/>` : ''}
-    <ellipse cx="-38" cy="-210" rx="12" ry="7" fill="${spec.blushColor || P.blush}" opacity=".75"/>
-    <ellipse cx="38" cy="-210" rx="12" ry="7" fill="${spec.blushColor || P.blush}" opacity=".75"/>
+    <ellipse cx="-38" cy="-210" rx="12" ry="7" fill="${spec.blushColor || autoBlush(skin)}" opacity=".75"/>
+    <ellipse cx="38" cy="-210" rx="12" ry="7" fill="${spec.blushColor || autoBlush(skin)}" opacity=".75"/>
+    ${beard(spec.beard, spec.beardColor || spec.hairColor || '#4a4038')}
     ${eyes(eyesKind, st.look || 0)}${glasses(spec.glasses)}${brows(st.brows || 'flat')}
     ${moustache(spec.moustache, spec.moustacheColor)}${mouth(mouthKind)}
     ${spec.cigar ? `<rect x="10" y="-206" width="34" height="9" rx="3" fill="#8a5a3c" stroke="${P.ink}" stroke-width="2.5"/>` : ''}
-    ${hat(spec.hat, spec.hatColor, spec.hatBand)}`;
+    ${headset(spec.headset)}${veilFront(spec.veil)}
+    ${hat(spec.hat, spec.hatColor || HAT_COLOR[spec.hat], spec.hatBand || HAT_BAND[spec.hat])}`;
   const headTilt = st.tilt ? `transform="rotate(${n(st.tilt)} 0 ${SHOULDER_Y - 20})"` : '';
   const held = st.holding && !carry ? heldProp(st.holding, handPosition(1, armR)) : '';
   // re-draw the hand on top of held items so fingers overlap the prop
@@ -288,6 +479,7 @@ function character(spec = {}, st = {}) {
     : '';
   const size = spec.size && spec.size !== 1 ? `transform="scale(${n(spec.size)})"` : '';
   return `<g ${size}><g transform="translate(0 ${n(bob)})">
+    <g transform="translate(0 ${HIP_Y}) scale(1 ${n(b)}) translate(0 ${-HIP_Y})"><g ${headTilt}>${veilBack(spec.veil)}</g></g>
     ${st.legs === false ? '' : legs(st.walk)}
     <g transform="translate(0 ${HIP_Y}) scale(1 ${n(b)}) translate(0 ${-HIP_Y})">
       ${body(spec)}${bodyExtras(spec)}
@@ -336,6 +528,24 @@ const CAST = {
   crowdA: { outfit: 'suit', suit: '#4a4f58', tie: P.blue, hair: 'side', hairColor: '#3a2d25' },
   crowdB: { outfit: 'shirt', shirt: '#b8a07a', hair: 'long', hairColor: '#6b3f2a' },
   crowdC: { outfit: 'suit', suit: '#5a4a3a', tie: P.gold, hair: 'bald', hairColor: '#4a4038' },
+
+  // uniforms & occupations
+  officer: { outfit: 'uniform', suit: P.olive, hat: 'service', hair: 'side', hairColor: '#4a4038', moustache: 'brush', moustacheColor: '#4a4038', skin: P.skin2 },
+  pilot: { outfit: 'uniform', suit: P.navy, shirt: '#f2efe6', tie: P.ink, hat: 'service', hatColor: P.navy, hatBand: P.ink, hair: 'side', hairColor: P.greyLight, skin: P.skin1 },
+  fighterPilot: { outfit: 'flightsuit', hat: 'pilotHelmet', hair: 'none', skin: P.skin4 },
+  controller: { outfit: 'shirt', shirt: '#c9d6e3', hair: 'curly', hairColor: '#2f2a26', headset: true, skin: P.skin5 },
+  policeOfficer: { outfit: 'police', hat: 'police', hair: 'side', hairColor: '#2f2a26', skin: P.skin5 },
+  firefighter: { outfit: 'firefighter', hat: 'helmet', hair: 'none', beard: 'short', beardColor: '#6b3f2a', skin: P.skin3 },
+  scientist: { outfit: 'labcoat', shirt: '#c9d6e3', tie: P.navy, hair: 'bun', hairColor: '#e8e4dc', glasses: true, skin: P.skin4 },
+  engineer: { outfit: 'shirt', shirt: P.blue, hat: 'hardhat', hair: 'none', beard: 'full', beardColor: '#2f2a26', skin: P.skin6 },
+  groom: { outfit: 'tuxedo', hair: 'slick', hairColor: '#2f2a26', skin: P.skin3 },
+  bride: { outfit: 'weddingDress', veil: true, hair: 'bun', hairColor: '#6b3f2a', skin: P.skin2 },
+  unknown: { outfit: 'coat', hair: 'side', silhouette: true },
+  // everyday people, varied skin tones
+  passerby: { outfit: 'tshirt', shirt: P.green, hair: 'spiky', hairColor: '#2f2a26', beard: 'short', beardColor: '#2f2a26', skin: P.skin5 },
+  neighbor: { outfit: 'dress', shirt: P.blue, hair: 'curly', hairColor: '#2a221e', earrings: true, skin: P.skin6 },
+  student: { outfit: 'tshirt', shirt: P.gold, print: 'U', printColor: P.ink, hair: 'ponytail', hairColor: '#4a3020', skin: P.skin2 },
+  shopkeeper: { outfit: 'shirt', shirt: '#b8a07a', hair: 'bald', hairColor: '#2f2a26', glasses: true, beard: 'full', beardColor: P.greyLight, skin: P.skin4 },
 };
 
 // ---------- crowds ----------
@@ -384,13 +594,16 @@ function crowd(seed, rows, cols, x, y, w, h, scale = 0.3) {
 // beard above, add its name here too so shots.json / storyboard casts can use it.
 const FEATURES = {
   hair: ['slick', 'side', 'bald', 'bob', 'curly', 'long', 'spiky', 'ponytail', 'bun', 'none'],
-  outfit: ['suit', 'shirt', 'dress', 'coat', 'hoodie', 'turtleneck', 'vest', 'robe', 'overalls', 'blazer'],
-  hat: ['tophat', 'fedora', 'cap'],
+  outfit: ['suit', 'shirt', 'dress', 'coat', 'hoodie', 'turtleneck', 'vest', 'robe', 'overalls', 'blazer',
+    'uniform', 'police', 'firefighter', 'flightsuit', 'labcoat', 'tuxedo', 'weddingDress', 'tshirt'],
+  hat: ['tophat', 'fedora', 'cap', 'service', 'police', 'hardhat', 'helmet', 'pilotHelmet'],
   moustache: ['brush', 'walrus', 'thin'],
-  beard: [],
-  colors: ['suit', 'shirt', 'tie', 'hairColor', 'skin', 'hatColor', 'hatBand', 'moustacheColor', 'blushColor', 'beardColor', 'necklace'],
-  flags: ['glasses', 'cigar', 'pin', 'badge', 'lanyard', 'earrings', 'necklace'],
+  beard: ['short', 'full'],
+  colors: ['suit', 'shirt', 'tie', 'hairColor', 'skin', 'hatColor', 'hatBand', 'moustacheColor', 'blushColor', 'beardColor', 'necklace', 'printColor'],
+  flags: ['glasses', 'cigar', 'pin', 'badge', 'lanyard', 'earrings', 'necklace', 'headset', 'veil', 'silhouette'],
   numbers: ['size'],
+  strings: ['print'], // free text: tshirt chest print (1-3 characters)
+  holding: ['phone', 'paper', 'money', 'mic', 'briefcase', 'sign', 'glass', 'camera', 'laptop', 'book'], // state.holding values
 };
 
 module.exports = { FEATURES, character, handPosition, crowd, ANCHOR, CAST, HEAD_Y, HEAD_R };
