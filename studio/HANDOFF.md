@@ -4,7 +4,7 @@ This file is the memory of the project. Any Claude session (cloud or desktop, an
 this work should read it first, then `CLAUDE.md`, then do the "Next steps" in order.
 **Update this file at the end of every working session.**
 
-_Last updated: 2026-10-21 (cloud session): two style packs (war + finance), recipes, validator and skills are ready._
+_Last updated: 2026-10-21 (cloud session): one interchangeable style with two presets; recipes, validator and skills are ready._
 
 ## The goal (in the owner's words, summarised)
 Build a faceless YouTube channel about **money, companies, scams and crashes** (the topics of
@@ -24,13 +24,16 @@ The owner is not a developer. Explain things step by step in plain words, and sh
 - **Style numbers were measured from the reference videos** and are the lib defaults
   (`docs/REFERENCE-ANALYSIS.md`, `STYLE-GUIDE.md`, `MOTION.md`).
 - **Render output (`renders/`) is not committed.** Regenerate it with `node render.js …`.
-- **Two style packs planned:** `war` (history) and `finance` (informed by Crayon Capital: see `docs/CRAYON-ANALYSIS.md`
-  once written). Same engine and cast; the pack changes look, dialogue style, pacing and devices.
+- **ONE interchangeable style (owner's rule).** History and finance are not separate styles. Everything (characters, sets,
+  templates, screens, data, diagrams, maps, the fuse) works in every video. `"style": "war" | "finance"` is only a preset of
+  defaults (vignette, dialogue as bubble or handwritten line, tag look, chapter card look, camera, pacing numbers), and each shot
+  can override any of them. The finance additions exist because some things (apps, markets, money, org charts) are better
+  illustrated that way; use them wherever they fit, including in history videos.
 - **Finance pack decisions** come from `docs/CRAYON-ANALYSIS.md` ("Rules for our FINANCE pack"). No real logos: lettered emblems instead.
 - **The finance host** (`CAST.host`, `lib/host.js`, from the owner's illustration) is an occasional recurring character:
   she appears sometimes, as a shot or inside an explanation. She is NOT a presenter on every shot; most scenes use the
-  regular cast, as in the history style. The default build is the detailed "hero" head (`host`); a house-style twin is
-  `hostHouse`. The owner hasn't confirmed which one yet.
+  regular cast, as in the history style. The owner chose the detailed "hero" head (`host`), lightly refined; a house-style
+  twin, `hostHouse`, exists for crowd shots.
 - **Validation:** `lib/validate.js` checks every shots.json before rendering (unknown names, typos with suggestions,
   cue words missing from the narration, long labels, repetition).
 - **Copyright:** never commit reference frames or footage, or other channels' audio. The Ozempic MP3 the owner
@@ -40,7 +43,7 @@ The owner is not a developer. Explain things step by step in plain words, and sh
 ## Status: ready to make videos in two styles
 | Piece | State |
 |---|---|
-| **Style packs:** `war` (Two Sides look) and `finance` (Crayon-informed look) | done (`lib/styles.js`) |
+| **Presets** `war` / `finance` (defaults only; everything interchangeable; per-shot overrides) | done (`lib/styles.js`) |
 | Core templates: talk, versus, document, chart, stat, fuse, map, money, title, chapter, card | done |
 | Finance kits: screens (7), data (7), diagrams (8) | done (`lib/screens.js`, `lib/datakit.js`, `lib/diagrams.js`) |
 | Finance dialogue: floating lines, conversations cutting to the speaker, spotlight, name + arrow, black cards | done |
@@ -98,6 +101,9 @@ Package managers (npm, PyPI) are allowed by default.
 - Crayon Capital: topic and direction reference (top videos: Wolf of Wall Street, Great Depression, 2008 crisis).
 
 ## Session log
+- **2026-10-21 (cloud), final:** the owner confirmed the hero host (refined: hair shine, curled ends, lashes, lips, collar)
+  and that history and finance must be ONE interchangeable style. The presets were reworked to be defaults only, with per-shot
+  overrides; `episodes/test-mixed*` prove the mixing.
 - **2026-10-21 (cloud), latest:** the owner wants a finance style next to the war style, their host character, more variety for
   any kind of script, and no rebuilding on the main account. Measured two Crayon Capital videos (`docs/CRAYON-ANALYSIS.md`).
   Built: style packs, finance dialogue and cards, the host, screens, data and diagram kits, RECIPES.md (beat → visual),

@@ -170,8 +170,9 @@ function body(spec) {
       return `<path d="${torso}" fill="${spec.suit || P.navy}" ${o}/>
         <path d="M-18 -168 L0 -118 L18 -168 Z" fill="${spec.shirt || '#f7f5ef'}" stroke="${P.ink}" stroke-width="3"/>
         <path d="M-10 -168 L0 -146 L10 -168 Z" fill="${spec.skin || P.skin}"/>
-        <path d="M-18 -170 L-6 -150 L-22 -146 Z M18 -170 L6 -150 L22 -146 Z" fill="${spec.shirt || '#f7f5ef'}" stroke="${P.ink}" stroke-width="2.5" stroke-linejoin="round"/>
-        <path d="M-28 -166 L-4 -112 M28 -166 L4 -112" stroke="${P.ink}" stroke-width="3" fill="none"/>
+        <path d="M-20 -171 L-5 -148 L-27 -140 Z M20 -171 L5 -148 L27 -140 Z" fill="${spec.shirt || '#f7f5ef'}" stroke="${P.ink}" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M-30 -164 L-4 -112 M30 -164 L4 -112" stroke="${P.ink}" stroke-width="3" fill="none"/>
+        <path d="M-27 -140 L-33 -132 L-22 -128 M27 -140 L33 -132 L22 -128" stroke="${P.ink}" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
         <circle cx="-2" cy="-98" r="3" fill="${P.ink}"/>`;
     default: // suit
       return `<path d="${torso}" fill="${spec.suit || P.navy}" ${o}/>

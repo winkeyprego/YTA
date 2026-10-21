@@ -1,6 +1,6 @@
 ---
 name: make-video
-description: Turn a topic, script or voiceover into a finished animated YouTube video with the studio toolkit (studio/). Use whenever the owner asks to make, draft, preview, re-time or render an episode, in either the finance or the war/history style.
+description: Turn a topic, script or voiceover into a finished animated YouTube video with the studio toolkit (studio/). Use whenever the owner asks to make, draft, preview, re-time or render an episode (money or history topics; one shared style).
 ---
 
 # Make a video
@@ -17,7 +17,8 @@ truly needs something that doesn't exist; in that case use the `add-to-library` 
    `studio/episodes/template-starter/shots.json` (war/history). Copy its patterns.
 
 ## Steps
-1. **Folder:** `studio/episodes/<short-name>/`. Decide the style (`"finance"` or `"war"`) with the owner if it isn't obvious.
+1. **Folder:** `studio/episodes/<short-name>/`. Pick the preset that fits the topic (`"finance"` for money, `"war"` for history).
+   It only sets defaults: **any recipe or graphic can be used in any video**, so pick the best visual for each sentence.
 2. **Script:** in `SCRIPT.md`, at ~165 words per minute. Add a sources table for every number, date and quote on screen,
    and mark anything unverified. Never invent quotes for real people.
 3. **Voice (optional now):** if `vo.mp3` exists, run `python3 studio/tools/transcribe.py studio/episodes/<ep>/vo.mp3` to make `words.json`.

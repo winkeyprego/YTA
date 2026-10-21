@@ -1,0 +1,14 @@
+{
+  "title": "Interchangeability check: one style, presets are only defaults",
+  "style": "war",
+  "shots": [
+    { "template": "talk", "set": "hall", "tag": "WASHINGTON · OCT 1929", "vo": "In October 1929 the market panicked, and Congress wanted answers.",
+      "chars": [{ "who": "politician", "spot": "center", "mood": "angry", "pose": "pointUp", "poseOn": "answers" }],
+      "speaker": "politician", "line": "Who let this happen?", "lineOn": "congress", "dialogue": "float" },
+    { "template": "data", "kind": "stockChart", "vo": "The Dow lost almost a quarter of its value in two days.", "name": "Dow Jones", "ticker": "DJIA",
+      "data": [[1, 300], [2, 299], [3, 261], [4, 230]], "activeTab": "1W", "change": "-23%", "on": "dow", "vignette": 0.3 },
+    { "template": "screen", "kind": "newsLive", "vo": "Newspapers called it the end of an era.", "channel": "DN", "headline": "WALL ST. LAYS AN EGG", "ticker": "STOCKS COLLAPSE · BANKS MEET", "anchor": "reporter", "on": "newspapers" },
+    { "template": "card", "vo": "But the crash was only the beginning.", "text": "But the crash was only the beginning." },
+    { "template": "chapter", "label": "The Long Fall", "sub": "part one", "dur": 2, "style": "script" }
+  ]
+}

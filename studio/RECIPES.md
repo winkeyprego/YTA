@@ -12,7 +12,10 @@ How to use it:
 5. Check with `node render.js episodes/<ep> --plan`, then look at the `--sheet`.
 
 The recipes are written as `shots.json` entries; `"vo"` is always the beat's narration. Fields are explained in `SHOTS.md`.
-Recipes marked **F** fit the finance style best, **W** the war style; unmarked ones fit both.
+
+**Every recipe works in every video.** History and finance share ONE style. The `"style"` preset only changes defaults
+(and every shot can override them). Tags just say where a recipe came from: **F** = first measured on money videos, **W** = on
+history/war videos. Use whichever illustrates the sentence best: a social post works in a 1929 story, and the fuse works in a crypto story.
 
 ---
 

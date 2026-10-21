@@ -100,7 +100,7 @@ function overlays(shot, t, ctx, { side = 'left', skipStickers = false } = {}) {
   if (!skipStickers) out += stickersSvg(shot.stickers, t, ctx, side);
   if (shot.tag) {
     const tg = typeof shot.tag === 'string' ? { text: shot.tag } : shot.tag;
-    out += ctx.style && ctx.style.tag === 'script'
+    out += (tg.style || (ctx.style && ctx.style.tag)) === 'script'
       ? ui.scriptCaption(tg.text, t, ctx.cue(tg.on, tg.at ?? 0.1), CAPTION_LOW.has(shot.set) || tg.low ? { y: 692 } : {})
       : ui.dateTag(tg.text, t, ctx.cue(tg.on, tg.at ?? 0.1));
   }
@@ -184,7 +184,8 @@ function talk(shot, ctx) {
   const raw = shot.lines || (shot.line ? [{ who: shot.speaker, text: shot.line, on: shot.lineOn, at: shot.lineAt }] : []);
   const dlg = [];
   raw.forEach((l, i) => {
-    const mode = l.bubble || shot.bubble || style.dialogue === 'bubble' ? 'bubble' : 'float';
+    const pick = l.dialogue || shot.dialogue || (l.bubble || shot.bubble ? 'bubble' : (shot.bubble === false ? 'float' : style.dialogue));
+    const mode = pick === 'bubble' ? 'bubble' : 'float';
     const cps = shot.cps || (mode === 'bubble' ? (style.name === 'war' ? 18 : 24) : 30);
     const prevEnd = i ? dlg[i - 1].end + 0.4 : 0.3;
     const at = ctx.cue(l.on, l.at ?? prevEnd);
@@ -501,7 +502,7 @@ function title(shot, ctx) {
 
 // ---------- chapter: black card, serif small caps ----------
 // { template: 'chapter', label: 'PART ONE', sub: 'Cheap Money', dur: 2 }
-const chapter = (shot, ctx) => (t) => (ctx.style.chapter === 'script' ? ui.chapterScript(shot.label, shot.sub, t) : ui.chapterCard(shot.label, shot.sub, t));
+const chapter = (shot, ctx) => (t) => ((shot.style || ctx.style.chapter) === 'script' ? ui.chapterScript(shot.label, shot.sub, t) : ui.chapterCard(shot.label, shot.sub, t));
 
 // ---------- card: black narration card for pivot sentences (finance pack; works in war too) ----------
 // { template: 'card', vo: '...', text: 'But there was a problem.' | lines: [{ text, on }], stack: false }
@@ -534,7 +535,7 @@ const KIT_KINDS = {
   data: ['stockChart', 'rankingBoard', 'winnersLosers', 'calendarFlip', 'cheque', 'countUp', 'tickerChip'],
   diagram: ['equation', 'loop', 'funnel', 'orgTree', 'portraits', 'steps', 'split', 'montage'],
 };
-const KIT_SKIP = ['template', 'kind', 'vo', 'dur', 'minDur', 'tail', 'id', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
+const KIT_SKIP = ['template', 'kind', 'vo', 'dur', 'minDur', 'tail', 'id', 'vignette', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
 
 // split panels / montage frames may carry a whole sub-shot: { shot: { template: 'talk', ... }, at }.
 // The sub-shot renders with its own clock starting at the panel's `at`.

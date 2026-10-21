@@ -1,0 +1,14 @@
+{
+  "title": "Interchangeability check (finance preset using history-born pieces)",
+  "style": "finance",
+  "shots": [
+    { "template": "map", "vo": "The panic spread from New York to London in a single week.", "tag": { "text": "SEPTEMBER 2008", "style": "tape" },
+      "view": { "fit": ["United States of America", "United Kingdom"], "cities": [{ "name": "New York", "lon": -74, "lat": 40.7, "on": "york" }, { "name": "London", "lon": -0.1, "lat": 51.5, "on": "london" }],
+        "arrows": [{ "from": [-74, 40.7], "to": [-0.1, 51.5], "on": "spread", "label": "PANIC", "color": "red" }] } },
+    { "template": "fuse", "vo": "There were three chances to stop it. In 2004, in 2006, and in 2007.",
+      "stops": [{ "year": "2004", "title": "LEVERAGE", "on": "2004" }, { "year": "2006", "title": "PEAK", "on": "2006" }, { "year": "2007", "title": "CRACKS", "on": "2007" }],
+      "end": { "label": "2008", "on": "stop" } },
+    { "template": "talk", "set": "office", "vo": "And every warning got the same answer.", "chars": [{ "who": "banker", "spot": "center", "mood": "smug" }],
+      "speaker": "banker", "line": "Relax. It's fine.", "lineOn": "answer", "bubble": true }
+  ]
+}

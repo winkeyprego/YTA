@@ -1,7 +1,12 @@
-// Style packs. An episode picks one with "style": "war" | "finance" in shots.json (default "war").
-// Same engine, sets, cast and timing; the pack decides look, dialogue, captions, cards and pacing rules.
-//   war:     Two Sides of War / War Unspun (docs/REFERENCE-ANALYSIS.md)
-//   finance: informed by Crayon Capital (docs/CRAYON-ANALYSIS.md)
+// Presets. ONE shared style: every template, kit, set, character and graphic works in every video.
+// A preset ("style": "war" | "finance" in shots.json, default "war") only sets DEFAULTS for a topic,
+// and every shot can override them:
+//   dialogue  shot "dialogue": "bubble" | "float"  (or "bubble": true)
+//   tag       "tag": { "text": "...", "style": "tape" | "script" }
+//   chapter   chapter shot "style": "serif" | "script"
+//   vignette  any shot "vignette": 0..1 (or true for the strong look)
+//   camera    any shot "camera"
+// Measured sources: war = docs/REFERENCE-ANALYSIS.md, finance = docs/CRAYON-ANALYSIS.md.
 
 const STYLES = {
   war: {

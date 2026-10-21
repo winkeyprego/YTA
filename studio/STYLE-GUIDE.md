@@ -1,8 +1,11 @@
 # Style guide: how things look
 
-Two style packs share this engine (`lib/styles.js`, chosen by `"style"` in shots.json):
-- **war** (default): everything below, measured from Two Sides of War / War Unspun.
-- **finance**: see "Finance pack" at the end, measured from Crayon Capital (`docs/CRAYON-ANALYSIS.md`).
+**One style for everything.** History and finance videos share the same characters, sets, palette and every graphic,
+and any piece can be used in any video. The `"style"` field in shots.json is only a **preset of defaults** (`lib/styles.js`):
+- **war** (default): the look described below, measured from Two Sides of War / War Unspun.
+- **finance**: "Finance preset" at the end, measured from Crayon Capital (`docs/CRAYON-ANALYSIS.md`).
+
+Each shot can override any default (dialogue, tag, chapter card, vignette, camera); see SHOTS.md.
 
 The look of the reference channels, adapted for a money channel. Measured numbers come from
 `docs/REFERENCE-ANALYSIS.md`. Every rule here is already built into `lib/`, so follow the lib and you follow this guide.
@@ -96,8 +99,9 @@ Ours is **the fuse**: a lit fuse burning along a timeline toward the disaster. E
 cut it. A card lands at each stop and the "CHANCES TO CUT IT" tally counts up. Use it as the spine of
 every "Why X Was COMPLETELY Avoidable" episode, and return to it between chapters.
 
-## Finance pack
-Same characters, sets, line weights and palette; brighter and lighter-handed:
+## Finance preset
+Same characters, sets, line weights and palette, with brighter, lighter-handed defaults. These pieces were added from the
+money references, and all of them are usable in history videos too:
 - **Look:** neutral grey, wood and teal backgrounds; saturation ~0.22; **light vignette** (corners ~0.9 of centre); spotlight pools for drama; no grain.
 - **Text:**
   - Dialogue: a **floating handwritten line** (Caveat, `script`) above the speaker, with a tick; bubbles only for emphasis.

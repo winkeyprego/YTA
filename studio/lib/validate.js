@@ -9,9 +9,9 @@ const { MOODS, POSES } = require('./templates');
 
 const lazy = (m) => { try { return require(m); } catch (e) { return {}; } };
 
-const COMMON = ['template', 'vo', 'dur', 'minDur', 'tail', 'id', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
+const COMMON = ['template', 'vo', 'dur', 'minDur', 'tail', 'id', 'vignette', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note'];
 const FIELDS = {
-  talk: ['set', 'setOpts', 'chars', 'frame', 'focus', 'focusXY', 'zoom', 'speaker', 'line', 'lineOn', 'lineAt', 'lineWidth', 'cps', 'speaking', 'lines', 'bubble', 'light', 'nameArrow'],
+  talk: ['set', 'setOpts', 'chars', 'frame', 'focus', 'focusXY', 'zoom', 'speaker', 'line', 'lineOn', 'lineAt', 'lineWidth', 'cps', 'speaking', 'lines', 'bubble', 'dialogue', 'light', 'nameArrow'],
   versus: ['left', 'right', 'title'],
   document: ['lines', 'highlight', 'highlightOn', 'pencil', 'pencilOn', 'stamp'],
   chart: ['title', 'data', 'turn', 'turnLabel', 'riseOn', 'fallOn', 'change', 'xLabels', 'color', 'rising', 'drawDur'],
@@ -20,7 +20,7 @@ const FIELDS = {
   map: ['view', 'legend', 'legendOn', 'focus', 'fx', 'fy'],
   money: ['items', 'set', 'setOpts'],
   title: ['text', 'set', 'setOpts', 'size'],
-  chapter: ['label', 'sub'],
+  chapter: ['label', 'sub', 'style'],
   card: ['text', 'lines', 'stack', 'size'],
   screen: null, data: null, diagram: null, // kit templates: fields depend on `kind` (see the kit file's header)
 };

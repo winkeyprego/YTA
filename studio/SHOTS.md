@@ -23,9 +23,18 @@ With it, every shot lasts exactly as long as its line, and anything with `"on": 
 }
 ```
 
-**`style`**: `"war"` (default; history look: taped tags, speech bubbles, strong vignette) or `"finance"`
-(Crayon-informed look: handwritten captions and floating dialogue, light vignette, black narration cards, script chapter cards).
-Start a finance episode from `episodes/finance-starter`, and a war episode from `episodes/template-starter`.
+**`style`**: a **preset of defaults**, not a separate style. Every template and graphic works under either preset.
+- `"war"` (default): taped date tags, speech bubbles, strong vignette, serif chapter cards.
+- `"finance"`: handwritten corner captions, floating handwritten dialogue, light vignette, handwritten chapter cards.
+
+**Per-shot overrides** (mix freely):
+- dialogue: `"dialogue": "bubble"` or `"float"` on a `talk` shot
+- tag: `"tag": { "text": "...", "style": "tape" }` or `"script"`
+- chapter card: `"style": "serif"` or `"script"` on a `chapter` shot
+- vignette: `"vignette": 0.25` (light) or `true` (strong) on any shot
+
+Starters: `episodes/finance-starter` (money topics) and `episodes/template-starter` (history topics).
+`episodes/test-mixed` shows the two mixed.
 **Which visual for which sentence: see `RECIPES.md`.**
 
 ## Fields every shot can use

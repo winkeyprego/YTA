@@ -60,7 +60,7 @@ studio/
     maps.js            real maps (Natural Earth): highlights, hatching, cities, arrows, legend
     templates.js       shot templates: talk, versus, document, chart, stat, fuse, map, money, title, chapter,
                        card, screen, data, diagram
-    styles.js          style packs: war (default) and finance
+    styles.js          presets (war default, finance): defaults only, every piece works in every video
     host.js            the finance host (detailed face) + house-style twin
     screens.js         finance UI mockups (social post, phone alert, article, app page, live news, terminal, chat)
     datakit.js         finance data (stock chart w/ tabs, ticker, ranking, winners/losers, calendar, cheque, count-up)

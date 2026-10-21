@@ -18,7 +18,8 @@ const LOOK = {
   skin: '#8f5d3e',
   skinShade: '#7a4c31',
   hair: '#2a221e',
-  hairLight: '#463a33',
+  hairLight: '#4d4038',
+  hairShine: '#5e4f46',
   lips: '#7d4436',
   blush: '#a85b48',
   blazer: '#2d3a5a',
@@ -34,7 +35,7 @@ function eyesHero(kind, look) {
   const px = 3 + look * 5; // she naturally glances slightly to screen-right
   const one = (x, s) => {
     const outer = x + 15 * s;
-    const lashes = `<path d="M${outer} ${y - 4} l${7 * s} -4 M${outer - 2 * s} ${y - 8} l${6 * s} -7" ${ink(2.6)} fill="none"/>`;
+    const lashes = `<path d="M${outer + s} ${y - 2} l${8 * s} -2 M${outer - s} ${y - 7} l${8 * s} -6 M${outer - 4 * s} ${y - 11} l${5 * s} -8" ${ink(2.8)} fill="none"/>`;
     switch (kind) {
       case 'closed':
         return `<path d="M${x - 14} ${y} Q${x} ${y + 7} ${x + 14} ${y}" ${ink(4)} fill="none"/>${lashes}`;
@@ -54,10 +55,10 @@ function eyesHero(kind, look) {
           <circle cx="${n(x + px * 0.5)}" cy="${y + 3}" r="6" fill="${P.ink}"/>
           <path d="M${x - 14} ${y - 2 + (s > 0 ? 4 : 0)} Q${x} ${y - 10} ${x + 14} ${y - 2 + (s < 0 ? 4 : 0)}" ${ink(4)} fill="none"/>${lashes}`;
       default: // 'dot': open, friendly
-        return `<ellipse cx="${x}" cy="${y}" rx="15" ry="13" fill="#fff" ${ink(3)}/>
-          <circle cx="${n(x + px)}" cy="${y + 1}" r="7" fill="${P.ink}"/>
-          <circle cx="${n(x + px + 2.5)}" cy="${y - 2}" r="2" fill="#fff"/>
-          <path d="M${x - 15} ${y - 2} Q${x} ${y - 17} ${x + 15} ${y - 3}" ${ink(4)} fill="none"/>${lashes}`;
+        return `<ellipse cx="${x}" cy="${y}" rx="16" ry="14" fill="#fff" ${ink(3)}/>
+          <circle cx="${n(x + px)}" cy="${y + 1}" r="7.5" fill="${P.ink}"/>
+          <circle cx="${n(x + px + 2.8)}" cy="${y - 2.5}" r="2.2" fill="#fff"/>
+          <path d="M${x - 16} ${y - 2} Q${x} ${y - 19} ${x + 16} ${y - 3}" ${ink(4.5)} fill="none"/>${lashes}`;
     }
   };
   return one(lx, -1) + one(rx, 1);
@@ -84,8 +85,8 @@ function mouthHero(kind) {
     case 'grin':
     case 'smile': // the reference smile: open, teeth showing
       return `<path d="M-20 ${y - 2} Q0 ${y + 2} 21 ${y - 3} Q6 ${y + 18} -2 ${y + 17} Q-14 ${y + 14} -20 ${y - 2} Z" fill="#fff" ${ink(3)}/>
-        <path d="M-20 ${y - 2} Q-8 ${y - 7} 0 ${y - 4} Q9 ${y - 7} 21 ${y - 3}" stroke="${LOOK.lips}" stroke-width="4" fill="none" stroke-linecap="round"/>
-        ${lipLower(13, 19)}`;
+        <path d="M-21 ${y - 2} Q-9 ${y - 9} 0 ${y - 5} Q9 ${y - 9} 22 ${y - 3} Q9 ${y - 3} 0 ${y - 2} Q-10 ${y - 2} -21 ${y - 2} Z" fill="${LOOK.lips}" stroke="${P.ink}" stroke-width="2"/>
+        <path d="M-12 ${y + 19} Q0 ${y + 27} 14 ${y + 17}" stroke="${LOOK.lips}" stroke-width="5.5" stroke-linecap="round" fill="none"/>`;
     case 'open':
       return `<path d="M-15 ${y - 1} Q0 ${y - 5} 15 ${y - 1} Q13 ${y + 17} 0 ${y + 18} Q-13 ${y + 17} -15 ${y - 1} Z" fill="${LOOK.mouthDark}" ${ink(3)}/>
         <path d="M-12 ${y + 1} Q0 ${y - 2} 12 ${y + 1} L11 ${y + 5} Q0 ${y + 3} -11 ${y + 5} Z" fill="#fff"/>
@@ -99,7 +100,9 @@ function mouthHero(kind) {
     case 'smirk':
       return `<path d="M-12 ${y + 4} Q4 ${y + 8} 17 ${y - 3}" ${ink(3.5)} fill="none"/>${lipLower(9, 9)}`;
     default: // 'neutral': closed warm smile
-      return `<path d="M-15 ${y} Q0 ${y + 9} 15 ${y - 1}" ${ink(3.5)} fill="none"/>${lipLower(10, 8)}`;
+      return `<path d="M-16 ${y - 1} Q-6 ${y - 5} 0 ${y - 2} Q7 ${y - 5} 16 ${y - 2} Q0 ${y + 1} -16 ${y - 1} Z" fill="${LOOK.lips}" opacity=".85"/>
+        <path d="M-15 ${y} Q0 ${y + 9} 15 ${y - 1}" ${ink(3.5)} fill="none"/>
+        <path d="M-9 ${y + 8} Q0 ${y + 14} 10 ${y + 7}" stroke="${LOOK.lips}" stroke-width="5" stroke-linecap="round" fill="none"/>`;
   }
 }
 
@@ -111,7 +114,7 @@ function heroHead(st) {
   const hairO = `stroke="${P.ink}" stroke-width="4" stroke-linejoin="round"`;
   return `
     <!-- back of the bob, falling to the collar -->
-    <path d="M-60 -284 Q-86 -232 -78 -174 Q-66 -164 -50 -170 L50 -170 Q66 -164 77 -173 Q86 -232 60 -284 Q0 -332 -60 -284 Z" fill="${LOOK.hair}" ${hairO}/>
+    <path d="M-62 -286 Q-90 -232 -82 -172 Q-74 -160 -58 -164 Q-52 -170 -50 -172 L50 -172 Q54 -168 60 -164 Q76 -160 81 -172 Q90 -232 62 -286 Q0 -334 -62 -286 Z" fill="${LOOK.hair}" ${hairO}/>
     <!-- neck -->
     <path d="M-13 -192 V-160 Q0 -154 13 -160 V-192 Z" fill="${LOOK.skin}" stroke="${P.ink}" stroke-width="3.5"/>
     <path d="M-13 -176 Q0 -170 13 -176" stroke="${LOOK.skinShade}" stroke-width="3" fill="none"/>
@@ -129,9 +132,10 @@ function heroHead(st) {
     <path d="M2 ${CY + 2} Q-7 ${CY + 20} -3 ${CY + 27} Q4 ${CY + 31} 11 ${CY + 26}" ${ink(3)} fill="none"/>
     ${mouthHero(mouthKind)}
     <!-- front hair: side part on screen-right, sweeping across to cover the screen-left cheek -->
-    <path d="M22 -306 Q-40 -318 -68 -270 Q-84 -228 -76 -176 Q-64 -166 -54 -178 Q-50 -206 -48 -232 Q-38 -264 -10 -282 Q8 -292 22 -300 Z" fill="${LOOK.hair}" ${hairO}/>
+    <path d="M22 -306 Q-40 -320 -70 -270 Q-88 -226 -80 -176 Q-72 -162 -56 -170 Q-50 -176 -52 -184 Q-50 -208 -48 -232 Q-38 -264 -10 -282 Q8 -292 22 -300 Z" fill="${LOOK.hair}" ${hairO}/>
     <path d="M22 -306 Q64 -304 64 -252 Q60 -268 46 -278 Q32 -290 22 -300 Z" fill="${LOOK.hair}" ${hairO}/>
-    <path d="M-30 -298 Q-58 -276 -64 -226 M-12 -300 Q-36 -286 -46 -262 M40 -298 Q54 -288 58 -270" stroke="${LOOK.hairLight}" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M-26 -300 Q-56 -280 -64 -228" stroke="${LOOK.hairShine}" stroke-width="7" fill="none" stroke-linecap="round" opacity=".75"/>
+    <path d="M-8 -302 Q-30 -290 -42 -266 M38 -300 Q54 -290 58 -272 M-70 -214 Q-72 -196 -68 -184" stroke="${LOOK.hairLight}" stroke-width="3.5" fill="none" stroke-linecap="round"/>
   `;
 }
 

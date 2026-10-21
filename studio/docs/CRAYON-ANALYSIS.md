@@ -1,4 +1,4 @@
-# Crayon Capital analysis: inputs for the FINANCE style pack
+# Crayon Capital analysis: inputs for the finance preset (one shared style; see STYLE-GUIDE.md)
 
 **Sources measured**
 - **c1:** "The Rise of Anthropic Explained Like You're 5" (17:50)
