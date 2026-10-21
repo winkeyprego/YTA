@@ -22,7 +22,7 @@ const { spawn } = require('child_process');
 const { chromium } = require('playwright');
 const { frame } = require('./lib/svg');
 
-const GRAIN_VF = 'noise=c0s=9:c1s=4:c2s=4:allf=t'; // matches the SVG grain strength at 1080p
+const GRAIN_VF = 'noise=c0s=2:allf=t'; // ~1% luma noise: stops banding, matches the near-invisible SVG grain
 
 function args() {
   const a = process.argv.slice(2);

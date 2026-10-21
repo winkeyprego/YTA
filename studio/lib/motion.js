@@ -35,11 +35,12 @@ function keys(t, list, e = ease.inOut) {
   return list[list.length - 1][1];
 }
 
-// Pop-in used by stickers, labels, cards: scale 0 -> overshoot -> 1, opacity 0 -> 1.
-function pop(t, at, dur = 0.32) {
+// Pop-in used by stickers, labels, cards. Measured on the references: appears at ~50% scale,
+// overshoots, settles in 0.15-0.2s.
+function pop(t, at, dur = 0.18) {
   if (t < at) return { s: 0, o: 0, on: false };
   const k = prog(t, at, dur);
-  return { s: Math.max(0, ease.outBack(k)), o: clamp(k * 3), on: true };
+  return { s: 0.5 + 0.5 * ease.outBack(k), o: clamp(k * 4), on: true };
 }
 
 // Number of characters revealed by a typewriter that starts at `at`.
@@ -71,14 +72,34 @@ function talking(t, from, to, rate = 8) {
   return Math.sin((t - from) * Math.PI * 2 * rate * 0.5) > -0.2;
 }
 
+// References cycle 2-3 mouth shapes 4-8 times a second while speaking.
+// Returns a mouth name for character() while talking, else null (use the resting mouth).
+function mouthCycle(t, from, to, rate = 6, shapes = ['open', 'o', 'neutral']) {
+  if (t < from || t > to) return null;
+  return shapes[Math.floor((t - from) * rate) % shapes.length];
+}
+
+// ---- camera presets (measured on the references) ----
+// Most shots are locked-off. Moves are linear, never eased, and there is no camera shake.
+// creep: linear push from the first frame, ~1.1%/s (1.00 -> ~1.07 over a 6s shot).
+const creep = (t, rate = 0.011, from = 1) => from + rate * t;
+// punch: hold, then a linear push of ~4.5%/s for ~2s to land on a key phrase (-> ~1.09).
+const punch = (t, at, { rate = 0.045, dur = 2, from = 1 } = {}) => from + rate * clamp(t - at, 0, dur);
+// steps (War Unspun mode): repeated ease-out pushes of +9% over 1s with holds between.
+function steps(t, { every = 2.2, size = 0.09, dur = 1, from = 1 } = {}) {
+  const i = Math.floor(t / every);
+  return from + size * (i + ease.out(clamp((t - i * every) / dur)));
+}
+
 // Idle breathing multiplier for body scaleY (very subtle).
 const breathe = (t, seed = 0) => 1 + 0.007 * Math.sin((t + seed) * (Math.PI * 2) / 3.4);
 
-// Small decaying shake for impacts. Returns [dx, dy].
+// Small decaying shake. The references never shake the camera, so keep this for rare
+// in-world impacts only (a stamp, an explosion), never as a default. Returns [dx, dy].
 function shake(t, at, dur = 0.5, amp = 8) {
   if (t < at || t > at + dur) return [0, 0];
   const k = 1 - (t - at) / dur;
   return [Math.sin(t * 90) * amp * k, Math.cos(t * 77) * amp * k * 0.6];
 }
 
-module.exports = { clamp, lerp, ease, prog, tween, keys, pop, typed, typeDuration, rng, blinking, talking, breathe, shake };
+module.exports = { clamp, lerp, ease, prog, tween, keys, pop, typed, typeDuration, rng, blinking, talking, mouthCycle, breathe, shake, creep, punch, steps };

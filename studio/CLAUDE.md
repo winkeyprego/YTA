@@ -13,8 +13,9 @@ and keep the pipeline runnable with one command.
 
 ## Rules
 - **Colours only from `lib/palette.js`.** Need a new one? Add it there with a comment.
-- **Fonts:** `display` = Lilita One (titles, big numbers, sticker labels), `hand` = Patrick Hand
-  (date tags, bubbles, name plates, notes), `type` = Special Elite (documents). Nothing else.
+- **Fonts:** `display` = Lilita One (titles, big numbers), `hand` = Patrick Hand (date tags, bubbles,
+  stickers, name plates, map labels), `type` = Special Elite (documents), `serif` = Cormorant SC
+  (chapter cards). Nothing else.
 - **Characters come from `character(spec, state)`.** Never draw a person freehand in a shot.
   New recurring person, such as a real CEO: add a `CAST` entry with ONE or TWO signature features
   (hair shape, glasses, hat, moustache, outfit colour). Keep the round head and dot eyes.
@@ -22,7 +23,8 @@ and keep the pipeline runnable with one command.
   To change how stickers pop everywhere, change it once in the lib.
 - **Every render function is pure in `t`.** No `Math.random()`. Use `rng(seed)` from `lib/motion.js`.
 - **The world layer goes inside `camera()`. Overlays go outside**: date tag, name plate, tally, source line.
-- **Every new scene starts with a date tag** (place · date) and holds a slow camera move (see MOTION.md).
+- **Every new place or time gets a date tag** (place · date). Camera: mostly locked-off, linear moves, no shake.
+- **Pacing:** shots of about 3.5s, an event every 1–1.5s, nothing still for more than 4s (see MOTION.md).
 - **Facts:** every number on screen needs a source in the episode's SCRIPT.md. Mark unverified items.
 - **No copyrighted material:** never put frames, logos or footage from other channels into the repo.
 - **Real people:** caricature allowed only through the cast system (signature features, no photo

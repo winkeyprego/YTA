@@ -9,34 +9,37 @@ const { pop, typed, tween, ease, clamp, prog } = require('./motion');
 const popAround = (cx, cy, p, inner, rot = 0) =>
   p.on ? `<g opacity="${n(p.o)}" transform="translate(${n(cx)} ${n(cy)}) rotate(${n(rot)}) scale(${n(p.s)}) translate(${n(-cx)} ${n(-cy)})">${inner}</g>` : '';
 
-// Taped paper tag, top-left. Text types in. Use for place + date on every new scene.
-function dateTag(label, t, at = 0.15, { x = 26, y = 22, rot = -1.2, size = 25 } = {}) {
+// Taped paper tag, top-left. Slides in over 0.08s, then the text types at ~30 cps (measured).
+// Use for place + date on every new location or time.
+function dateTag(label, t, at = 0.1, { x = 26, y = 22, rot = -1.2, size = 25 } = {}) {
   if (t < at) return '';
   const w = textWidth(label, size) + 44;
-  const shown = typed(label, t, at + 0.12, 34);
-  return `<g transform="translate(${x} ${y}) rotate(${rot})" filter="url(#shadow)" opacity="${n(clamp((t - at) * 8))}">
+  const shown = typed(label, t, at + 0.08, 30);
+  const sx = tween(t, at, 0.08, -w - 40, x, ease.out);
+  return `<g transform="translate(${n(sx)} ${y}) rotate(${rot})" filter="url(#shadow)">
     <rect width="${n(w)}" height="48" fill="${P.paper}" stroke="${P.ink}" stroke-width="2.5"/>
     <rect x="-12" y="-8" width="40" height="18" fill="${P.tape}" opacity=".85" transform="rotate(-24 8 1)"/>
     ${text(shown, 20, 34, { size, font: 'hand' })}
   </g>`;
 }
 
-// Lower-third name plate. Slides in from the left.
-function namePlate(name, role, t, at = 0.5, { y = 598 } = {}) {
+// Lower-third name plate. Slides in from the left in ~0.35s (measured).
+function namePlate(name, role, t, at = 0.5, { y = 592 } = {}) {
   if (t < at) return '';
-  const w = Math.max(textWidth(name, 30), textWidth(role, 19)) + 60;
-  const x = tween(t, at, 0.45, -w - 20, 40, ease.out);
+  const w = Math.max(textWidth(name, 34), textWidth(role, 20)) + 60;
+  const x = tween(t, at, 0.35, -w - 20, 40, ease.out);
   return `<g transform="translate(${n(x)} ${y})" filter="url(#shadow)">
-    <rect width="${n(w)}" height="78" fill="${P.paper}" stroke="${P.ink}" stroke-width="2.5"/>
-    <rect width="10" height="78" fill="${P.red}"/>
-    ${text(name, 26, 37, { size: 31, font: 'hand' })}
-    <path d="M26 46 H${n(w - 30)}" stroke="${P.red}" stroke-width="2.5"/>
-    ${text(role, 26, 68, { size: 19, font: 'hand', fill: P.inkSoft })}
+    <rect width="${n(w)}" height="84" fill="${P.paper}" stroke="${P.ink}" stroke-width="2.5"/>
+    <rect width="10" height="84" fill="${P.red}"/>
+    ${text(name, 26, 40, { size: 34, font: 'hand' })}
+    <path d="M26 50 H${n(w - 30)}" stroke="${P.red}" stroke-width="2.5"/>
+    ${text(role, 26, 74, { size: 20, font: 'hand', fill: P.inkSoft })}
   </g>`;
 }
 
 // Pop-in paper sticker. The main way the narration's key words land on screen.
-function sticker(label, x, y, t, at, { rot = -3, size = 30, color = P.red, fill = P.paper, font = 'display' } = {}) {
+// Hand-lettered caps like the references. Stagger several stickers 0.7-1s apart.
+function sticker(label, x, y, t, at, { rot = -3, size = 32, color = P.red, fill = P.paper, font = 'hand' } = {}) {
   const w = textWidth(label, size, font) + 36;
   const h = size + 24;
   const inner = `<g filter="url(#shadow)"><rect x="${n(x - w / 2)}" y="${n(y - h / 2)}" width="${n(w)}" height="${h}" fill="${fill}" stroke="${color}" stroke-width="3"/>
@@ -44,20 +47,21 @@ function sticker(label, x, y, t, at, { rot = -3, size = 30, color = P.red, fill 
   return popAround(x, y, pop(t, at), inner, rot);
 }
 
-// Speech bubble: pops from its tail, then types. Returns { svg, end } (end = when typing finishes).
-function bubble({ x, y, w, lines, tail, size = 27, cps = 28 }, t, at) {
+// Speech bubble: pops from its tail, then types at 16-20 cps (measured; sync to the VO line).
+// Stays until the cut. Returns { svg, end } (end = when typing finishes).
+function bubble({ x, y, w, lines, tail, size = 27, cps = 18 }, t, at) {
   const lineH = size * 1.28;
   const h = lines.length * lineH + 34;
-  const p = pop(t, at, 0.28);
+  const p = pop(t, at, 0.18);
   const full = lines.join('\n');
-  const end = at + 0.3 + full.length / cps;
+  const end = at + 0.2 + full.length / cps;
   if (!p.on) return { svg: '', end };
   const [tx, ty] = tail;
   const below = ty > y + h;
   const baseY = below ? y + h : y;
   const bx = clamp(tx, x + 50, x + w - 50);
   const tailPath = `M${n(bx - 26)} ${n(baseY)} L${n(tx)} ${n(ty)} L${n(bx + 14)} ${n(baseY)} Z`;
-  let remaining = typed(full, t, at + 0.3, cps).length;
+  let remaining = typed(full, t, at + 0.2, cps).length;
   const textLines = lines.map((ln, i) => {
     const show = ln.slice(0, Math.max(0, remaining));
     remaining -= ln.length + 1;
@@ -80,7 +84,7 @@ function indexCard({ x, y, w = 230, h = 130, title, lines = [], rot = 0, accent 
     ${text(title, x + 14, y + 30, { size: 24, font: 'display', fill: accent })}
     ${lines.map((ln, i) => text(ln, x + 14, y + 64 + i * 26, { size: 22, font: 'hand' })).join('')}
   </g>`;
-  return popAround(x + w / 2, y + h / 2, pop(t, at, 0.3), inner, rot);
+  return popAround(x + w / 2, y + h / 2, pop(t, at), inner, rot);
 }
 
 // Rubber stamp that slams down (scale 1.8 -> 1 with a quick settle).
@@ -98,8 +102,8 @@ function stamp(label, x, y, t, at, { rot = -8, size = 44, color = P.red } = {}) 
   </g>`;
 }
 
-// Big overlay number + caption, like "3,000,000+ / GERMAN SOLDIERS".
-function bigStat(value, caption, x, y, t, at, { size = 76, color = P.gold, capColor = P.paper, anchor = 'start' } = {}) {
+// Big overlay number + caption, like "3,000,000+ / GERMAN SOLDIERS". 10-16% of frame height.
+function bigStat(value, caption, x, y, t, at, { size = 84, color = P.gold, capColor = P.paper, anchor = 'start' } = {}) {
   if (t < at) return '';
   const k = ease.out(prog(t, at, 0.4));
   return `<g opacity="${n(k)}" transform="translate(0 ${n((1 - k) * 18)})">
@@ -124,8 +128,8 @@ function pencilCircle(cx, cy, rx, ry, t, at, { dur = 0.45, color = P.red } = {})
     stroke-dasharray="${n(len)}" stroke-dashoffset="${n(len * (1 - k))}" transform="rotate(-6 ${cx} ${cy})"/>`;
 }
 
-// Thick map/diagram arrow that grows from start to end.
-function arrow(x1, y1, x2, y2, t, at, { dur = 0.6, color = P.red, width = 16, label } = {}) {
+// Thick map/diagram arrow that grows from start to end over 0.6-1s. Stagger arrows ~0.8s apart.
+function arrow(x1, y1, x2, y2, t, at, { dur = 0.8, color = P.red, width = 16, label } = {}) {
   const k = ease.inOut(prog(t, at, dur));
   if (k <= 0) return '';
   const ex = x1 + (x2 - x1) * k, ey = y1 + (y2 - y1) * k;
@@ -158,4 +162,15 @@ function titleCard(lines, t, at, { y = 250, size = 64 } = {}) {
   </g>`;
 }
 
-module.exports = { dateTag, namePlate, sticker, bubble, indexCard, stamp, bigStat, highlight, pencilCircle, arrow, titleCard, popAround, esc };
+// Chapter / time-jump card: black, serif small caps, held 2.0s; fades in over 0.4s, hard cut out.
+// Give the shot dur 2.0 and call with at = 0.
+function chapterCard(label, sub, t, at = 0) {
+  const k = ease.out(prog(t, at, 0.4));
+  return `<rect width="1280" height="720" fill="#0d0d0e"/>
+    <g opacity="${n(k)}">
+      ${text(label, 640, 360, { size: 54, font: 'serif', fill: P.paper, anchor: 'middle', spacing: 3 })}
+      ${sub ? text(sub, 640, 410, { size: 26, font: 'serif', fill: P.paperShade, anchor: 'middle', spacing: 2 }) : ''}
+    </g>`;
+}
+
+module.exports = { chapterCard, dateTag, namePlate, sticker, bubble, indexCard, stamp, bigStat, highlight, pencilCircle, arrow, titleCard, popAround, esc };

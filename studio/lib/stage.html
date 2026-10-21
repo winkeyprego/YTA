@@ -6,18 +6,20 @@
   @font-face { font-family: 'Lilita One'; src: url('../fonts/lilita-one.woff2') format('woff2'); }
   @font-face { font-family: 'Patrick Hand'; src: url('../fonts/patrick-hand.woff2') format('woff2'); }
   @font-face { font-family: 'Special Elite'; src: url('../fonts/special-elite.woff2') format('woff2'); }
+  @font-face { font-family: 'Cormorant SC'; src: url('../fonts/cormorant-sc.woff2') format('woff2'); font-weight: 600; }
   html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
   #stage, #stage svg { display: block; width: 1280px; height: 720px; }
   .t-display { font-family: 'Lilita One', sans-serif; }
   .t-hand { font-family: 'Patrick Hand', sans-serif; }
   .t-type { font-family: 'Special Elite', monospace; }
+  .t-serif { font-family: 'Cormorant SC', serif; font-weight: 600; }
 </style>
 </head>
 <body>
   <div id="stage"></div>
   <!-- warm the font cache so the first rendered frame already uses the real fonts -->
   <div style="position:absolute;left:-9999px">
-    <span class="t-display">Aa</span><span class="t-hand">Aa</span><span class="t-type">Aa</span>
+    <span class="t-display">Aa</span><span class="t-hand">Aa</span><span class="t-type">Aa</span><span class="t-serif">Aa</span>
   </div>
 </body>
 </html>

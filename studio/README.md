@@ -44,10 +44,10 @@ studio/
     ui.js              date tags, name plates, stickers, bubbles, cards, stamps, titles
     devices.js         signature recurring device: THE FUSE (+ tally scoreboard)
     stage.html         the page Chromium renders into (loads fonts)
-  fonts/               Lilita One, Patrick Hand, Special Elite (open licences included)
+  fonts/               Lilita One, Patrick Hand, Special Elite, Cormorant SC (open licences included)
   episodes/
     sample-2008-cold-open/
-      episode.js       six shots, ~37s
+      episode.js       eight shots, ~37s
       SCRIPT.md        narration + shot list + facts to verify
   renders/             output (git-ignored; regenerate with render.js)
 ```
@@ -69,7 +69,7 @@ module.exports = {
 
 `render(t)` gets the shot-local time in seconds and returns SVG markup for 1280x720 design units.
 It must be pure: no state between frames. Everything animated is a function of `t`.
-Shots play back to back with hard cuts, as in the references.
+Shots play back to back with hard cuts, as in the references. Chapter cards (`ui.chapterCard`) are the only fades.
 
 ## Workflow for a new episode
 
@@ -82,7 +82,8 @@ Shots play back to back with hard cuts, as in the references.
 ## Roadmap
 
 - [x] Style library v1 (characters, props, UI, fuse device), renderer, 37s sample
-- [ ] Faster render path (grain/vignette in ffmpeg, JPEG frames)
+- [x] Reference videos measured; defaults tuned to the numbers (docs/REFERENCE-ANALYSIS.md)
+- [x] Faster render path (parallel workers, JPEG frames, grain in ffmpeg): ~2s of render per 1s of video on 4 CPUs (a 30-min episode is about an hour)
 - [ ] VO pass: narration audio, word timestamps, and shots timed to the words
 - [ ] Map kit (countries/regions as flat shapes, arrows, legend, fronts)
 - [ ] Sound kit (pops, typewriter ticks, paper, whoosh, low music bed)

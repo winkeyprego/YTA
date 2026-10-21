@@ -1,6 +1,7 @@
 # Sample: "Why the 2008 Crash Was COMPLETELY Avoidable" (cold open)
 
 Status: style test, ~37s, no audio yet. In the VO pass, shot durations get re-timed to the recorded narration.
+Shots in episode.js: tower-wide, street-close (= row 1), bankruptcy-filing (2), office-wide, office-close (3), the-crash (4), the-fuse (5), title (6).
 
 ## Narration (draft, for the VO pass)
 

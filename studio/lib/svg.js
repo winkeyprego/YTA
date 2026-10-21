@@ -10,7 +10,8 @@ const n = (v) => Math.round(v * 100) / 100;
 const g = (attrs, ...children) => `<g ${attrs}>${children.join('')}</g>`;
 const tr = (x, y, s = 1, r = 0) => `transform="translate(${n(x)} ${n(y)}) rotate(${n(r)}) scale(${n(s)})"`;
 
-// Text. `font` is one of: display (titles, big numbers), hand (labels, bubbles), type (documents).
+// Text. `font` is one of: display (titles, big numbers), hand (tags, bubbles, stickers, plates),
+// type (documents), serif (chapter cards).
 function text(str, x, y, { font = 'hand', size = 24, fill = P.ink, anchor = 'start', weight, spacing, opacity } = {}) {
   const extra = [
     weight ? `font-weight="${weight}"` : '',
@@ -21,7 +22,7 @@ function text(str, x, y, { font = 'hand', size = 24, fill = P.ink, anchor = 'sta
 }
 
 // Approximate rendered width of a string, for sizing labels around text.
-const FONT_EM = { display: 0.56, hand: 0.47, type: 0.6 };
+const FONT_EM = { display: 0.56, hand: 0.47, type: 0.6, serif: 0.62 };
 const textWidth = (str, size, font = 'hand') => String(str).length * size * (FONT_EM[font] || 0.5);
 
 // Camera: zoom around a focus point plus a pan offset. Wrap the "world" layer of a shot in this;
@@ -43,19 +44,21 @@ const DEFS = (seed) => `
   </filter>
   <filter id="grain" x="0" y="0" width="100%" height="100%">
     <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="${seed}"/>
-    <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .075 0"/>
+    <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .018 0"/>
     <feComposite in2="SourceGraphic" operator="in"/>
   </filter>
+  <!-- references: corners at ~0.6 of centre brightness -->
   <radialGradient id="vignette" cx="50%" cy="46%" r="75%">
-    <stop offset="58%" stop-color="#000" stop-opacity="0"/>
-    <stop offset="100%" stop-color="#000" stop-opacity=".38"/>
+    <stop offset="45%" stop-color="#000" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#000" stop-opacity=".55"/>
   </radialGradient>
   <pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
     <rect width="10" height="10" fill="none"/><path d="M0 0 V10" stroke="${P.red}" stroke-width="3" opacity=".5"/>
   </pattern>
 </defs>`;
 
-// Wrap a finished shot: grain re-seeds 12x a second so the paper "lives" without flicker.
+// Wrap a finished shot. Grain is near-invisible on purpose (references show none measurable);
+// it re-seeds 12x a second so flat fields don't band.
 function frame(content, t, { grain = true, vignette = true } = {}) {
   const seed = Math.floor(t * 12) % 50;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${DEFS(seed)}
