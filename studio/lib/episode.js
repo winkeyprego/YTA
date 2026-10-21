@@ -135,6 +135,22 @@ function lint(spec, plan, style = { pacing: { maxShot: 8, maxBuild: 13, maxGap: 
       look(s).forEach((l) => { if (!seenLooks.has(l)) { seenLooks.add(l); fresh++; } });
     });
     if (stale.length) warn.push(`nothing new for long stretches: ${stale.join(', ')} -- each 3 minutes needs ~6+ looks never shown before (a new set, prop, scene or graphic). Build episode-specific visuals for these chapters (add-to-library), don't recycle`);
+    // variety inside any 3 minutes: the same set, background, graphic kind or device at most ~twice
+    const sig = (s) => (s.template === 'talk' ? `set ${s.set}` : s.template === 'compose' ? (s.bg && !['board', 'paper', 'wall', 'desk', 'night'].includes(s.bg) ? `set ${s.bg}` : null)
+      : ['card', 'chapter', 'title', 'document', 'map'].includes(s.template) ? null : s.template + (s.kind ? `:${s.kind}` : ''));
+    // a scene that stays in one place for a few cuts is one visit; count separate visits (returns) within 3 minutes
+    const visits = [];
+    spec.shots.forEach((s, i) => {
+      const k = sig(s); if (!k) return;
+      const prev = spec.shots.slice(Math.max(0, i - 2), i).map(sig); // a cutaway of 1 shot doesn't end the visit
+      if (!prev.includes(k)) visits.push({ k, t: plan.shots[i] ? plan.shots[i].start : 0 });
+    });
+    const crowded = new Map();
+    visits.forEach((v) => {
+      const near = visits.filter((x) => x.k === v.k && x.t >= v.t && x.t - v.t < 180).length;
+      if (near > 3 && !crowded.has(v.k)) crowded.set(v.k, `${v.k} visited ${near}x from ${Math.floor(v.t / 60)}:${String(Math.floor(v.t % 60)).padStart(2, '0')}`);
+    });
+    if (crowded.size) warn.push(`the same look repeats within 3 minutes: ${[...crowded.values()].join('; ')} -- at most 3 visits per 3 minutes; show the other beats somewhere new`);
     const stick = spec.shots.filter((s) => (s.stickers || []).length).length;
     if (stick / n > 0.35) warn.push(`${Math.round((100 * stick) / n)}% of shots carry stickers (limit 35%): stickers on everything become wallpaper; keep them for the key word of a beat`);
     const setCount = {};
