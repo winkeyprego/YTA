@@ -44,13 +44,15 @@ The owner is not a developer. Explain things step by step in plain words, and sh
 | Piece | State |
 |---|---|
 | **Presets** `war` / `finance` (defaults only; everything interchangeable; per-shot overrides) | done (`lib/styles.js`) |
-| Core templates: talk, versus, document, chart, stat, fuse, map, money, title, chapter, card | done |
-| Finance kits: screens (7), data (7), diagrams (8) | done (`lib/screens.js`, `lib/datakit.js`, `lib/diagrams.js`) |
+| Core templates: talk, versus, document, chart, stat, fuse, case, compose, map, money, title, chapter, card | done |
+| Kits: screens (11), data (12), diagrams (9) | done (`lib/screens.js`, `lib/datakit.js`, `lib/diagrams.js`) |
 | Finance dialogue: floating lines, conversations cutting to the speaker, spotlight, name + arrow, black cards | done |
 | **Visual vocabulary:** beat type → recipes (`RECIPES.md`) | done |
 | Finance host (`CAST.host`, from the owner's illustration) | done; occasional cast member |
-| Library: ~27 cast, 11 sets, money graphics, real maps | done |
-| Validator (typos, unknown names, cue words, labels, repetition) + pacing checker | done; `--plan` |
+| Library: ~42 cast (uniforms, jobs, silhouette, 6 skin tones), 33 sets (money world + history/places), ~45 compose props, money graphics, real maps + city plates + range rings | done |
+| Validator (typos, unknown names, cue words, kit field names read from the kit headers, repetition) + pacing + rhythm | done; `--plan` |
+| Layout QA (text overlaps, faces covered, off screen, **almost-empty frames**), per range | done; `--qa [--from --to]` |
+| Long episodes: storyboard part files for parallel writers | done (STORYBOARD.md) |
 | Voiceover → word timings → shot timing | done (`tools/transcribe.py`) |
 | **Skills:** `make-video`, `add-to-library` (`.claude/skills/` at the repo root) | done |
 | Starters: `finance-starter` (GameStop), `template-starter` (2008, war look) | done |
@@ -63,8 +65,8 @@ Use the **make-video** skill. In short: style → script → (voice → `words.j
 ## Next steps (improvements, not blockers)
 1. **Sound kit:** a music bed ~17 dB under the voice (war) and a light bed (finance), sparse pops/whooshes, a −14 LUFS master.
 2. **A first real episode** with the owner's voice, then tune anything that looks off at full length.
-3. **More metaphor props** (RECIPES O) as scripts need them: house of cards, rocket, gold-rush tools, sinking ship.
-4. **More sets:** a lab or hospital, casino, government building exterior, port.
+3. **More metaphor props** (RECIPES O) as scripts need them: gold-rush tools, sinking ship.
+4. **More sets:** a lab or hospital, casino, port, demolition site, bookshop.
 5. Move derived colours (`T` in sets.js, `C` in maps.js and diagrams.js, `SCREEN_COLORS`, `DATAKIT_COLORS`) into palette.js.
 
 ## Open questions for the owner
@@ -101,6 +103,13 @@ Package managers (npm, PyPI) are allowed by default.
 - Crayon Capital: topic and direction reference (top videos: Wolf of Wall Street, Great Depression, 2008 crisis).
 
 ## Session log
+- **2026-10-21 (cloud), stress test:** two full-length private test VOs (a 37-min finance story, a 41-min 9/11-theories
+  story) were run through the whole pipeline to find what's missing. Fresh "director" agents wrote PLAN.md + NEEDS.md from the
+  docs alone; five library workers then built what they asked for (22 sets, uniforms and jobs, beards, skin tones, the
+  `unknown` silhouette, 24 compose props, 10 kit kinds, `case`, `section`, map rings and city plates, redaction, stamps on any
+  shot). The validator now reads kit field names from the kit file headers and `--qa` flags near-empty frames, the two
+  silent failure modes the test exposed. Eight parallel writers then storyboarded both episodes from the docs (their
+  FRICTION notes feed the next fixes). The test audio and storyboards stay private (scratchpad), never in the repo.
 - **2026-10-21 (cloud), final:** the owner confirmed the hero host (refined: hair shine, curled ends, lashes, lips, collar)
   and that history and finance must be ONE interchangeable style. The presets were reworked to be defaults only, with per-shot
   overrides; `episodes/test-mixed*` prove the mixing.
