@@ -249,7 +249,7 @@ function talk(shot, ctx) {
   const ESTABLISHING = ['towerNight', 'bankExterior', 'skylineWTC', 'memorial', 'fieldPA', 'pentagon', 'capitol', 'courthouse', 'embassy', 'gulfSkyline', 'prisonExterior'];
   const fitCast = () => {
     if (shot.frame === 'full' || (!shot.frame && ESTABLISHING.includes(shot.set)) || !chars.length) return { zoom: 1, fx: 640, fy: 360 };
-    const boxes = chars.map((ch) => { const [x, y, s] = spotOf(ch); return { x0: x - 110 * s, x1: x + 110 * s, y0: y - 330 * s, y1: y + 10 }; });
+    const boxes = chars.map((ch) => { const [x, y, s] = spotOf(ch); return { x0: x - 110 * s, x1: x + 110 * s, y0: y - (ch.sit ? 290 : 330) * s, y1: y + 10 }; });
     const x0 = Math.min(...boxes.map((b) => b.x0)), x1 = Math.max(...boxes.map((b) => b.x1));
     const y0 = Math.min(...boxes.map((b) => b.y0)), y1 = Math.max(...boxes.map((b) => b.y1));
     const zoom = Math.max(1, Math.min(1.55, (720 * 0.78) / (y1 - y0), (1280 * 0.8) / (x1 - x0)));
@@ -261,7 +261,7 @@ function talk(shot, ctx) {
     let c;
     if ((closeFrame || ots) && focusChar) {
       const [x, y, s] = spotOf(focusChar);
-      const hx = x, hy = y - 236 * s;
+      const hx = x, hy = y - (focusChar.sit ? 196 : 236) * s;
       const z0 = shot.zoom || (ots ? Math.min(2.2, Math.max(1.25, 170 / (132 * s))) : Math.min(3, Math.max(1.3, 220 / (132 * s))));
       const zoom = cameraZoom(shot.camera || style.camera, t, ctx, z0);
       // head off-centre; dialogue and stickers get the other side (over the shoulder: away from the foreground person)
@@ -298,7 +298,7 @@ function talk(shot, ctx) {
 
     const headOf = (ch) => {
       const [x, y, s] = spotOf(ch);
-      const [hx, hy] = toScreen(x, y - 236 * s, c);
+      const [hx, hy] = toScreen(x, y - (ch.sit ? 196 : 236) * s, c);
       return { hx, hy, hr: 66 * s * c.zoom };
     };
     if (shot.light && focusChar) {
