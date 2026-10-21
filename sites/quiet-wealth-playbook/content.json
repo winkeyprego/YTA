@@ -786,40 +786,12 @@
     "less": "Show fewer comments",
     "items": [
       {
-        "handle": "@HokeTheDog",
-        "text": "I've been feeling a lot less stress since I started listening to your videos.",
-        "video": "25 Great Depression Money Habits That Still Build Wealth (Most People Have Forgotten These!)",
-        "url": "https://www.youtube.com/watch?v=Wy4jGfRJ6E8&lc=Ugz6ZkU3qXlrVOyyHqp4AaABAg",
-        "likes": 56,
-        "featured": true
-      },
-      {
-        "handle": "@Paladindude19",
-        "text": "I've heard of Japanese money habits, but you explain it even a 5 year old can understand it, thank you Alicia.",
-        "video": "10 Japanese Money Habits That Build Quiet Wealth (Most Americans Have Never Heard of These)",
-        "url": "https://www.youtube.com/watch?v=qBR62RSE6II&lc=Ugx0aPfloqnKF7eRJzt4AaABAg",
-        "likes": 89
-      },
-      {
-        "handle": "@lshey1",
-        "text": "I am almost 2 months in. These videos are awesome! I am going through every one of them. My thinking has changed so much. I am 66, starting over. I wish I had learned these lessons YEARS ago. Thank you!",
-        "video": "How I Built a Full Year of Emergency Savings on a $30,000 Salary (The Exact System)",
-        "url": "https://www.youtube.com/watch?v=BFQb7NJeLEc&lc=Ugz9R5tKkHg-boBpKTd4AaABAg",
-        "likes": 17
-      },
-      {
         "handle": "@melissa3407",
         "text": "My goodness Alicia. Thank you for this video. I seriously feel like you're directly speaking to me . Im 47, few jobs with saving, but nothing consistent to make a true difference in my retirement account. Now in a new phase of life with a son going to college im still working, felt somewhat defeated and overwhelmed, however this video here gives me HOPE with a gps. Love all the examples. Helps me to see myself in another light.  Bookmarking so I can always listen to as a reminder. You're awesome!",
         "video": "The Proven Path From Broke to Quiet Millionaire (If You're Behind, Watch This!)",
         "url": "https://www.youtube.com/watch?v=6n4WOuoxjcE&lc=UgyNTKbz0ynbA0bb_nZ4AaABAg",
-        "likes": 1
-      },
-      {
-        "handle": "@pattip1413",
-        "text": "I find these video so affirming and soothing but I’m also learning new stuff to try! Thanks Alicia!",
-        "video": "10 Unsexy Habits That Save Me Serious Money (like, a lot)",
-        "url": "https://www.youtube.com/watch?v=B5sFampEvx0&lc=UgySODh6gblEIe6fIsZ4AaABAg",
-        "likes": 13
+        "likes": 1,
+        "featured": true
       },
       {
         "handle": "@The_Abasiama",
@@ -829,31 +801,38 @@
         "likes": 13
       },
       {
-        "handle": "@chyla1",
-        "text": "I’ve listened to this 3 times today- I  learn a little more each  time. Sharing with younger members of my family. Thank you Alicia💗",
-        "video": "Master Financial Literacy in 62 Minutes: Everything They Never Taught You About Money!",
-        "url": "https://www.youtube.com/watch?v=5s4vFQQxImc&lc=UgxA4sHM-vpUtxdcHyh4AaABAg",
-        "likes": 22
+        "handle": "@sageywagey-d1e",
+        "text": "Really appreciate this video. It helped me realize I’m currently doing better than I thought, even when it feels like I’m behind. It also helped me reframe how I feel about my past choices between the ages of 18 and 30 (The guilt is real!). Many of those choices were about survival, limited financial literacy, and earning power while putting myself through college and paying rent, not failure (i.e., depending on credit cards to buy groceries and other necessities)!  Also, thank you for making the point about not comparing finances and lifestyles with others who appear to be better off than you- so true!",
+        "video": "What You Should Have Accomplished by 40 | How to Catch Up Fast",
+        "url": "https://www.youtube.com/watch?v=LwAe95uFbHw&lc=Ugy4ygfLPAEa3xmabjR4AaABAg",
+        "likes": 7
       },
       {
-        "handle": "@tmfoster67",
-        "text": "You can ALWAYS restart. After making what seemed like countless financial blunders, and feeling intense shame, I was able to move forward. Thanks Alicia.",
-        "video": "A Letter to Anyone Starting Over At Any Point (From Someone Who Did)",
-        "url": "https://www.youtube.com/watch?v=W7EeQEZTChc&lc=Ugw_Jlk7HkrFooa2uBl4AaABAg",
-        "likes": 1
+        "handle": "@ericanderson1846",
+        "text": "I love your channel! Your Alicia character and presentation is a winner, Excellent info on personal finance, accessible to everybody.. You could branch out into other topics, with Alicia starring in each. Cooking, relationships, home maintenance,  job search, navigating university, de-cluttering a home, caring for aging parents, pet care, health care, insurance policies, whatever. We'd all tune in to hear Alicia. Looking forward to much more.",
+        "video": "20 Frugal Habits That Saved My First $100,000 by 24",
+        "url": "https://www.youtube.com/watch?v=xd0tWseGJcc&lc=UgxWRUnZdV-flPhovO94AaABAg"
       },
       {
-        "handle": "@TiagsFaust",
-        "text": "I’ve watched many self-improvement videos, but yours truly stands out because of its practicality. Thank you for breaking down complex ideas into such clear, actionable steps without any fluff.\n\nThe way you structure the content is very logical and easy to follow. It didn’t just give me temporary motivation; it gave me a clear roadmap to actually change my habits. I really appreciate the effort you put into the editing and the sincerity in your voice. Please keep creating such high-quality and helpful content. It’s exactly what I needed to hear today! <3",
-        "video": "Average Net Worth By Age (2026): Are You Ahead or Behind?",
-        "url": "https://www.youtube.com/watch?v=JF0aXbhk2j4&lc=UgysqW-JWTKvSNeRPH94AaABAg"
+        "handle": "@lshey1",
+        "text": "I am almost 2 months in. These videos are awesome! I am going through every one of them. My thinking has changed so much. I am 66, starting over. I wish I had learned these lessons YEARS ago. Thank you!",
+        "video": "How I Built a Full Year of Emergency Savings on a $30,000 Salary (The Exact System)",
+        "url": "https://www.youtube.com/watch?v=BFQb7NJeLEc&lc=Ugz9R5tKkHg-boBpKTd4AaABAg",
+        "likes": 17
       },
       {
-        "handle": "@canelake34",
-        "text": "Thank You Alicia i am someone who started late in life i will be 50  this upcoming November i just started turning my financial pictures around this past January  your information is very valuable i will do the best i can to at least have a decent amount of retirement savings i dont plan to retire until 70 but work part after that Lord Willing! I appreciate you",
-        "video": "EVERY Financial Trap at Every Age That Keeps You Broke",
-        "url": "https://www.youtube.com/watch?v=NyzesH8ma2Y&lc=UgwsUAZOTNV4olnREMV4AaABAg",
-        "likes": 12
+        "handle": "@kimyladyofdragons3570",
+        "text": "I want to thank you for all the time you take on your channel to educate us. I recently found this channel,  and you have helped me so much already. Am doing things already regarding my finances. Am in my 30s and I know if I make changes now it will help me immensely for the future. Thank you so much for all that you do to help us.",
+        "video": "10 Money Lessons Your 30s Teach You the Hard Way",
+        "url": "https://www.youtube.com/watch?v=SQ1NyMLIKM8&lc=UgxlvRw2T9GUlIcU-UJ4AaABAg",
+        "likes": 5
+      },
+      {
+        "handle": "@chuckiefong1004",
+        "text": "Hi Alicia. You're doing so much good for this world, God's blessings to you🎉\n\nAt age 70, i followed most of your principles for just the past few years, and it's made a world of difference in my life going forward with so much more greater financial confidence\nand in life overall",
+        "video": "The Average Person ACTUALLY Retires With This Much | Are You Better Off?",
+        "url": "https://www.youtube.com/watch?v=SZh1t68fes8&lc=Ugwbr4pNNq0vcoeArcx4AaABAg",
+        "likes": 3
       },
       {
         "handle": "@triniciab",
@@ -863,25 +842,31 @@
         "likes": 99
       },
       {
-        "handle": "@CylonRaider74",
-        "text": "Alicia, I truly enjoy your channel and you do a great job in explaining everything. I can see Alicia Invests easily becoming massive in the near future and I hope it does. Please keep it coming but don't burn yourself out. One must have a real life. Take care and God bless.",
-        "video": "Why I Quit Budgeting Forever & Never Tracked Spending Again!",
-        "url": "https://www.youtube.com/watch?v=1MDAHK3mpcs&lc=UgwuZc5-fkljyflKoZ94AaABAg",
-        "likes": 9
+        "handle": "@bigwavesun",
+        "text": "Alicia, I binge watched your videos on my days off and took notes. You really encouraged me to change my mindset about where my money goes with the daily saving video in particular. I used to put away several hundred dollars only to reverse and pull from savings when I fell short. I appreciate you making personal finance easier to get.",
+        "video": "The Average Person ACTUALLY Retires With This Much | Are You Better Off?",
+        "url": "https://www.youtube.com/watch?v=SZh1t68fes8&lc=Ugwixr45FmKAeZJJngJ4AaABAg",
+        "likes": 1
       },
       {
-        "handle": "@rjthepoet500",
-        "text": "I’m gonna rewatch this and write the habits down because this is helpful. \n\nNewly subscribed. Thanks!",
-        "video": "It's IMPOSSIBLE to Stay Broke If You Do THIS Everyday In 2026 (Step by Step)",
-        "url": "https://www.youtube.com/watch?v=7yhjYjM9Qkc&lc=UgxOM2MyZxSw36fQIDV4AaABAg",
-        "likes": 45
+        "handle": "@michellaxoxoxo3995",
+        "text": "I recently called a repairman to service my refrigerator instead of running out to buy another refrigerator. Its sealant was replaced. It should be another 10 years before anything else happens. Plus I asked a lot of questions about appliances they repair often so he told me what not to buy. 👍🏾 This was due to me watching your videos. Plus just planted a few vegetables yesterday. I’m still wearing my scrubs I bought 6 years ago when I started this job.",
+        "video": "25 Great Depression Money Habits That Still Build Wealth (Most People Have Forgotten These!)",
+        "url": "https://www.youtube.com/watch?v=Wy4jGfRJ6E8&lc=UgzF1vXU4UT0SdeOoFR4AaABAg"
       },
       {
-        "handle": "@angelat56",
-        "text": "I cleared all of my counter, table and desk tops. It feels lighter, calmer. Thanks.",
-        "video": "12 Cheap Upgrades That Make Everyday Life Feel Expensive",
-        "url": "https://www.youtube.com/watch?v=--ni2MPfFP0&lc=Ugxj1Tw2fyvRZ3FqKgd4AaABAg",
-        "likes": 4
+        "handle": "@ONLY1KUDWE",
+        "text": "I appreciate your channel so much. I'm learning a lot! You break the information down in such a way it's easily digestible. Keep up the great work. I'm starting from your first video now lol. Been watching the videos as they appeared in my feed. Subscribed after watching one video (forgot which one lol). I look forward to seeing the growth you have in the not so distant future.",
+        "video": "Hi I am Alicia & I’m Here to Make You Richer",
+        "url": "https://www.youtube.com/watch?v=dDuE_2SWEB8&lc=UgyYZbKAQM0QrDLJQMt4AaABAg",
+        "likes": 3
+      },
+      {
+        "handle": "@Itsallgudgud",
+        "text": "School teach lessons in books, unfortunately not real survival life lessons. If I had know about finances, my current debt would have been my current savings. Thank you Alicia for teaching me lessons I have started passing on to my loved ones and friends.🎉",
+        "video": "Schools Failed You on Money: 10 Money Rules They Failed to Teach You!",
+        "url": "https://www.youtube.com/watch?v=A9ODaXSL_3c&lc=UgzkdIcEfsIFGKkuDWp4AaABAg",
+        "likes": 5
       },
       {
         "handle": "@cherrylindo3917",
@@ -891,25 +876,91 @@
         "likes": 14
       },
       {
+        "handle": "@CylonRaider74",
+        "text": "Alicia, I truly enjoy your channel and you do a great job in explaining everything. I can see Alicia Invests easily becoming massive in the near future and I hope it does. Please keep it coming but don't burn yourself out. One must have a real life. Take care and God bless.",
+        "video": "Why I Quit Budgeting Forever & Never Tracked Spending Again!",
+        "url": "https://www.youtube.com/watch?v=1MDAHK3mpcs&lc=UgwuZc5-fkljyflKoZ94AaABAg",
+        "likes": 9
+      },
+      {
+        "handle": "@canelake34",
+        "text": "Thank You Alicia i am someone who started late in life i will be 50  this upcoming November i just started turning my financial pictures around this past January  your information is very valuable i will do the best i can to at least have a decent amount of retirement savings i dont plan to retire until 70 but work part after that Lord Willing! I appreciate you",
+        "video": "EVERY Financial Trap at Every Age That Keeps You Broke",
+        "url": "https://www.youtube.com/watch?v=NyzesH8ma2Y&lc=UgwsUAZOTNV4olnREMV4AaABAg",
+        "likes": 12
+      },
+      {
+        "handle": "@grandma_of_2",
+        "text": "Your channel recently came across my feed and I am loving it. The content applies to a wide audience. It hits my lifestyle were I was previously and where I am going. I appreciate your content. I am a new sub and I plan to share with my girls.  I will be binge watching.",
+        "video": "10 Minimalist Rules That DON'T Actually Work (Do This Instead!)",
+        "url": "https://www.youtube.com/watch?v=NH2ql2vQZTY&lc=UgxEqwMPZBHn_JJvpZN4AaABAg",
+        "likes": 5
+      },
+      {
+        "handle": "@omoyemoja-colafiuymi5505",
+        "text": "Your channel is the best 🎉..I have been watching your videos for a while now . And I realized I been triple charged for the same subscription app. And I was able to get a 10$ loyal customer discount on my bill for a year. I also was able to get a library card in another county to acess free museum access with my son . All thanks to you. Your channel is a huge blessing ❤ ..",
+        "video": "The 14 Freebies and Discounts You Should Be Asking For (Most Don’t Know About This!)",
+        "url": "https://www.youtube.com/watch?v=Jws4VzuZ5Fw&lc=Ugys1KsZOP3yQM9g7FF4AaABAg",
+        "likes": 1
+      },
+      {
+        "handle": "@striveforsuccess6259",
+        "text": "Thank you for taking the time to make these videos. I have learned and I have these accounts set up. I think I am in the frustration phase lol. But more importantly, I am educating myself for my Daughter, she has these tools, and I have started them for her already. I will also teach my hood kids where I am from about these lessons. Thank you.",
+        "video": "This is Why Compounding Feels Slow (Until the 7-5-3-1 Rule Kicks In)",
+        "url": "https://www.youtube.com/watch?v=2x0xEZJAgDY&lc=UgxHgL4dwblS7KB0aNV4AaABAg"
+      },
+      {
+        "handle": "@marnold9147",
+        "text": "What i thought was my number and what it really is are 2 different things. I added up every little expenditure including monthly amounts to save for upcoming bills including food to feed the dogs...lol this was a great lesson in what exactly is needed and what is a luxury. I love the tips I pick up here...thankyou for sharing when used they really do help!",
+        "video": "How I Built a Full Year of Emergency Savings on a $30,000 Salary (The Exact System)",
+        "url": "https://www.youtube.com/watch?v=BFQb7NJeLEc&lc=UgwD3X8e_EVTbhQcqDB4AaABAg"
+      },
+      {
+        "handle": "@jannz079",
+        "text": "Am genuinely grateful for this video! My job is new but I have the ability to get pay-rises as I train in each area, every 3-6 months. I work split shifts on a 3-wk rotation so will plan my money minute to align with my wakeup times, also my pay-cycle is bi-weekly but I do get a small weekly side income which I can use for my daily. Will be starting small and increasing as I can, it’s not the amount at first it’s building the habits and growing self-awareness towards my spending. Thank you so much!",
+        "video": "It's IMPOSSIBLE to Stay Broke If You Do THIS Everyday In 2026 (Step by Step)",
+        "url": "https://www.youtube.com/watch?v=7yhjYjM9Qkc&lc=UgxSiu-c-6AOW4uW-8N4AaABAg"
+      },
+      {
+        "handle": "@creecerubia4569",
+        "text": "Thank you for this video. I had always been struggling with savings for many years until I discovered, briefly studied kakeibo and have implemented it in my life for almost a year now, but I am still somewhat struggling with my financial management. Thank you again for this enlightening presentation and I have already set my daily money minute alarm to complement my kakeibo! ❤❤❤ ❤❤❤❤",
+        "video": "It's IMPOSSIBLE to Stay Broke If You Do THIS Everyday In 2026 (Step by Step)",
+        "url": "https://www.youtube.com/watch?v=7yhjYjM9Qkc&lc=Ugwll-V8PUqfYZCKO7h4AaABAg",
+        "likes": 1
+      },
+      {
+        "handle": "@TheDaintyBrew",
+        "text": "I’ve recently moved over the summer and was reminded how much STUFF…just STUFF I’ve accumulated and wasted money on! I was disgusted with myself and working on becoming a minimalist. Your vids have done more than just motivate but also put action behind it. Holding myself accountable and moving forward for the better! Thank you Alicia ❤",
+        "video": "40 Minimalist Money Rules for a Calmer, Richer Life",
+        "url": "https://www.youtube.com/watch?v=b-TuECWrtDQ&lc=UgyZgyhG_T2qqbZS0jh4AaABAg",
+        "likes": 13
+      },
+      {
+        "handle": "@birgitkrotz9992",
+        "text": "Minute 9:12 – That was me until three months ago, when I started to put the advice that this channel provides into practice  Now, I have cleared up almost every category except insurance, and I have a small emergency fund. I have also freed up enough money to live without a credit card or overdraft. Every purchase is backed by real money. When I desperately want something, I either wait until I have enough money to buy it, or I sell something😁",
+        "video": "The Brutal Truth About Looking Rich (It's the #1 Way to Stay Broke)",
+        "url": "https://www.youtube.com/watch?v=Lcly1ApkrKs&lc=UgwfqatGEcvpf7W0fot4AaABAg",
+        "likes": 12
+      },
+      {
+        "handle": "@petraeunjoo",
+        "text": "Thanks to your video’s I completely if it comes down to finances and spending/saving money. And I’m even proud at myself that I made the decision to take seriously my finances under control by changing my mindset but also by learning now about economics and finances and of course watching your videos! And I love this new life with books, cooking home made meals at home, quit drinking alcohol which is expensive and bad for our health. I am looking forward to simple things like my cup of tea or when it’s time to eat or when I have time ro read, to paint, to make music etc",
+        "video": "12 Things That Are No Longer Worth Your Money in 2026",
+        "url": "https://www.youtube.com/watch?v=0KiV3xUm2Lk&lc=UgzwM8UWe4gtngICZ3h4AaABAg",
+        "likes": 1
+      },
+      {
+        "handle": "@johannees622",
+        "text": "I realized I am already rich! 😊\nI do all of them currently successfully or progressively. When I tell people I leave my personal cell phone in the office downstairs, they think I’m crazy and that it is unsafe. Well I do it for the sake of peace of mind and mental health. That’s safe to me. \nThe ones that are still hard for me is to say no to my closed circle … yeah this is hard on me. But I will keep trying. And I would love to stay away from my phone more often. \n\nThanks for this. I really appreciate this video!",
+        "video": "12 Free Upgrades That Make Life Feel Expensive",
+        "url": "https://www.youtube.com/watch?v=ylv5PYLrMVM&lc=UgznlaJpejQNx5iztP54AaABAg"
+      },
+      {
         "handle": "@sherriholcombe5428",
         "text": "You're right Alicia, I am guilty of 7 on this list. Thank you for explaining why these money traps are wealth destroyers and how to correct that behavior. Imagine, if we were taught about finances in school!...Thank you for your encouraging words at the end.  I will share these tips!💖😊",
         "video": "15 Things That Are a Complete Waste of Your Money (Most People Buy at Least 7 of These)",
         "url": "https://www.youtube.com/watch?v=ODou2ck2BqM&lc=UgygpeOmQmwQhJy3bfN4AaABAg",
         "likes": 5
-      },
-      {
-        "handle": "@KaedonGray",
-        "text": "Thank you for this channel! I'm implementing these habits now as a 50 year old.",
-        "video": "It's IMPOSSIBLE to Stay Broke If You Do THIS Everyday In 2026 (Step by Step)",
-        "url": "https://www.youtube.com/watch?v=7yhjYjM9Qkc&lc=UgykFQ4Nn3RBh-ohPsp4AaABAg",
-        "likes": 4
-      },
-      {
-        "handle": "@naturenutrıtıon-d",
-        "text": "I love the way you're explaining everything clearly",
-        "video": "Minimalist Money Rules You MUST Follow to Always be Financially Stable",
-        "url": "https://www.youtube.com/watch?v=X-fYyGqcaUc&lc=UgxUMU4cFBCTwJ1IAxp4AaABAg",
-        "likes": 4
       },
       {
         "handle": "@carltaylor5251",
@@ -919,13 +970,6 @@
         "likes": 1
       },
       {
-        "handle": "@HarlemML",
-        "text": "This video is super eye opening I’m 30 and always drive nice still jeeps ect but this year I got a ford car because that’s what I can afford this just totally changed my mindset and I needed this",
-        "video": "Why Looking Poor is SO Important",
-        "url": "https://www.youtube.com/watch?v=sGpWEp164zs&lc=UgxOSJ_2l1Djig87nUR4AaABAg",
-        "likes": 3
-      },
-      {
         "handle": "@barbaradouglas3990",
         "text": "Thank you for a great video! I have always made the bed every morning to start my day. Recently, I started lighting a candle in the evenings when I get home and I have noticed a difference in my mood before going to bed. I also stopped buying paper plates and started using my real dishes! I didn’t realize how that simple thing has really impacted my life until this video! 😊",
         "video": "12 Free Upgrades That Make Life Feel Expensive",
@@ -933,16 +977,18 @@
         "likes": 13
       },
       {
-        "handle": "@johannees622",
-        "text": "This video is a piece of Diamond 💎 on YouTube. This should have way more comments. Thank you for sharing your knowledge.",
-        "video": "The Credit Score Move That Drops Your Mortgage Rate by a Full Percent",
-        "url": "https://www.youtube.com/watch?v=n2k1zm4zgCY&lc=UgwFayaebxNJFhWvqy14AaABAg"
+        "handle": "@NokuthulaMotha-k2b",
+        "text": "First! 🥇 I watch these videos religiously and my spending habits have completely changed. My goal now is to decrease the gap between my spending and investing, and I'm happy to say I'm well on my way because of this channel. Thank you so much for sharing this wealth of financial information!",
+        "video": "I'm Almost 60: What I'd Do Differently With Money at 40",
+        "url": "https://www.youtube.com/watch?v=K94Hw6EuNBQ&lc=UgxurKMss-vsVrpMT4V4AaABAg",
+        "likes": 6
       },
       {
-        "handle": "@GabrielGonzalez-mw4ch",
-        "text": "Great video. You covered so many topics beyond the mortgage. Standard deduction, itemized, irmaa surcharge, ss tax threshold, and so much more. Thank you.",
-        "video": "Why a Paid-Off Home Changes Literally Everything",
-        "url": "https://www.youtube.com/watch?v=69rJ9pFtaQI&lc=UgzFPOkPZmhHcBpbn6J4AaABAg"
+        "handle": "@Belle-r5l",
+        "text": "Your videos are shifting how I see money in the best way. I’ve stopped seeing saving as holding back and started seeing it as building toward my goals. I now save automatically on payday, and it’s made a real difference. I loved your house hacking video. Are there other options you would recommend?",
+        "video": "20 Frugal Habits That Saved Me Thousands",
+        "url": "https://www.youtube.com/watch?v=ZRBJpfH7EBk&lc=UgxeBBrT_5WecrpEIYh4AaABAg",
+        "likes": 1
       }
     ],
     "noVideo": "Alicia Invests on YouTube"
