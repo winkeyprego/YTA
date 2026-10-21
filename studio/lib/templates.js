@@ -48,6 +48,15 @@ const POSES = {
   hips: { L: [38, -125], R: [38, -125] },
   think: { L: [12, -8], R: [28, -150] },
   wave: { L: [12, -8], R: [150, -40] },
+  // acting poses (use with turn/sit/back for staged scenes)
+  give: { L: [12, -8], R: [82, 4] },          // hands something across to screen right (pair with holding)
+  giveLeft: { L: [82, 4], R: [12, -8] },
+  typing: { L: [24, -100], R: [24, -100] },   // both hands forward on a desk/keyboard
+  armsCrossed: { L: [42, -138], R: [42, -138] },
+  facepalm: { L: [12, -8], R: [130, 107] },     // hand over the face
+  phoneEar: { L: [12, -8], R: [130, 64] },      // hand at the ear; with holding: "phone"
+  headInHands: { L: [130, 107], R: [130, 107] },
+  explain: { L: [55, -60], R: [70, -40] },    // both hands open, mid-sentence
 };
 
 const STICKER_COLORS = { red: P.red, ink: P.ink, gold: P.goldDark, green: P.greenDark, blue: P.blue };
@@ -171,8 +180,11 @@ function actor(c, t, ctx, { talkFrom, talkTo } = {}) {
     mouth: talkMouth || mood2.mouth,
     armL: arm('L'),
     armR: arm('R'),
-    look: c.look || 0,
+    look: c.look,
     tilt: c.tilt || 0,
+    turn: c.turn2 != null && t >= ctx.cue(c.turnOn, c.turnAt ?? ctx.dur / 2) ? M.keys(t, [[ctx.cue(c.turnOn, c.turnAt ?? ctx.dur / 2), c.turn || 0], [ctx.cue(c.turnOn, c.turnAt ?? ctx.dur / 2) + 0.35, c.turn2]]) : c.turn || 0,
+    sit: !!c.sit,
+    back: !!c.back,
     holding: c.holding,
     carry: c.carry,
     walk: c.walk ? t * 9 : null,
@@ -223,8 +235,12 @@ function talk(shot, ctx) {
     dlg.push({ ...l, who: l.who || shot.speaker, at, mode, cps, end: at + 0.2 + l.text.length / cps });
   });
   const current = (t) => { let c = null; dlg.forEach((d) => { if (t >= d.at) c = d; }); return c; };
+  // over-the-shoulder: `over` (default: the first person who isn't the focus) is drawn from behind, big, in the foreground
+  const ots = shot.frame === 'ots' && chars.length > 1;
+  const overChar = ots ? byWho(shot.over) || chars.find((ch) => ch.who !== (shot.focus || shot.speaker)) : null;
   const focusOf = (t) => {
     if (shot.frame === 'reverse' && dlg.length) return byWho((current(t) || dlg[0]).who) || chars[0];
+    if (ots) return byWho(shot.focus || shot.speaker) || chars.find((ch) => ch !== overChar);
     return byWho(shot.focus || shot.speaker) || chars[0];
   };
   const closeFrame = shot.frame === 'close' || shot.frame === 'reverse';
@@ -243,20 +259,24 @@ function talk(shot, ctx) {
   return (t) => {
     const focusChar = focusOf(t);
     let c;
-    if (closeFrame && focusChar) {
+    if ((closeFrame || ots) && focusChar) {
       const [x, y, s] = spotOf(focusChar);
       const hx = x, hy = y - 236 * s;
-      const z0 = shot.zoom || Math.min(3, Math.max(1.3, 220 / (132 * s)));
+      const z0 = shot.zoom || (ots ? Math.min(2.2, Math.max(1.25, 170 / (132 * s))) : Math.min(3, Math.max(1.3, 220 / (132 * s))));
       const zoom = cameraZoom(shot.camera || style.camera, t, ctx, z0);
-      const sx = hx < 640 ? 470 : 810; // head off-centre; dialogue and stickers get the other side
+      // head off-centre; dialogue and stickers get the other side (over the shoulder: away from the foreground person)
+      const sx = ots ? (spotOf(overChar)[0] < x ? 800 : 480) : hx < 640 ? 470 : 810;
       c = { zoom, fx: hx, fy: hy, x: sx - hx, y: 330 - hy };
+      // never look past the edge of the set: world x 0..1280 / y 0..720 must cover the screen
+      c.x = Math.min(Math.max(c.x, 1280 - hx - (1280 - hx) * zoom), -hx + hx * zoom);
+      c.y = Math.min(Math.max(c.y, 720 - hy - (720 - hy) * zoom), -hy + hy * zoom);
     } else {
       const fit = fitCast();
       const zoom = cameraZoom(shot.camera || style.camera, t, ctx, shot.zoom || fit.zoom);
       const [fx, fy] = shot.focusXY || (shot.zoom || fit.zoom === 1 ? (focusChar ? [spotOf(focusChar)[0], spotOf(focusChar)[1] - 200] : [640, 360]) : [fit.fx, fit.fy]);
       c = { zoom, fx, fy };
     }
-    const people = chars.map((ch) => {
+    const people = chars.filter((ch) => ch !== overChar).map((ch) => {
       const [x, y, s] = spotOf(ch);
       const mine = dlg.filter((d) => d.who === ch.who);
       const live = mine.find((d) => t >= d.at && t <= d.end);
@@ -269,6 +289,12 @@ function talk(shot, ctx) {
     }).join('');
     const world = set.draw(t, shot.setOpts || {}) + people + (set.front ? set.front(t, shot.setOpts || {}) : '');
     let out = cam(world, c);
+    if (overChar) {
+      // the foreground shoulder: big, cropped by the frame edge, seen from behind
+      const left = spotOf(overChar)[0] < spotOf(focusChar)[0];
+      const st = { ...actor(overChar, t, ctx), back: true, legs: false };
+      out += g(tr(left ? 170 : 1110, 1040, 2.05), character(resolveCast(overChar.who, ctx), st));
+    }
 
     const headOf = (ch) => {
       const [x, y, s] = spotOf(ch);

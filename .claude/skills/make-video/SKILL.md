@@ -24,6 +24,9 @@ from existing recipes. Only touch `studio/lib/` when a beat truly needs somethin
    Write it to `PLAN.md`. List what the library is missing in `NEEDS.md`.
 5. **Library pass:** build the important NEEDS items once (use the `add-to-library` skill). For minor ones, use the closest existing visual.
 6. **Storyboard:** write `storyboard.txt`, one line per beat or small beat range, by type:
+   - **Stage the moment first** (RECIPES "Staging"): who is doing what, to whom, where? People sit, turn to each other,
+     hand things over, take calls; use over-the-shoulder and three-quarter close-ups. About 1 beat in 4 is a scene designed
+     for that sentence. Kit graphics are for numbers and documents, not a default.
    - Pick a recipe for each beat's type (RECIPES A–P). Rotate them: never the same recipe three times running.
    - Give every shot a cue on one of its own words.
    - Use the host only occasionally. Use a black card about every 10–12 shots (finance) and a metaphor every 1–2 minutes.

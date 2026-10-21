@@ -459,17 +459,23 @@ function character(spec = {}, st = {}) {
     ? `<g><rect x="-46" y="-140" width="92" height="64" fill="${P.paperShade}" stroke="${P.ink}" stroke-width="4" stroke-linejoin="round"/><path d="M-46 -124 H46" stroke="${P.ink}" stroke-width="3"/><rect x="-20" y="-118" width="40" height="14" fill="${P.paper}" stroke="${P.ink}" stroke-width="2"/></g>`
     : '';
   const skin = spec.skin || P.skin;
+  // Staging (acting): turn -1..1 = three-quarter view toward screen left/right; back = seen from behind (over-the-shoulder
+  // foregrounds); sit = seated on a chair (behind a desk the legs are hidden anyway).
+  const T = Math.max(-1, Math.min(1, st.turn || 0));
+  if (st.back) return backView(spec, st, skin);
   // Hero characters (e.g. the finance host, lib/host.js) bring their own detailed head via spec.drawHead.
   const head = spec.drawHead ? spec.drawHead(st, spec) : `<circle data-qa="face" cx="0" cy="${HEAD_Y}" r="${HEAD_R}" fill="${skin}" stroke="${P.ink}" stroke-width="${OUT}"/>
     ${hair(spec.hair, spec.hairColor || '#4a4038')}
     ${spec.earrings ? `<circle cx="-64" cy="-212" r="5" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/><circle cx="64" cy="-212" r="5" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/>` : ''}
-    <ellipse cx="-38" cy="-210" rx="12" ry="7" fill="${spec.blushColor || autoBlush(skin)}" opacity=".75"/>
-    <ellipse cx="38" cy="-210" rx="12" ry="7" fill="${spec.blushColor || autoBlush(skin)}" opacity=".75"/>
+    <g transform="translate(${n(T * 17)} 0)">
+    ${T > 0.3 ? '' : `<ellipse cx="-38" cy="-210" rx="12" ry="7" fill="${spec.blushColor || autoBlush(skin)}" opacity=".75"/>`}
+    ${T < -0.3 ? '' : `<ellipse cx="38" cy="-210" rx="12" ry="7" fill="${spec.blushColor || autoBlush(skin)}" opacity=".75"/>`}
     ${beard(spec.beard, spec.beardColor || spec.hairColor || '#4a4038')}
-    ${eyes(eyesKind, st.look || 0)}${glasses(spec.glasses)}${brows(st.brows || 'flat')}
+    ${eyes(eyesKind, st.look ?? T)}${glasses(spec.glasses)}${brows(st.brows || 'flat')}
+    ${Math.abs(T) > 0.25 ? `<path d="M${n(T * 30)} -226 q${n(T * 12)} 8 0 14" stroke="${P.ink}" stroke-width="3.5" fill="none" stroke-linecap="round"/>` : ''}
     ${moustache(spec.moustache, spec.moustacheColor)}${mouth(mouthKind)}
     ${spec.cigar ? `<rect x="10" y="-206" width="34" height="9" rx="3" fill="#8a5a3c" stroke="${P.ink}" stroke-width="2.5"/>` : ''}
-    ${headset(spec.headset)}${veilFront(spec.veil)}
+    ${headset(spec.headset)}</g>${veilFront(spec.veil)}
     ${hat(spec.hat, spec.hatColor || HAT_COLOR[spec.hat], spec.hatBand || HAT_BAND[spec.hat])}`;
   const headTilt = st.tilt ? `transform="rotate(${n(st.tilt)} 0 ${SHOULDER_Y - 20})"` : '';
   const held = st.holding && !carry ? heldProp(st.holding, handPosition(1, armR)) : '';
@@ -478,18 +484,50 @@ function character(spec = {}, st = {}) {
     ? (() => { const [hx, hy] = handPosition(1, armR); return `<circle cx="${n(hx)}" cy="${n(hy)}" r="9" fill="${skin}" stroke="${P.ink}" stroke-width="3.5"/>`; })()
     : '';
   const size = spec.size && spec.size !== 1 ? `transform="scale(${n(spec.size)})"` : '';
+  const sitY = st.sit ? 40 : 0; // seated: the upper body drops onto the chair
   return `<g ${size}><g transform="translate(0 ${n(bob)})">
-    <g transform="translate(0 ${HIP_Y}) scale(1 ${n(b)}) translate(0 ${-HIP_Y})"><g ${headTilt}>${veilBack(spec.veil)}</g></g>
-    ${st.legs === false ? '' : legs(st.walk)}
-    <g transform="translate(0 ${HIP_Y}) scale(1 ${n(b)}) translate(0 ${-HIP_Y})">
-      ${body(spec)}${bodyExtras(spec)}
+    ${st.sit ? chairBack(spec.chairColor) : ''}
+    <g transform="translate(0 ${sitY}) translate(0 ${HIP_Y}) scale(1 ${n(b)}) translate(0 ${-HIP_Y})"><g ${headTilt}>${veilBack(spec.veil)}</g></g>
+    ${st.legs === false ? '' : st.sit ? seatedLegs() : legs(st.walk)}
+    <g transform="translate(0 ${sitY}) translate(0 ${HIP_Y}) scale(1 ${n(b)}) translate(0 ${-HIP_Y})">
+      <g transform="scale(${n(1 - 0.1 * Math.abs(T))} 1)">${body(spec)}${bodyExtras(spec)}</g>
       ${carry ? '' : arm(-1, armL, skin) + arm(1, armR, skin)}
       ${held}${handTop}
       ${carry}
       ${carry ? arm(-1, [28, -70], skin) + arm(1, [28, -70], skin) : ''}
       <g ${headTilt}>${head}</g>
+      ${carry ? '' : (armL[0] > 100 ? arm(-1, armL, skin) : '') + (armR[0] > 100 ? arm(1, armR, skin) + held + handTop : '')}
     </g>
   </g></g>`;
+}
+
+// Seated: an office chair behind the body, short foreshortened legs (knees toward the camera).
+function chairBack(color = P.charcoal) {
+  const o = `stroke="${P.ink}" stroke-width="${OUT}" stroke-linejoin="round"`;
+  return `<rect x="-64" y="-150" width="128" height="132" rx="22" fill="${color}" ${o}/>
+    <path d="M-52 0 L-46 -18 M52 0 L46 -18" stroke="${P.ink}" stroke-width="6" stroke-linecap="round"/>`;
+}
+function seatedLegs() {
+  const s = `stroke="${P.ink}" stroke-width="${LIMB}" stroke-linecap="round" fill="none"`;
+  return `<rect x="-58" y="-24" width="116" height="16" rx="7" fill="${P.charcoal}" stroke="${P.ink}" stroke-width="3.5"/>
+    <path d="M-18 -16 L-22 0 M18 -16 L22 0" ${s}/>
+    <ellipse cx="-25" cy="0" rx="13" ry="6" fill="${P.ink}"/><ellipse cx="25" cy="0" rx="13" ry="6" fill="${P.ink}"/>`;
+}
+
+// Seen from behind (over-the-shoulder foregrounds): back of the head (hair), ears, the jacket's back, arms.
+function backView(spec, st, skin) {
+  const hc = ['bald', 'none'].includes(spec.hair) ? skin : spec.hairColor || '#4a4038';
+  const backBody = body({ ...spec, tie: null, shirt: spec.outfit === 'shirt' || spec.outfit === 'tshirt' || spec.outfit === 'hoodie' ? spec.shirt : spec.suit || spec.shirt, print: null });
+  const o = `stroke="${P.ink}" stroke-width="${OUT}"`;
+  const armL = st.armL || [10, -6], armR = st.armR || [10, -6];
+  const sitY = st.sit ? 40 : 0;
+  return `<g ${spec.size && spec.size !== 1 ? `transform="scale(${n(spec.size)})"` : ''}>${st.sit ? chairBack(spec.chairColor) : ''}
+    ${st.legs === false ? '' : st.sit ? seatedLegs() : legs(null)}
+    <g transform="translate(0 ${sitY})">${backBody}${arm(-1, armL, skin)}${arm(1, armR, skin)}
+    <circle cx="-64" cy="-226" r="11" fill="${skin}" stroke="${P.ink}" stroke-width="3.5"/><circle cx="64" cy="-226" r="11" fill="${skin}" stroke="${P.ink}" stroke-width="3.5"/>
+    <circle cx="0" cy="${HEAD_Y}" r="${HEAD_R}" fill="${skin}" ${o}/>
+    ${hc !== skin ? `<path d="M-64 -214 A66 66 0 1 1 64 -214 Q0 -190 -64 -214 Z" fill="${hc}" stroke="${P.ink}" stroke-width="3.5"/>` : ''}
+    ${hat(spec.hat, spec.hatColor || HAT_COLOR[spec.hat], spec.hatBand || HAT_BAND[spec.hat])}</g></g>`;
 }
 
 // Where a hand ends up for a pose (useful for attaching props or aiming bubbles).

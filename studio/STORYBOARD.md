@@ -24,7 +24,7 @@ It's about 3× less writing than shots.json, and cue words can't mismatch the na
 | `talk` | a conversation; use with `"f":"r"` to cut to each speaker | `"talk":["ceo\|How bad?@bad","sbf\|Worse.@worse"]` |
 | `st` | stickers on words; optional colour after a colon. Use the object form to place one: `{"text":"GENIUS","on":"genius","x":900,"y":160}` | `"st":["GENIUS@genius","$32 BILLION@billion:gold"]` |
 | `arrow` | handwritten name + arrow on the first character | `"arrow":"Sam Bankman-Fried@sam"` |
-| `f` | framing: `w` wide (people at medium size), `F` full set (shows signs, boards, screens), `c` close, `r` conversation cuts | `"f":"c"` |
+| `f` | framing: `w` wide (people at medium size), `F` full set (shows signs, boards, screens), `c` close, `r` conversation cuts, `o` over the shoulder (with `"over":"who"`) | `"f":"c"` |
 | `cam` | camera: `locked`, `creep`, `punch@word`, `push@word`, `steps` | `"cam":"punch@collapse"` |
 
 Everything else is a normal `shots.json` field (see SHOTS.md) and passes straight through: `set`, `setOpts`, `tag`, `plate`,
@@ -56,7 +56,8 @@ The director validates the header alone with `--plan` ("header OK: no shots yet"
 - **One-off named people** don't get a face. Show their name (a `portraits` card with `emblem`/initials, a `plate`, an
   `arrow` on a generic or silhouette figure, a document or screen with the name), so a generic face never reads as a likeness.
 - A person who stays **unrevealed** until later: the `unknown` silhouette cast.
-- The `who` shorthand takes extra fields after `=`: `"leo:center:sad:idle:holding=phone,walk=out"`. For anything else,
+- The `who` shorthand takes extra fields after `=`: `"leo:center:sad:idle:holding=phone,walk=out"`, and staging:
+  `"leo:left:worried:typing:sit=true,turn=0.7"`. For anything else,
   use the long `"chars":[{...}]` form (the two can't be mixed in one line).
 
 ## Cue words and the transcript

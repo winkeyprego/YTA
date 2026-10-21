@@ -92,7 +92,12 @@ Starters: `episodes/finance-starter` (money topics) and `episodes/template-start
 - `light: true`: a spotlight pool on the focus character (drama, a lone figure).
 - `nameArrow: { "who", "text", "on" }`: a handwritten name with a curved arrow, for someone's first appearance.
 - **Moods:** `neutral`, `confident`, `smug`, `happy`, `excited`, `worried`, `sad`, `angry`, `shocked`, `sleepy`.
-- **Poses:** `idle`, `pointLeft`, `pointRight`, `pointUp`, `present`, `presentLeft`, `shrug`, `armsUp`, `hips`, `think`, `wave`.
+- **Poses:** `idle`, `pointLeft`, `pointRight`, `pointUp`, `present`, `presentLeft`, `shrug`, `armsUp`, `hips`, `think`, `wave`,
+  and acting poses `give`, `giveLeft`, `typing`, `armsCrossed`, `facepalm`, `phoneEar`, `headInHands`, `explain`.
+- **Staging per person:** `turn` (-1..1, three-quarter view toward screen left/right; `turn2` + `turnOn` turns on a word),
+  `sit: true` (on a chair; behind a desk people already read as seated), `back: true` (seen from behind).
+- `frame: "ots"` (over the shoulder): `over` names the listener, drawn from behind, big, in the foreground; the camera frames
+  the other person beyond. See RECIPES "Staging".
 
 ### `versus`: two sides, split screen
 ```json

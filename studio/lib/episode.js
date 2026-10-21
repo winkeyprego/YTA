@@ -106,6 +106,26 @@ function lint(spec, plan, style = { pacing: { maxShot: 8, maxBuild: 13, maxGap: 
     if (MOVING.has(shot.template) && win.dur > maxBuild + 1) warn.push(`${label}: very long even for a built-up shot (max ~${maxBuild}s)`);
     if (shot.template === 'card' && win.dur > 4) warn.push(`${label}: black cards hold 0.5-2.5s after typing. Keep the narration on them short`);
   });
+  // Repetition limits (the "templated" feel): a graphic that keeps coming back, and people who only stand and face us.
+  const n = spec.shots.length;
+  if (n >= 40) {
+    const kinds = {};
+    spec.shots.forEach((s, i) => { const k = s.template + (s.kind ? `:${s.kind}` : ''); (kinds[k] = kinds[k] || []).push(i + 1); });
+    const cap = Math.max(5, Math.round(n * 0.02));
+    Object.entries(kinds).forEach(([k, idx]) => {
+      if (['talk', 'compose', 'card', 'chapter', 'map', 'document', 'title'].includes(k) || idx.length <= cap) return;
+      warn.push(`${k} is used ${idx.length} times (limit ~${cap} for ${n} shots; shots ${idx.slice(cap).join(', ')} are over): show those beats a new way (stage people, a compose scene, a different kind)`);
+    });
+    const talks = spec.shots.map((s, i) => [s, i + 1]).filter(([s]) => s.template === 'talk');
+    const flat = talks.filter(([s]) => (s.chars || []).length === 1 && s.frame !== 'ots'
+      && !(s.chars[0].sit || s.chars[0].turn || s.chars[0].back || s.chars[0].walk || s.chars[0].holding || s.chars[0].carry));
+    if (talks.length >= 10 && flat.length / talks.length > 0.35) {
+      warn.push(`${Math.round((100 * flat.length) / talks.length)}% of people shots are one person facing the camera doing nothing (limit 35%; e.g. shots ${flat.slice(0, 8).map(([, i]) => i).join(', ')}): stage them (sit, turn toward someone, "f":"o" over the shoulder, hand something over, walk in, hold a prop)`);
+    }
+    const setCount = {};
+    talks.forEach(([s]) => { setCount[s.set] = (setCount[s.set] || 0) + 1; });
+    Object.entries(setCount).forEach(([k, c]) => { if (c > Math.max(8, n * 0.05)) warn.push(`set "${k}" is used ${c} times (limit ~${Math.round(Math.max(8, n * 0.05))}): move some beats to other places`); });
+  }
   return warn;
 }
 

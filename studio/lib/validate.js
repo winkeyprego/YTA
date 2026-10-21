@@ -11,7 +11,7 @@ const lazy = (m) => { try { return require(m); } catch (e) { return {}; } };
 
 const COMMON = ['template', 'vo', 'dur', 'minDur', 'tail', 'id', 'vignette', 'fill', 'stamp', 'tag', 'plate', 'stickers', 'stat', 'source', 'camera', 'note', '_t0'];
 const FIELDS = {
-  talk: ['set', 'setOpts', 'chars', 'frame', 'focus', 'focusXY', 'zoom', 'speaker', 'line', 'lineOn', 'lineAt', 'lineWidth', 'cps', 'speaking', 'lines', 'bubble', 'dialogue', 'light', 'nameArrow'],
+  talk: ['set', 'setOpts', 'chars', 'frame', 'over', 'focus', 'focusXY', 'zoom', 'speaker', 'line', 'lineOn', 'lineAt', 'lineWidth', 'cps', 'speaking', 'lines', 'bubble', 'dialogue', 'light', 'nameArrow'],
   versus: ['left', 'right', 'title'],
   document: ['lines', 'highlight', 'highlightOn', 'pencil', 'pencilOn', 'stamp', 'redact', 'unredactOn', 'classified'],
   chart: ['title', 'data', 'turn', 'turnLabel', 'riseOn', 'fallOn', 'change', 'xLabels', 'color', 'rising', 'drawDur'],
@@ -63,7 +63,7 @@ const REQUIRED = {
   fuse: ['stops'], case: ['cards'], map: [], money: ['items'], title: ['text'], chapter: ['label'], compose: ['items'],
 };
 const CHAR_FIELDS = ['who', 'spot', 'mood', 'mood2', 'mood2On', 'mood2At', 'pose', 'poseOn', 'poseAt', 'pose2', 'pose2On', 'pose2At',
-  'holding', 'carry', 'walk', 'walkAt', 'walkDur', 'look', 'tilt', 'seed'];
+  'holding', 'carry', 'walk', 'walkAt', 'walkDur', 'look', 'tilt', 'seed', 'turn', 'turn2', 'turnOn', 'turnAt', 'sit', 'back'];
 const HOLDING = require('./characters').FEATURES.holding || ['phone', 'paper', 'money', 'mic', 'briefcase', 'sign'];
 const STICKER_FIELDS = ['text', 'on', 'at', 'x', 'y', 'rot', 'size', 'color', 'font'];
 
@@ -181,7 +181,8 @@ function validate(spec) {
       if (shot.speaker && !(shot.chars || []).some((c) => c.who === shot.speaker)) errors.push(`${at}: speaker "${shot.speaker}" is not in chars`);
       if (shot.line && !shot.speaker) errors.push(`${at}: "line" needs a "speaker"`);
       if (shot.line && shot.line.length > 90) warnings.push(`${at}: bubble line is ${shot.line.length} characters. Keep bubbles under ~90`);
-      if (shot.frame && !['wide', 'full', 'close', 'reverse'].includes(shot.frame)) errors.push(`${at}: frame must be "wide", "full", "close" or "reverse"`);
+      if (shot.frame && !['wide', 'full', 'close', 'reverse', 'ots'].includes(shot.frame)) errors.push(`${at}: frame must be "wide", "full", "close", "reverse" or "ots"`);
+      if (shot.frame === 'ots' && (shot.chars || []).length < 2) errors.push(`${at}: frame "ots" (over the shoulder) needs two people`);
       (shot.lines || []).forEach((l, k) => {
         if (!l.text) errors.push(`${at} lines[${k}]: missing "text"`);
         if (!(shot.chars || []).some((c) => c.who === (l.who || shot.speaker))) errors.push(`${at} lines[${k}]: speaker "${l.who}" is not in chars`);

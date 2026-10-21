@@ -121,7 +121,7 @@ function expand(line, beats, lineNo) {
     out.nameArrow = { who: (out.chars || s.chars || [{}])[0].who, text, ...(on ? { on } : {}) };
     delete s.arrow;
   }
-  if (s.f) { out.frame = { w: 'wide', c: 'close', r: 'reverse', F: 'full' }[s.f] || s.f; delete s.f; }
+  if (s.f) { out.frame = { w: 'wide', c: 'close', r: 'reverse', F: 'full', o: 'ots' }[s.f] || s.f; delete s.f; }
   if (s.cam) {
     const [mode, on] = cueSplit(s.cam);
     out.camera = on ? { mode, on } : mode;

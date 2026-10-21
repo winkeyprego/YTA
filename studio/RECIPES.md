@@ -146,6 +146,22 @@ The host (`"who": "host"`) works in **any** preset. She is an **occasional** rec
 She appears now and then: as an aside (M3), introducing a breakdown ("Let's break it down"), or as one of the people
 in an explanation (for example, a portrait in a `portraits` row, or a character in a `talk` scene). Most beats use the regular cast.
 
+## Staging: draw the moment, not a recipe (the most important section)
+The reference videos feel hand-made because almost every beat is **its own little scene**: people do something, to someone,
+somewhere specific. A recipe filled with new text (another countUp, another person standing front-on) is what makes a
+video feel templated. Before writing a beat, ask: *what is happening in this sentence, and who is doing it?* Then stage it.
+- **People act.** Sit them (`"sit":true`), turn them toward each other (`"turn":0.7` / `-0.7`, or `"turn2"` + `"turnOn"` to
+  turn on a word), give them an action pose: `give`/`giveLeft` (+ `holding`), `typing`, `phoneEar` (+ `holding:"phone"`),
+  `facepalm`, `headInHands`, `armsCrossed`, `explain`, `shrug`, `think`, walk in/out.
+- **Vary the camera on people:** wide two-shot facing each other; close-up turned three-quarter; **over the shoulder**
+  (`"f":"o"`, `"over":"who"`: the listener's back big in the foreground, the speaker beyond); a full set for a place.
+- **Make the object the subject:** the email being typed, the paper handed over, the phone ringing on the desk (`compose`
+  with a set as `bg` and props + people placed by hand).
+- **One-off ideas beat reused graphics.** About 1 beat in 4 should be a scene you designed for that sentence (a compose
+  with people and props), not a kit graphic.
+- **Limits `--plan` enforces** (warnings): any one graphic kind ~2% of shots (min 5; e.g. 10 for a 500-shot video), any one
+  set ~5% of shots (min 8), and at most 35% of people shots may be one person facing the camera doing nothing.
+
 ## Rhythm: busy vs simple (balance, never empty)
 The reference videos alternate **busy, information-rich scenes** (a set with several people, a montage, a map with arrows,
 a diagram building up) with **simple scenes that are easy to follow**: one big number, one key phrase, a black card, a clean
