@@ -6,6 +6,9 @@ Google Cloud Console > new project > enable "YouTube Data API v3" > Credentials 
     set YOUTUBE_API_KEY=your-key          (Windows PowerShell: $env:YOUTUBE_API_KEY="your-key")
     python tools/fetch_comments.py --handle @AliciaInvests
 
+In a Claude cloud environment the key can instead be a network secret that adds an
+X-goog-api-key header for www.googleapis.com; then leave YOUTUBE_API_KEY unset.
+
 Writes three files to comments-export/ (kept out of git):
     all-comments.csv   every top-level comment found, with video, likes and link
     shortlist.csv      the strongest candidates, flagged ones removed, best first
@@ -43,12 +46,16 @@ PRIVATE = r'\b(depress\w*|stroke|cancer|divorc\w*|died|passed away|diagnos\w*|ab
 
 
 def call(endpoint, key, **params):
-    url = API + endpoint + '?' + urllib.parse.urlencode({**params, 'key': key})
+    url = API + endpoint + '?' + urllib.parse.urlencode({**params, **({'key': key} if key else {})})
     try:
         with urllib.request.urlopen(url, timeout=30) as response:
             return json.load(response)
     except urllib.error.HTTPError as error:
-        detail = json.loads(error.read() or b'{}').get('error', {})
+        body = error.read() or b'{}'
+        try:
+            detail = json.loads(body).get('error', {})
+        except ValueError:
+            detail = {'message': body[:200].decode('utf-8', 'replace')}
         reason = (detail.get('errors') or [{}])[0].get('reason', '')
         raise RuntimeError(f'{endpoint}: {error.code} {reason} {detail.get("message", "")}'.strip()) from None
 
@@ -100,7 +107,7 @@ def main():
     args = parser.parse_args()
     key = os.environ.get('YOUTUBE_API_KEY', '').strip()
     if not key:
-        sys.exit('Set YOUTUBE_API_KEY first. See the top of this file for how to get a free key.')
+        print('No YOUTUBE_API_KEY set: relying on an X-goog-api-key header added by the environment.')
     if not (args.handle or args.channel_id):
         sys.exit('Give --handle @YourHandle or --channel-id UC...')
 
