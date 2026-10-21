@@ -7,10 +7,12 @@ and keep the pipeline runnable with one command.
 
 ## Read before changing anything
 0. `HANDOFF.md`: project memory: goal, decisions, status, next steps. **Update it at the end of every session.**
+   Making a video? Follow `PLAYBOOK.md`, and write the shot list per `SHOTS.md`.
 1. `STYLE-GUIDE.md`: what things look like. Stay on-model.
 2. `MOTION.md`: how things move and how long they stay.
 3. `docs/REFERENCE-ANALYSIS.md`: measured numbers from the reference videos. Prefer these numbers over guesses.
-4. `episodes/sample-2008-cold-open/episode.js`: the working example of every library piece.
+4. `episodes/template-starter/shots.json`: a working shot list using every template.
+   `episodes/sample-2008-cold-open/episode.js` shows hand-coded shots, for one-offs.
 
 ## Rules
 - **Colours only from `lib/palette.js`.** Need a new one? Add it there with a comment.
@@ -31,6 +33,11 @@ and keep the pipeline runnable with one command.
 - **Real people:** caricature allowed only through the cast system (signature features, no photo
   likeness). Keep depictions factual and fair; no invented quotes presented as real. Quotes in
   bubbles must be real and sourced, or clearly framed as a paraphrase in SCRIPT.md.
+
+## Making videos
+- Videos are data (`shots.json`), not code. Only write code when something is missing from the lib,
+  and then add it to the lib so every future episode gets it.
+- Always run `--plan` and fix every pacing warning before rendering.
 
 ## Checking your work
 - `node render.js episodes/<ep> --sheet 1 --scale 1` gives a contact sheet; look at it (Read the jpg).

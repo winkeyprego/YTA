@@ -9,7 +9,11 @@
 //   node render.js episodes/<name> --fps 12             -> quick low-fps preview
 //   node render.js episodes/<name> --workers 3          -> parallel browser workers (default: CPUs - 1)
 //
-// An episode is a folder with episode.js exporting { fps, shots: [{ name, dur, render(t, ctx) }], audio? }.
+//   node render.js episodes/<name> --plan               -> print each shot's start/length (no rendering)
+//
+// An episode folder contains EITHER
+//   shots.json (+ words.json, audio): plain data built with templates (lib/episode.js, SHOTS.md), OR
+//   episode.js exporting { fps, shots: [{ name, dur, render(t, ctx) }], audio? } (hand-built shots).
 // render(t) returns SVG markup for the shot at local time t (seconds). It must be pure.
 //
 // Speed: for video, film grain is added by ffmpeg (cheap) instead of an SVG turbulence filter
@@ -27,7 +31,12 @@ const GRAIN_VF = 'noise=c0s=2:allf=t'; // ~1% luma noise: stops banding, matches
 function args() {
   const a = process.argv.slice(2);
   const o = { dir: a[0] };
-  for (let i = 1; i < a.length; i += 2) o[a[i].replace(/^--/, '')] = a[i + 1];
+  for (let i = 1; i < a.length; i++) {
+    const key = a[i].replace(/^--/, '');
+    const val = a[i + 1];
+    if (val == null || val.startsWith('--')) o[key] = true; // bare flag, e.g. --plan
+    else { o[key] = val; i++; }
+  }
   return o;
 }
 
@@ -64,6 +73,25 @@ function makeDraw(page, tl, fps, { svgGrain, type = 'png' }) {
   };
 }
 
+// Insert silence into the narration where cards (no-vo shots) were placed: gaps = [{ at, dur }].
+async function insertGaps(audio, gaps, tmp) {
+  const out = path.join(tmp, 'vo-gapped.wav');
+  const fmt = 'aformat=sample_rates=44100:channel_layouts=stereo';
+  const parts = [];
+  let f = '';
+  let prev = 0;
+  gaps.forEach((gp, i) => {
+    f += `[0:a]atrim=start=${prev}:end=${gp.at},asetpts=PTS-STARTPTS,${fmt}[s${i}];aevalsrc=0:d=${gp.dur}:s=44100,${fmt}[g${i}];`;
+    parts.push(`[s${i}]`, `[g${i}]`);
+    prev = gp.at;
+  });
+  f += `[0:a]atrim=start=${prev},asetpts=PTS-STARTPTS,${fmt}[end];`;
+  parts.push('[end]');
+  f += `${parts.join('')}concat=n=${parts.length}:v=0:a=1[out]`;
+  await run('ffmpeg', ['-v', 'error', '-y', '-i', audio, '-filter_complex', f, '-map', '[out]', out]);
+  return out;
+}
+
 function run(cmd, a) {
   return new Promise((res, rej) => {
     const p = spawn(cmd, a, { stdio: ['ignore', 'inherit', 'inherit'] });
@@ -93,13 +121,25 @@ async function main() {
   if (!o.dir) throw new Error('usage: node render.js episodes/<name> [--still t | --sheet every] [--from s --to s]');
   const dir = path.resolve(o.dir);
   const name = path.basename(dir);
-  const ep = require(path.join(dir, 'episode.js'));
+  const ep = fs.existsSync(path.join(dir, 'episode.js'))
+    ? require(path.join(dir, 'episode.js'))
+    : require('./lib/episode').loadEpisode(dir);
+  if (ep.estimated) console.error('note: no words.json; shot timing is estimated at 165 wpm');
   const fps = Number(o.fps || ep.fps || 24);
   const scale = Number(o.scale || 1.5);
   const tl = timeline(ep.shots);
   const total = tl.reduce((s, x) => s + x.dur, 0);
   const outDir = path.join(__dirname, 'renders');
   fs.mkdirSync(outDir, { recursive: true });
+  if (o.plan != null) {
+    tl.forEach((s, i) => console.log(`${String(i + 1).padStart(3)}  ${s.start.toFixed(2).padStart(7)}s  ${s.dur.toFixed(2).padStart(5)}s  ${s.name}`));
+    console.log(`total ${total.toFixed(1)}s`);
+    if (ep.lint) {
+      const w = ep.lint();
+      console.log(w.length ? `\npacing warnings (${w.length}):\n- ${w.join('\n- ')}` : '\npacing: OK');
+    }
+    return;
+  }
   const browser = await chromium.launch();
 
   if (o.still != null) {
@@ -153,7 +193,8 @@ async function main() {
 
   const list = path.join(tmp, 'list.txt');
   fs.writeFileSync(list, segs.map((s) => `file '${s.file}'`).join('\n'));
-  const audio = o.audio || (ep.audio && path.join(dir, ep.audio));
+  let audio = o.audio || (ep.audio && path.join(dir, ep.audio));
+  if (audio && fs.existsSync(audio) && ep.gaps && ep.gaps.length) audio = await insertGaps(audio, ep.gaps, tmp);
   const join = ['-v', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', list];
   if (audio && fs.existsSync(audio)) join.push('-ss', String(from), '-t', String(to - from), '-i', audio, '-map', '0:v', '-map', '1:a', '-c:a', 'aac', '-b:a', '192k');
   join.push('-c:v', 'copy', '-movflags', '+faststart', out);

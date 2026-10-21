@@ -4,7 +4,7 @@ This file is the memory of the project. Any Claude session (cloud or desktop, an
 this work should read it first, then `CLAUDE.md`, then do the "Next steps" in order.
 **Update this file at the end of every working session.**
 
-_Last updated: 2026-10-21 (cloud session, after sample clip v2)._
+_Last updated: 2026-10-21 (cloud session): the script-to-video toolkit is ready to use._
 
 ## The goal (in the owner's words, summarised)
 Build a faceless YouTube channel about **money, companies, scams and crashes** (the topics of
@@ -28,32 +28,30 @@ The owner is not a developer. Explain things step by step in plain words, and sh
   uploaded appears to be Crayon Capital's own narration (same title, same 12:41 length). It may be used **only as
   private test material** for VO timing, never in a published video, and it is not in the repo.
 
-## Status
+## Status: ready to make videos
 | Piece | State |
 |---|---|
-| Style library (characters, props, UI, fuse, camera presets) | done, v1 |
-| Renderer (MP4 / still / contact sheet, parallel workers) | done, ~2s render per 1s of video on 4 CPUs |
-| Reference measurements | done (`docs/`) |
-| Sample clip: 2008 cold open, 8 shots, 37s, no audio | done, v2 (`episodes/sample-2008-cold-open`) |
-| Speech-to-text with word timestamps | **next**, blocked in the cloud on network access (see below) |
-| Shot templates + plain-data shot list | **next** |
-| VO-timed video | **next** |
-| Map kit, sound kit (music bed, sparse SFX) | later |
+| Style library: characters (~25 archetypes), 11 sets, props, UI, money graphics, maps, fuse device | done |
+| Shot templates: talk, versus, document, chart, stat, fuse, map, money, title, chapter | done (`lib/templates.js`, `SHOTS.md`) |
+| `shots.json` episodes + pacing checker (`--plan`) | done |
+| Voiceover → word timings (`tools/transcribe.py`, faster-whisper) | done; tested on 90s of audio, about 16s to process |
+| Shots and cues timed to spoken words; silence inserted for cards | done |
+| Renderer (MP4 / still / contact sheet, parallel) | done, ~2s render per 1s of video on 4 CPUs (maps ~3×) |
+| Reference measurements + style and motion guides | done |
+| Starter episode (`episodes/template-starter`, the 2008 cold open, all templates) | done |
+| Sound kit (music bed, sparse SFX, loudness) | **not yet**: add in an editor for now |
 
-## Next steps (in order)
-1. **Word-timed transcription.** Install `faster-whisper` (`pip install faster-whisper`), transcribe the VO with
-   `word_timestamps=True`, and save `episodes/<ep>/words.json` ([{word, start, end}]). Add this as `tools/transcribe.py`.
-2. **Shot templates.** Turn the sample's shot types into reusable templates in `lib/templates.js`:
-   `talk` (character in a set says a line), `document` (paper + highlight + stamp), `chart` (rise/fall),
-   `bigStat`, `fuse`, `title`, `chapter`, `streetNight`/`exterior`. Each template takes plain data plus the shot time.
-3. **Shot list format.** `episodes/<ep>/shots.json`: one entry per beat:
-   `{ template, words: [startWord, endWord] or text, cast, set, stickers: [{text, onWord}], ... }`.
-   The renderer computes each shot's duration from the word timings, and each sticker pops on its word.
-4. **Script → shot list.** Claude reads the script and timings, splits it into beats of ~3.5s (8–11 words),
-   picks a template per beat, and writes `shots.json`. Follow `MOTION.md` pacing rules.
-5. **Test:** first 1–2 minutes of the Ozempic test VO (private test only), rendered and shown to the owner.
-6. **Real voice:** the owner still has to choose: ElevenLabs (paid, needs an API key), their own recording,
-   or a free local TTS.
+## How to make a video now
+Follow `PLAYBOOK.md`. In short: script → `vo.mp3` → `python3 tools/transcribe.py episodes/<ep>/vo.mp3`
+→ write `episodes/<ep>/shots.json` (copy `template-starter`) → `node render.js episodes/<ep> --plan` (fix warnings)
+→ `--sheet 1 --scale 1` (look) → `node render.js episodes/<ep>`.
+
+## Next steps (improvements, not blockers)
+1. **Sound kit:** a music bed about 17 dB under the voice, sparse pop/whoosh SFX, a −14 LUFS master (in render.js).
+2. **More templates:** calendar flip, timeline, balance scale, ledger, newspaper headline, phone/chat screen.
+3. **More sets** as episodes need them: lab or hospital, casino, White House or parliament exterior, ship or port.
+4. **Historical map borders** (pre-1990) if an episode needs them.
+5. **Move derived colours** from `lib/sets.js` (const `T`) and `lib/maps.js` (const `C`) into `palette.js`.
 
 ## Open questions for the owner
 - Which voice for real episodes? (see step 6)
@@ -89,6 +87,10 @@ Package managers (npm, PyPI) are allowed by default.
 - Crayon Capital: topic and direction reference (top videos: Wolf of Wall Street, Great Depression, 2008 crisis).
 
 ## Session log
+- **2026-10-21 (cloud), later:** the owner clarified that the deliverable is the TOOLKIT, so any script can become a video
+  on their main account. Built: the shot templates, shots.json, voice timing (faster-whisper), the pacing checker, 11 sets,
+  ~25 cast, money graphics, a real-map kit, SHOTS.md and PLAYBOOK.md, and a starter episode. Tested end-to-end on 90s of the
+  private Ozempic test audio (kept out of the repo).
 - **2026-10-20/21 (cloud):** researched the three channels; measured the style (pacing, camera, type, colour,
   sound); built the studio library and renderer; made sample clip v1, then v2 tuned to the measurements; wrote the
   style and motion guides. The owner pointed out the real need: **any script → video**. Next is the VO-timed,

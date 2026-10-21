@@ -98,6 +98,12 @@ function hair(kind, color) {
       const bumps = [-56, -36, -14, 8, 30, 52].map((x, i) => `<circle cx="${x}" cy="${-284 - (i % 2) * 8 + Math.abs(x) * 0.2}" r="20" fill="${color}" ${o}/>`).join('');
       return `<g>${bumps}</g>`;
     }
+    case 'long':
+      return `<path d="M-70 -170 Q-86 -308 0 -310 Q86 -308 70 -170 Q60 -160 52 -172 Q60 -256 22 -278 Q-16 -254 -52 -266 Q-60 -220 -52 -172 Q-60 -160 -70 -170 Z" fill="${color}" ${o}/>`;
+    case 'spiky':
+      return `<path d="M-60 -258 L-54 -300 L-34 -282 L-20 -314 L-2 -288 L16 -316 L30 -286 L50 -306 L54 -272 L64 -256 Q40 -280 0 -278 Q-40 -280 -60 -258 Z" fill="${color}" ${o}/>`;
+    case 'ponytail':
+      return `<path d="M54 -276 Q96 -262 92 -206 Q88 -188 78 -196 Q84 -240 50 -258 Z" fill="${color}" ${o}/><path d="M-64 -240 Q-66 -306 0 -306 Q66 -306 64 -240 Q50 -282 0 -284 Q-50 -282 -64 -240 Z" fill="${color}" ${o}/>`;
     case 'bun':
       return `<circle cx="0" cy="-312" r="24" fill="${color}" ${o}/><path d="M-64 -240 Q-64 -306 0 -306 Q64 -306 64 -240 Q50 -282 0 -284 Q-50 -282 -64 -240 Z" fill="${color}" ${o}/>`;
     default:
@@ -136,12 +142,66 @@ function body(spec) {
         <path d="M-14 -168 L0 -136 L14 -168 Z" fill="${spec.shirt || '#f2efe6'}" stroke="${P.ink}" stroke-width="3"/>
         <path d="M0 -136 V${HIP_Y + 10}" stroke="${P.ink}" stroke-width="3"/>
         <circle cx="-8" cy="-112" r="3" fill="${P.ink}"/><circle cx="-8" cy="-88" r="3" fill="${P.ink}"/>`;
+    case 'hoodie':
+      return `<path d="M-44 ${HIP_Y} Q-48 -150 -28 -170 L28 -170 Q48 -150 44 ${HIP_Y} Z" fill="${spec.shirt || P.greyDark}" ${o}/>
+        <path d="M-30 -170 Q0 -146 30 -170" fill="none" stroke="${P.ink}" stroke-width="3.5"/>
+        <path d="M-8 -156 V-128 M8 -156 V-128" stroke="${P.ink}" stroke-width="2.5"/>
+        <path d="M-24 -100 H24 V-76 H-24 Z" fill="none" stroke="${P.ink}" stroke-width="3"/>`;
+    case 'turtleneck':
+      return `<path d="${torso}" fill="${spec.shirt || P.ink}" ${o}/>
+        <rect x="-20" y="-178" width="40" height="16" rx="6" fill="${spec.shirt || P.ink}" stroke="${P.ink}" stroke-width="3"/>
+        ${spec.shirt && spec.shirt !== P.ink ? '' : `<path d="M-14 -172 H14" stroke="#4a4644" stroke-width="2"/>`}`;
+    case 'vest':
+      return `<path d="${torso}" fill="${spec.shirt || '#f2efe6'}" ${o}/>
+        <path d="M-38 ${HIP_Y} Q-42 -150 -26 -166 L-6 -124 L0 ${HIP_Y + 6} L6 -124 L26 -166 Q42 -150 38 ${HIP_Y} Z" fill="${spec.suit || P.greyDark}" stroke="${P.ink}" stroke-width="3.5" stroke-linejoin="round"/>
+        ${spec.tie === null ? '' : `<path d="M0 -164 L-5 -150 L0 -126 L5 -150 Z" fill="${spec.tie || P.blue}" stroke="${P.ink}" stroke-width="2.5"/>`}
+        <circle cx="-8" cy="-104" r="2.5" fill="${P.ink}"/><circle cx="-8" cy="-86" r="2.5" fill="${P.ink}"/>`;
+    case 'robe':
+      return `<path d="M-52 ${HIP_Y + 30} Q-50 -150 -28 -170 L28 -170 Q50 -150 52 ${HIP_Y + 30} Z" fill="${spec.suit || P.ink}" ${o}/>
+        <path d="M-12 -170 L0 -148 L12 -170 Z" fill="#f2efe6" stroke="${P.ink}" stroke-width="2.5"/>
+        <path d="M-20 -150 V${HIP_Y + 26} M20 -150 V${HIP_Y + 26}" stroke="#4a4644" stroke-width="2"/>`;
+    case 'overalls':
+      return `<path d="${torso}" fill="${spec.shirt || P.paperDim}" ${o}/>
+        <path d="M-30 -118 H30 V${HIP_Y} H-30 Z" fill="${spec.suit || P.blue}" stroke="${P.ink}" stroke-width="3.5" stroke-linejoin="round"/>
+        <path d="M-24 -118 L-28 -166 M24 -118 L28 -166" stroke="${spec.suit || P.blue}" stroke-width="9"/>
+        <path d="M-24 -118 L-28 -166 M24 -118 L28 -166" stroke="${P.ink}" stroke-width="2" opacity=".5"/>
+        <rect x="-12" y="-110" width="24" height="18" fill="none" stroke="${P.ink}" stroke-width="2.5"/>`;
     default: // suit
       return `<path d="${torso}" fill="${spec.suit || P.navy}" ${o}/>
         <path d="M-14 -168 L0 -120 L14 -168 Z" fill="${spec.shirt || '#f2efe6'}" stroke="${P.ink}" stroke-width="3"/>
         ${spec.tie === null ? '' : `<path d="M0 -160 L-6 -146 L0 -114 L6 -146 Z" fill="${spec.tie || P.red}" stroke="${P.ink}" stroke-width="2.5"/>`}
         <path d="M-26 -168 L-6 -126 M26 -168 L6 -126" stroke="${P.ink}" stroke-width="3" fill="none"/>
         <circle cx="0" cy="-96" r="3" fill="${P.ink}"/>`;
+  }
+}
+
+// Small extras worn on the body (drawn over the outfit).
+function bodyExtras(spec) {
+  let out = '';
+  if (spec.pin) out += `<g transform="translate(-24 -142)"><rect x="-7" y="-5" width="14" height="10" fill="#fff" stroke="${P.ink}" stroke-width="1.5"/><rect x="-7" y="-5" width="6" height="5" fill="${P.blue}"/><path d="M-1 -2 H7 M-7 2 H7" stroke="${P.red}" stroke-width="1.6"/></g>`;
+  if (spec.badge) out += `<rect x="14" y="-146" width="18" height="12" rx="2" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/>`;
+  if (spec.lanyard) out += `<path d="M-14 -166 L0 -118 L14 -166" fill="none" stroke="${P.red}" stroke-width="3"/><rect x="-10" y="-118" width="20" height="26" fill="#fff" stroke="${P.ink}" stroke-width="2"/>`;
+  return out;
+}
+
+// Prop held in the screen-right hand (state.holding). Drawn over the hand position.
+function heldProp(kind, [hx, hy]) {
+  const o = `stroke="${P.ink}" stroke-width="3" stroke-linejoin="round"`;
+  switch (kind) {
+    case 'phone':
+      return `<g transform="translate(${n(hx)} ${n(hy)}) rotate(-12)"><rect x="-9" y="-30" width="20" height="36" rx="4" fill="${P.ink}"/><rect x="-6" y="-26" width="14" height="24" rx="2" fill="${P.blue}" opacity=".8"/></g>`;
+    case 'paper':
+      return `<g transform="translate(${n(hx)} ${n(hy)}) rotate(6)"><rect x="-6" y="-56" width="44" height="58" fill="${P.paper}" ${o}/><path d="M2 -44 H30 M2 -34 H30 M2 -24 H24" stroke="${P.inkSoft}" stroke-width="2"/></g>`;
+    case 'money':
+      return `<g transform="translate(${n(hx)} ${n(hy)})"><rect x="-4" y="-34" width="56" height="28" rx="3" fill="${P.green}" ${o} transform="rotate(-18)"/><rect x="0" y="-30" width="56" height="28" rx="3" fill="#7fa577" ${o} transform="rotate(-6)"/><circle cx="28" cy="-17" r="7" fill="none" stroke="${P.greenDark}" stroke-width="2.5" transform="rotate(-6)"/></g>`;
+    case 'mic':
+      return `<g transform="translate(${n(hx)} ${n(hy)}) rotate(-20)"><rect x="-5" y="-6" width="10" height="34" rx="3" fill="${P.ink}"/><circle cx="0" cy="-14" r="13" fill="${P.greyDark}" ${o}/><path d="M-8 -20 H8 M-9 -13 H9 M-8 -6 H8" stroke="${P.grey}" stroke-width="2"/></g>`;
+    case 'briefcase':
+      return `<g transform="translate(${n(hx)} ${n(hy)})"><path d="M-12 4 V-4 H12 V4" fill="none" stroke="${P.ink}" stroke-width="4"/><rect x="-34" y="4" width="68" height="48" rx="5" fill="${P.woodMid}" ${o}/><path d="M-34 22 H34" stroke="${P.woodDark}" stroke-width="2.5"/><rect x="-6" y="18" width="12" height="9" fill="${P.gold}" stroke="${P.ink}" stroke-width="2"/></g>`;
+    case 'sign':
+      return `<g transform="translate(${n(hx)} ${n(hy)})"><path d="M0 10 V-120" stroke="${P.woodMid}" stroke-width="7"/><rect x="-60" y="-190" width="120" height="76" fill="${P.paper}" ${o}/></g>`;
+    default:
+      return '';
   }
 }
 
@@ -203,16 +263,23 @@ function character(spec = {}, st = {}) {
     ${spec.cigar ? `<rect x="10" y="-206" width="34" height="9" rx="3" fill="#8a5a3c" stroke="${P.ink}" stroke-width="2.5"/>` : ''}
     ${hat(spec.hat, spec.hatColor, spec.hatBand)}`;
   const headTilt = st.tilt ? `transform="rotate(${n(st.tilt)} 0 ${SHOULDER_Y - 20})"` : '';
-  return `<g transform="translate(0 ${n(bob)})">
+  const held = st.holding && !carry ? heldProp(st.holding, handPosition(1, armR)) : '';
+  // re-draw the hand on top of held items so fingers overlap the prop
+  const handTop = held && st.holding !== 'briefcase' && st.holding !== 'sign'
+    ? (() => { const [hx, hy] = handPosition(1, armR); return `<circle cx="${n(hx)}" cy="${n(hy)}" r="9" fill="${P.skin}" stroke="${P.ink}" stroke-width="3.5"/>`; })()
+    : '';
+  const size = spec.size && spec.size !== 1 ? `transform="scale(${n(spec.size)})"` : '';
+  return `<g ${size}><g transform="translate(0 ${n(bob)})">
     ${st.legs === false ? '' : legs(st.walk)}
     <g transform="translate(0 ${HIP_Y}) scale(1 ${n(b)}) translate(0 ${-HIP_Y})">
-      ${body(spec)}
+      ${body(spec)}${bodyExtras(spec)}
       ${carry ? '' : arm(-1, armL) + arm(1, armR)}
+      ${held}${handTop}
       ${carry}
       ${carry ? arm(-1, [28, -70]) + arm(1, [28, -70]) : ''}
       <g ${headTilt}>${head}</g>
     </g>
-  </g>`;
+  </g></g>`;
 }
 
 // Where a hand ends up for a pose (useful for attaching props or aiming bubbles).
@@ -235,6 +302,61 @@ const CAST = {
   homeowner: { outfit: 'shirt', shirt: P.green, hair: 'curly', hairColor: '#5a3e2b' },
   homeownerWoman: { outfit: 'dress', shirt: P.gold, hair: 'bob', hairColor: '#6b3f2a' },
   analyst: { outfit: 'suit', suit: '#4a4f45', tie: null, hair: 'bun', hairColor: '#3a2d25', glasses: true },
+
+  ceo: { outfit: 'suit', suit: P.charcoal, tie: P.redDark, hair: 'slick', hairColor: P.greyLight },
+  founder: { outfit: 'hoodie', shirt: P.greyDark, hair: 'curly', hairColor: '#3a2d25' },
+  founderTurtle: { outfit: 'turtleneck', hair: 'bob', hairColor: '#d8c08a' },
+  investor: { outfit: 'vest', suit: P.greyDark, shirt: '#e3ecf2', tie: P.blue, hair: 'side', hairColor: '#6b5a4a', glasses: true },
+  politician: { outfit: 'suit', suit: '#2f3a52', tie: P.red, hair: 'side', hairColor: P.greyLight, pin: true },
+  regulatorWoman: { outfit: 'suit', suit: '#55606b', tie: null, hair: 'bob', hairColor: P.greyLight, glasses: true, badge: true },
+  worker: { outfit: 'overalls', suit: P.blue, shirt: P.paperDim, hair: 'none', hat: 'cap', hatColor: P.red },
+  reporter: { outfit: 'suit', suit: '#6b4a3a', tie: null, shirt: '#f2efe6', hair: 'ponytail', hairColor: '#4a3020', lanyard: true },
+  judge: { outfit: 'robe', hair: 'bald', hairColor: P.greyLight, glasses: true },
+  child: { outfit: 'shirt', shirt: P.gold, hair: 'spiky', hairColor: '#6b3f2a', size: 0.72 },
+  elderly: { outfit: 'vest', suit: '#7a6a55', shirt: '#efe8d6', tie: null, hair: 'bald', hairColor: '#e8e4dc', glasses: true, moustache: 'thin', moustacheColor: '#e8e4dc' },
+  elderlyWoman: { outfit: 'dress', shirt: '#8a6b8a', hair: 'bun', hairColor: '#e8e4dc', glasses: true },
+  crowdA: { outfit: 'suit', suit: '#4a4f58', tie: P.blue, hair: 'side', hairColor: '#3a2d25' },
+  crowdB: { outfit: 'shirt', shirt: '#b8a07a', hair: 'long', hairColor: '#6b3f2a' },
+  crowdC: { outfit: 'suit', suit: '#5a4a3a', tie: P.gold, hair: 'bald', hairColor: '#4a4038' },
 };
 
-module.exports = { character, handPosition, ANCHOR, CAST, HEAD_Y, HEAD_R };
+// ---------- crowds ----------
+// Simple seated crowd of head-and-shoulder busts (parliament, hearing, shareholder meeting).
+// Rows go back -> front, front rows a little bigger. Pure in its seed.
+function crowd(seed, rows, cols, x, y, w, h, scale = 0.3) {
+  let a = seed >>> 0;
+  const r = () => { a = (a * 1664525 + 1013904223) >>> 0; return a / 4294967296; };
+  const suits = [P.navy, P.charcoal, '#4a4f58', '#5a4a3a', '#55606b', '#6b4a3a', P.greyDark];
+  const hairs = ['slick', 'side', 'bald', 'bob', 'curly', 'bun', 'long', 'none'];
+  const hairCols = ['#4a4038', '#2f2a26', P.greyLight, '#6b3f2a', '#3a2d25', '#d8c08a'];
+  let out = '';
+  for (let j = 0; j < rows; j++) {
+    const k = rows === 1 ? 1 : j / (rows - 1);
+    const s = scale * (0.85 + 0.3 * k);
+    const yy = y + k * h;
+    const step = w / cols;
+    for (let i = 0; i < cols; i++) {
+      const xx = x + step * (i + 0.5) + (j % 2 ? step * 0.25 : -step * 0.15) + (r() - 0.5) * step * 0.2;
+      const suit = suits[Math.floor(r() * suits.length)];
+      const hr = hairs[Math.floor(r() * hairs.length)];
+      const hc = hairCols[Math.floor(r() * hairCols.length)];
+      const glassesOn = r() < 0.2;
+      const mood = r();
+      const eyesK = mood < 0.15 ? 'closed' : 'dot';
+      out += `<g transform="translate(${n(xx)} ${n(yy)}) scale(${n(s)})">
+        <path d="M-46 0 Q-48 -70 -28 -84 L28 -84 Q48 -70 46 0 Z" fill="${suit}" stroke="${P.ink}" stroke-width="${OUT}" stroke-linejoin="round"/>
+        <path d="M-12 -84 L0 -60 L12 -84 Z" fill="#f2efe6" stroke="${P.ink}" stroke-width="3"/>
+        <g transform="translate(0 84)">
+          <circle cx="0" cy="${HEAD_Y}" r="${HEAD_R}" fill="${P.skin}" stroke="${P.ink}" stroke-width="${OUT}"/>
+          ${hair(hr, hc)}
+          <ellipse cx="-38" cy="-210" rx="12" ry="7" fill="${P.blush}" opacity=".7"/><ellipse cx="38" cy="-210" rx="12" ry="7" fill="${P.blush}" opacity=".7"/>
+          ${eyes(eyesK)}${glasses(glassesOn)}${mouth(mood > 0.8 ? 'frown' : 'flat')}
+        </g>
+      </g>`;
+    }
+  }
+  return out;
+}
+
+
+module.exports = { character, handPosition, crowd, ANCHOR, CAST, HEAD_Y, HEAD_R };

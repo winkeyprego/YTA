@@ -79,8 +79,12 @@ Built the same way every time:
 | Fuse device | `dev.fuse` + `fuseProgress` / `fuseSchedule` + `dev.tally` | the channel's signature device |
 | Sets | `props.office`, `windowCity`, `clock`, `desk`, `nightSky`, `skyline`, `tower`, `streetLamp`, `deskTop` | |
 
-**Still to build** (seen in the references): a map kit (flat countries, flags, fronts, labelled arrows, a legend box),
-calendars, a balance scale, a ledger, a scoreboard variant and a progress row for chapters.
+| Sets (11) | `lib/sets.js` | each set has `draw`, `front` (furniture in front of people), `spots`, `close` |
+| Money | `lib/money.js` | cash stack, bag, coins, gold bars, banknote, piggy bank, vault, ticker, stock bars, money rain |
+| Maps | `lib/maps.js` | paper-blue ocean `#a3b6ba`, `paperDim` land, ink borders, flat highlight colours, hatching, cities, growing arrows, legend |
+
+**Still to build** (seen in the references): calendars, a balance scale, a ledger, a scoreboard variant,
+a progress row for chapters, and historical borders for maps.
 
 ## 8. The house device: THE FUSE
 The references each carry a whole episode with one metaphor: exits on a road, a scale, an evidence desk.

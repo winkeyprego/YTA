@@ -1,0 +1,388 @@
+{
+ "title": "Why the 2008 Crash Was COMPLETELY Avoidable (starter: copy this folder for a new episode)",
+ "fps": 24,
+ "cast": {
+  "lehmanBanker": {
+   "base": "banker"
+  }
+ },
+ "shots": [
+  {
+   "template": "talk",
+   "set": "towerNight",
+   "setOpts": {
+    "name": "LEHMAN BROTHERS",
+    "darkFrom": 0.4,
+    "darkTo": 6
+   },
+   "vo": "At a quarter to two in the morning, on the fifteenth of September 2008, Lehman Brothers filed for bankruptcy.",
+   "chars": [
+    {
+     "who": "lehmanBanker",
+     "spot": "right",
+     "mood": "sad",
+     "carry": "box",
+     "walk": "out",
+     "walkAt": 2.5,
+     "walkDur": 4.5,
+     "mood2": "worried",
+     "mood2On": "september"
+    }
+   ],
+   "tag": "NEW YORK \u00b7 15 SEPT 2008 \u00b7 1:45 AM",
+   "camera": "creep",
+   "stickers": [
+    {
+     "text": "1:45 AM",
+     "on": "quarter",
+     "x": 300,
+     "y": 330,
+     "color": "ink"
+    },
+    {
+     "text": "BANKRUPT",
+     "on": "bankruptcy",
+     "x": 300,
+     "y": 420
+    }
+   ]
+  },
+  {
+   "template": "stat",
+   "set": "towerNight",
+   "setOpts": {
+    "name": "LEHMAN BROTHERS"
+   },
+   "vo": "A hundred and fifty-eight years on Wall Street, gone in one night.",
+   "value": "158 YEARS",
+   "caption": "ON WALL STREET",
+   "on": "hundred",
+   "stickers": [
+    {
+     "text": "GONE IN ONE NIGHT",
+     "on": "gone",
+     "x": 640,
+     "y": 540
+    }
+   ]
+  },
+  {
+   "template": "document",
+   "vo": "The filing listed six hundred and thirteen billion dollars of debt.",
+   "lines": [
+    "UNITED STATES BANKRUPTCY COURT",
+    "SOUTHERN DISTRICT OF NEW YORK",
+    "",
+    "In re:",
+    {
+     "text": "LEHMAN BROTHERS HOLDINGS INC.,",
+     "big": true
+    },
+    "                         Debtor.",
+    "",
+    "Chapter 11",
+    "Case No. 08-13555"
+   ],
+   "highlight": "LEHMAN",
+   "highlightOn": "filing",
+   "stamp": {
+    "text": "$613 BILLION IN DEBT",
+    "on": "billion"
+   }
+  },
+  {
+   "template": "money",
+   "vo": "It's still the biggest bankruptcy in American history.",
+   "items": [
+    {
+     "kind": "cashStack",
+     "args": [
+      640,
+      600,
+      300,
+      "$t",
+      "$at"
+     ],
+     "on": "biggest"
+    }
+   ],
+   "stickers": [
+    {
+     "text": "BIGGEST IN U.S. HISTORY",
+     "on": "biggest",
+     "x": 640,
+     "y": 120,
+     "color": "ink"
+    }
+   ]
+  },
+  {
+   "template": "talk",
+   "set": "office",
+   "vo": "And it all rested on one idea that almost everyone on Wall Street believed in 2006.",
+   "chars": [
+    {
+     "who": "banker",
+     "spot": "center",
+     "mood": "confident",
+     "pose": "pointLeft",
+     "poseOn": "idea"
+    }
+   ],
+   "tag": "NEW YORK \u00b7 SPRING 2006",
+   "plate": {
+    "name": "A Wall Street Banker",
+    "role": "Mortgage desk",
+    "on": "everyone"
+   }
+  },
+  {
+   "template": "talk",
+   "set": "office",
+   "vo": "House prices don't fall. Not across the whole country. Not ever.",
+   "chars": [
+    {
+     "who": "banker",
+     "spot": "center",
+     "mood": "smug",
+     "pose": "pointLeft"
+    }
+   ],
+   "frame": "close",
+   "speaker": "banker",
+   "line": "House prices don't fall. Not nationally. Not ever.",
+   "lineOn": "house",
+   "stickers": [
+    {
+     "text": "THE ONE ASSUMPTION",
+     "on": "ever"
+    }
+   ]
+  },
+  {
+   "template": "chart",
+   "vo": "Then they did. From the peak in the summer of 2006, American home prices fell by more than a quarter.",
+   "title": "U.S. HOME PRICES",
+   "data": [
+    [
+     2000,
+     100
+    ],
+    [
+     2002,
+     116
+    ],
+    [
+     2004,
+     141
+    ],
+    [
+     2005,
+     160
+    ],
+    [
+     2006.5,
+     184.6
+    ],
+    [
+     2007.5,
+     178
+    ],
+    [
+     2008.5,
+     165
+    ],
+    [
+     2009.5,
+     147
+    ],
+    [
+     2011,
+     140
+    ],
+    [
+     2012.1,
+     134
+    ]
+   ],
+   "xLabels": [
+    [
+     2000,
+     "2000"
+    ],
+    [
+     2006.5,
+     "2006"
+    ],
+    [
+     2012,
+     "2012"
+    ]
+   ],
+   "turn": 2006.5,
+   "turnLabel": "PEAK \u00b7 JULY 2006",
+   "fallOn": "fell",
+   "change": {
+    "text": "\u221227%",
+    "on": "quarter"
+   },
+   "source": "S&P/Case-Shiller U.S. National Home Price Index (approximate path)"
+  },
+  {
+   "template": "fuse",
+   "vo": "In 2003, interest rates hit one percent. In 2004, the big investment banks were allowed to borrow more. In 2006, prices peaked. In 2007, two Bear Stearns funds collapsed. And in 2008, Lehman.",
+   "stops": [
+    {
+     "year": "2003",
+     "title": "RATES AT 1%",
+     "lines": [
+      "Money gets cheap"
+     ],
+     "on": "2003"
+    },
+    {
+     "year": "2004",
+     "title": "MORE DEBT",
+     "lines": [
+      "Banks allowed to",
+      "borrow more"
+     ],
+     "on": "2004"
+    },
+    {
+     "year": "2006",
+     "title": "PRICES PEAK",
+     "lines": [
+      "Then they stop",
+      "going up"
+     ],
+     "on": "2006"
+    },
+    {
+     "year": "2007",
+     "title": "FIRST CRACKS",
+     "lines": [
+      "Two Bear Stearns",
+      "funds collapse"
+     ],
+     "on": "2007"
+    }
+   ],
+   "end": {
+    "label": "LEHMAN",
+    "sub": "SEPT 2008",
+    "on": "lehman"
+   },
+   "tag": "2003 \u2192 2008"
+  },
+  {
+   "template": "map",
+   "vo": "And when Lehman fell, the panic didn't stay in New York. Within days it reached London, and then the world.",
+   "view": {
+    "center": [
+     -35,
+     45
+    ],
+    "zoom": 2.6,
+    "highlight": {
+     "United States of America": {
+      "color": "navy",
+      "on": "lehman"
+     },
+     "United Kingdom": {
+      "color": "red",
+      "on": "london"
+     }
+    },
+    "cities": [
+     {
+      "name": "New York",
+      "lon": -74,
+      "lat": 40.7,
+      "on": "york"
+     },
+     {
+      "name": "London",
+      "lon": -0.1,
+      "lat": 51.5,
+      "on": "london"
+     }
+    ],
+    "arrows": [
+     {
+      "from": [
+       -74,
+       40.7
+      ],
+      "to": [
+       -0.1,
+       51.5
+      ],
+      "on": "days",
+      "label": "PANIC",
+      "color": "red"
+     }
+    ]
+   },
+   "focus": [
+    -37,
+    46
+   ],
+   "camera": {
+    "mode": "push",
+    "on": "world"
+   },
+   "tag": "SEPTEMBER 2008",
+   "legend": [
+    {
+     "color": "navy",
+     "label": "WHERE IT STARTED"
+    },
+    {
+     "color": "red",
+     "label": "WHERE IT SPREAD"
+    }
+   ],
+   "stickers": [
+    {
+     "text": "THE WORLD",
+     "on": "world",
+     "x": 640,
+     "y": 600,
+     "size": 40
+    }
+   ]
+  },
+  {
+   "template": "versus",
+   "vo": "Wall Street kept the bonuses. Main Street lost its homes.",
+   "left": {
+    "who": "banker",
+    "label": "WALL STREET",
+    "labelOn": "wall",
+    "mood": "smug",
+    "holding": "money"
+   },
+   "right": {
+    "who": "homeownerWoman",
+    "label": "MAIN STREET",
+    "labelOn": "main",
+    "mood": "sad",
+    "pose": "shrug",
+    "poseOn": "lost"
+   }
+  },
+  {
+   "template": "title",
+   "vo": "So why didn't anyone cut it?",
+   "text": "WHY THE [2008 CRASH] WAS COMPLETELY AVOIDABLE",
+   "set": "towerNight"
+  },
+  {
+   "template": "chapter",
+   "label": "Part One",
+   "sub": "cheap money",
+   "dur": 2
+  }
+ ]
+}
